@@ -1,0 +1,52 @@
+html, body {
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+otree-page {
+    height: 100%;
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+}
+
+otree-page hr {
+    width: 50%;
+}
+
+otree-page > .main {
+    height: 500px;
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+}
+
+otree-page > .response {
+    height: 100px;
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+}
+
+otree-stimulus#aim {
+    font-size: 100px;
+}
+
+otree-stimulus#prime {
+    font-size: xx-large;
+}
+
+
+kbd {
+    background-color: #e0e0e0;
+    border-style: outset;
+    color: black;
+}
+
+.choice {
+    text-decoration: underline;
+}

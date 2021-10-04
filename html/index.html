@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <link rel="stylesheet" href="./main.css"/>
+</head>
+
+<body>
+  <otree-page trialtimeout="5000" aftertrial="1000">
+    <div class="main">
+      <otree-stimulus id="aim" delay="0" exposure="1000">⌖</otree-stimulus>
+
+      <otree-stimulus id="prime" delay="1010" exposure="500">
+        <otree-text ref="trial.prime"></otree-text>
+      </otree-stimulus>
+
+      <otree-stimulus id="stimulus" delay="1520">
+        <otree-img ref="trial.stimulus"></otree-img>
+      </otree-stimulus>
+    </div>
+
+    <hr>
+
+    <div class="response">
+
+      <otree-key keycode="KeyF" response="positive"></otree-key>
+      <otree-key keycode="KeyJ" response="negative"></otree-key>
+
+      <otree-response></otree-response>
+      <otree-feedback></otree-feedback>
+    </div>
+
+    <otree-start keycode="Space">
+      <p>Press space to start</p>
+    </otree-start>
+
+  </otree-page>
+
+  <script type="module" src="../src/events.mjs"></script>
+  <script type="module" src="../src/jspath.mjs"></script>
+  <script type="module" src="../src/timers.mjs"></script>
+  <script type="module" src="../src/otree-page.mjs"></script>
+  <script type="module" src="../src/otree-start.mjs"></script>
+  <script type="module" src="../src/otree-stimulus.mjs"></script>
+  <script type="module" src="../src/otree-text.mjs"></script>
+  <script type="module" src="../src/otree-img.mjs"></script>
+  <script type="module" src="../src/otree-key.mjs"></script>
+  <script type="module" src="../src/otree-response.mjs"></script>
+  <script type="module" src="../src/otree-feedback.mjs"></script>
+  <script src="trials.js"></script>
+  <script src="main.js"></script>
+</body>
+
+</html>
