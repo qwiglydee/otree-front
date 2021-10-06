@@ -15,18 +15,30 @@ export class otFeedback extends LitElement {
         this.value = null;
     }
 
+    _show() {
+        this.style.display = null;
+    }
+
+    _hide() {
+        this.style.display = "none";
+    }
+
     connectedCallback() {
         super.connectedCallback();
-        this.addEventListener("otree-trial-reset", () => this.reset());
-        this.addEventListener("otree-trial-feedback", (event) => this.load(event));
+        this.addEventListener("otree-reset", () => this.reset());
+        this.addEventListener("otree-updated", (event) => this._onUpdate(event.detail.update));
     }
 
     reset() {
         this.value = null;
+        this._hide();
     }
 
-    load(event) {
-        this.value = event.detail.feedback;
+    _onUpdate(update) {
+        if ('feedback' in update) {
+            this.value = update.feedback;
+            this._show();
+        }
     }
 
     render() {

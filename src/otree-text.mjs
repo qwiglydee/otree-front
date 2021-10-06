@@ -4,29 +4,29 @@ import { jspath } from "./jspath";
 
 export class otText extends LitElement {
     static properties = {
-        'ref': {type: String},
+        'obj': {type: String},
+        'field': {type: String},
         'content': {type: String, state: true},
     }
 
     constructor() {
         super();
-        this.ref = "";
-        this.content = "xxx";
     }
 
     connectedCallback() {
         super.connectedCallback();
-        this.addEventListener("otree-trial-reset", () => this.reset());
-        this.addEventListener("otree-trial-loaded", (event) => this.load(event));
+        this.addEventListener("otree-reset", () => this.reset());
+        this.addEventListener("otree-updated", (event) => this._onUpdate(event.detail.state));
     }
 
     reset() {
         this.content = null;
     }
 
-    load(event) {
-        const data = { trial: event.detail.trial };
-        this.content = jspath(this.ref, data);
+    _onUpdate(state) {
+        if (this.obj in state) {
+            this.content = jspath(this.field, state[this.obj]);
+        }
     }
 
     render() {

@@ -4,29 +4,29 @@ import { jspath } from "./jspath";
 
 export class otImage extends LitElement {
     static properties = {
-        'ref': {type: String},
+        'obj': {type: String},
+        'field': {type: String},
         'img': {type: String, state: true},
     }
 
     constructor() {
         super();
-        this.ref = "";
-        this.content = "xxx";
     }
 
     connectedCallback() {
         super.connectedCallback();
-        this.addEventListener("otree-trial-reset", () => this.reset());
-        this.addEventListener("otree-trial-loaded", (event) => this.load(event));
+        this.addEventListener("otree-reset", () => this.reset());
+        this.addEventListener("otree-updated", (event) => this._onUpdate(event.detail.state));
     }
 
     reset() {
         this.img = null;
     }
 
-    load(event) {
-        const data = { trial: event.detail.trial };
-        this.img = jspath(this.ref, data);
+    _onUpdate(state) {
+        if (this.obj in state) {
+            this.img = jspath(this.field, state[this.obj]);
+        }
     }
 
     render() {

@@ -1,7 +1,5 @@
 import { LitElement } from 'lit';
 
-import { otreeEventBubble } from './events';
-
 export class otKey extends LitElement {
     static properties = {
         'keycode': {type: String},
@@ -9,13 +7,14 @@ export class otKey extends LitElement {
     }
 
     connectedCallback() {
+        this.page = this.closest('otree-page');
         window.addEventListener("keydown", (e) => this._onKey(e))
     }
 
     _onKey(event) {
         if (event.code === this.keycode) {
             event.preventDefault();
-            this.dispatchEvent(otreeEventBubble("response", {response: this.response}));
+            this.page.setState({response: this.response});
         }
     }
 }

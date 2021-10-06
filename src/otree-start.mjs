@@ -1,5 +1,4 @@
 import { LitElement } from 'lit';
-import { otreeEventBubble } from './events';
 
 export class otStart extends LitElement {
     static properties = {
@@ -8,6 +7,8 @@ export class otStart extends LitElement {
 
     constructor() {
         super();
+        this.keycode = 'Space';
+        this.enabled = null;
     }
 
     createRenderRoot() {
@@ -15,28 +16,26 @@ export class otStart extends LitElement {
         return this;
     }
 
-    render() {}
-
     connectedCallback() {
-        this.addEventListener("otree-loaded", () => this._show());
-        this.addEventListener("otree-started", () => this._hide());
+        this.page = this.closest('otree-page');
         window.addEventListener("keydown", (ev) => this._onKey(ev));
+        this.addEventListener("otree-updated", (ev) => this._onUpdate(ev));
     }
 
-    _show() {
-        this.style.display = null;
-    }
-
-    _hide() {
-        this.style.display = "none";
+    toggle(enabled) {
+        this.enabled = enabled;
+        this.style.display = enabled ? null : "none";
     }
 
     _onKey(event) {
-        if (this.style.display == "none") return;
-        if (event.code == this.keycode) {
-            event.preventDefault();
-            this.dispatchEvent(otreeEventBubble("start"));
-        }
+        if (!this.enabled || event.code != this.keycode) return;
+        event.preventDefault();
+        this.page.setState({started: true});
+    }
+
+    _onUpdate(event) {
+        if (!('started' in event.detail.update)) return;
+        this.toggle(!event.detail.update.started);
     }
 }
 

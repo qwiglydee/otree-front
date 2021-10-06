@@ -11,16 +11,29 @@ export class otResponse extends LitElement {
 
     connectedCallback() {
         super.connectedCallback();
-        this.addEventListener("otree-trial-reset", () => this.reset());
-        this.addEventListener("otree-trial-responded", (event) => this.load(event));
+        this.addEventListener("otree-reset", () => this.reset());
+        this.addEventListener("otree-updated", (event) => this._onUpdate(event.detail.update));
     }
+
+    _show() {
+        this.style.display = null;
+    }
+
+    _hide() {
+        this.style.display = "none";
+    }
+
 
     reset() {
         this.content = null;
+        this._hide();
     }
 
-    load(event) {
-        this.content = event.detail.response;
+    _onUpdate(update) {
+        if ('response' in update) {
+            this.content = update.response;
+            this._show();
+        }
     }
 
     render() {

@@ -1,23 +1,18 @@
 import { LitElement } from 'lit';
-import { otreeEvent } from './events';
-import { sleep } from './timers';
+import { delay } from './timers';
+
+export function otreeEvent(type, detail) {
+    return new CustomEvent(`otree-${type}`, {bubbles: false, detail: detail});
+}
 
 export class otPage extends LitElement {
-    static properties = {
-        trialTimeout: {type: Number},
-        defaultResponse: {type: String},
-        afterTrial: {type: Number}
-      };
-
     constructor() {
         super();
+        this.state = {
+            started: false,
+            frozen: false
+        };
         this.otreeElems = Array.from(this.querySelectorAll("*")).filter(e => e.tagName.startsWith('OTREE-'));
-
-        this.started = false;
-
-        this.trial = {};
-        this.response = null;
-        this.feedback = null;
     }
 
     createRenderRoot() {
@@ -26,47 +21,45 @@ export class otPage extends LitElement {
     }
 
     connectedCallback() {
-        this.addEventListener("otree-start", () => this.startGame());
-        this.addEventListener("otree-response", (e) => this.onResponse(e));
+        super.connectedCallback();
     }
 
-    broadcastEvent(event) {
+    broadcastEvent(type, data={}) {
+        let event = otreeEvent(type, data);
         this.dispatchEvent(event);
         this.otreeElems.forEach(elem => elem.dispatchEvent(event));
     }
 
-    firstUpdated() {
-        delay(() => this.broadcastEvent(otreeEvent("loaded")));
+    firstUpdated() { // what for ???
+        delay(() => this.broadcastEvent("loaded"));
     }
 
-    startGame() {
-        this.broadcastEvent(otreeEvent("started"));
-        this.nextTrial();
+    resetState(state = {started: false, frozen: false}) {
+        this.state = Object.assign({}, state);
+        this.broadcastEvent("reset");
+        this.broadcastEvent("updated", {update: state, state: this.state});
     }
 
-    async nextTrial() {
-        this.resetTrial();
-        await this.newTrial();
+    setState(update) {
+        this.state = Object.assign(this.state, update);
+        this.broadcastEvent("updated", {update: update, state: this.state});
     }
 
-    resetTrial() {
-        this.trial = null;
-        this.broadcastEvent(otreeEvent("trial-reset"));
+    getState(field) {
+        return this.state[field];
     }
 
-    async newTrial() {
-        this.trial = await window.generateTrial();
-        this.broadcastEvent(otreeEvent("trial-loaded", {trial: this.trial}));
-        this.broadcastEvent(otreeEvent("trial-start"));
+    freeze() {
+        this.setState({frozen: true});
     }
 
-    async onResponse(event) {
-        this.response = event.detail.response;
-        this.broadcastEvent(otreeEvent("trial-responded", {trial: this.trial, response: this.response}));
-        this.feedback = await window.validateResponse(this.trial, this.response);
-        this.broadcastEvent(otreeEvent("trial-feedback", {trial: this.trial, response: this.response, feedback: this.feedback}));
-        await sleep(this.afterTrial);
-        this.nextTrial();
+    unfreeze() {
+        this.setState({frozen: false});
+    }
+
+    display() {
+        this.broadcastEvent("display");
+        ;
     }
 }
 

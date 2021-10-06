@@ -34,8 +34,8 @@ export class otStimulus extends LitElement {
 
     connectedCallback() {
         super.connectedCallback();
-        this.addEventListener('otree-trial-reset', () => this.reset());
-        this.addEventListener('otree-trial-start', () => this.display());
+        this.addEventListener('otree-reset', () => this.reset());
+        this.addEventListener('otree-display', () => this.display());
     }
 
     reset() {

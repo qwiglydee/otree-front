@@ -13,11 +13,11 @@
       <otree-stimulus id="aim" delay="0" exposure="1000">⌖</otree-stimulus>
 
       <otree-stimulus id="prime" delay="1010" exposure="500">
-        <otree-text ref="trial.prime"></otree-text>
+        <otree-text obj="trial" field="prime"></otree-text>
       </otree-stimulus>
 
       <otree-stimulus id="stimulus" delay="1520">
-        <otree-img ref="trial.stimulus"></otree-img>
+        <otree-img obj="trial" field="stimulus"></otree-img>
       </otree-stimulus>
     </div>
 
@@ -38,7 +38,6 @@
 
   </otree-page>
 
-  <script type="module" src="../src/events.mjs"></script>
   <script type="module" src="../src/jspath.mjs"></script>
   <script type="module" src="../src/timers.mjs"></script>
   <script type="module" src="../src/otree-page.mjs"></script>
@@ -50,7 +49,7 @@
   <script type="module" src="../src/otree-response.mjs"></script>
   <script type="module" src="../src/otree-feedback.mjs"></script>
   <script src="trials.js"></script>
-  <script src="main.js"></script>
+  <script type="module" src="main.js"></script>
 </body>
 
 </html>
