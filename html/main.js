@@ -1,7 +1,14 @@
-import { delay } from "../src/timers";
+import { GenericGame } from "../src/game-generic";
+import { MockData } from "./mockdata";
+
+// TODO: handle page reload
 
 window.addEventListener("load", () => {
     const page = document.getElementsByTagName("otree-page")[0];
+    const data = new MockData();
+    const game = new GenericGame(data, page, {trialDelay: 1000});
+
+    game.init();
 
     page.addEventListener("otree-loaded", (e) => {
         console.debug(e);
@@ -15,26 +22,10 @@ window.addEventListener("load", () => {
         console.debug(e);
     });
 
-
     page.addEventListener("otree-updated", (e) => {
         console.debug(e);
         console.debug("update", e.detail.update);
     });
 
-    // dumb single strial
-    page.addEventListener("otree-updated", async (e) => {
-        const u = e.detail.update;
-        if (u.started === true && !('trial' in u)) {
-            let trial = await generateTrial();
-            delay(() => page.resetState({started: true, frozen: false, trial}));
-            delay(() => page.display());
-        }
-
-        if ('response' in u) {
-            let feedback = await validateResponse(page.state.trial, u.response);
-            delay(() => page.setState({feedback}));
-        }
-    });
-
-    page.resetState();
+    page.resetState({started: false, frozen: false});
 })

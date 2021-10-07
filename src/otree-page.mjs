@@ -34,8 +34,8 @@ export class otPage extends LitElement {
         delay(() => this.broadcastEvent("loaded"));
     }
 
-    resetState(state = {started: false, frozen: false}) {
-        this.state = Object.assign({}, state);
+    resetState(state = {}) {
+        this.state = Object.assign({started: this.state.started, frozen: this.state.frozen}, state);
         this.broadcastEvent("reset");
         this.broadcastEvent("updated", {update: state, state: this.state});
     }
@@ -59,7 +59,6 @@ export class otPage extends LitElement {
 
     display() {
         this.broadcastEvent("display");
-        ;
     }
 }
 

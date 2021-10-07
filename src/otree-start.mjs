@@ -19,7 +19,7 @@ export class otStart extends LitElement {
     connectedCallback() {
         this.page = this.closest('otree-page');
         window.addEventListener("keydown", (ev) => this._onKey(ev));
-        this.addEventListener("otree-updated", (ev) => this._onUpdate(ev));
+        this.addEventListener("otree-updated", (ev) => this._onUpdate(ev.detail.update));
     }
 
     toggle(enabled) {
@@ -33,9 +33,9 @@ export class otStart extends LitElement {
         this.page.setState({started: true});
     }
 
-    _onUpdate(event) {
-        if (!('started' in event.detail.update)) return;
-        this.toggle(!event.detail.update.started);
+    _onUpdate(update) {
+        if (!('started' in update)) return;
+        this.toggle(!update.started);
     }
 }
 
