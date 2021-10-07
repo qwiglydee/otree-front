@@ -36,15 +36,18 @@ export class MockData {
         let stimulus = choice(EMOJIS[stimulus_mood]);
         let stimulus_img = await loadImage(`/assets/images/${stimulus}`);
 
-        return {
+        let trial = {
             prime: prime,
             stimulus: stimulus_img,
             solution: stimulus_mood,
             congruent: stimulus_mood == prime_mood
         }
+        console.debug("trial:", trial);
+        return trial;
     }
 
-    async handleResponse(trial, response) {
+    async handleResponse(trial, response, reaction_time) {
+        console.debug("response:", trial, response, reaction_time);
         return trial.solution === response;
     }
 }
