@@ -7,8 +7,9 @@ window.addEventListener("load", () => {
     const page = document.getElementsByTagName("otree-page")[0];
     const data = new MockData();
     const game = new GenericGame(data, page, {
-        trialDelay: 2000, // pause after trial
-        inputDelay: 1500  // time to unfreeze inputs
+        inputDelay: 1500,  // time to unfreeze inputs
+        trialDelay: 1000,  // pause after trial
+        trialTimeout: 3000,
     });
 
     game.init();
@@ -33,5 +34,6 @@ window.addEventListener("load", () => {
         console.debug(e, "update:", e.detail.update);
     });
 
-    page.resetState({started: false});
+    page.reset();
+    page.setState({started: false});
 })

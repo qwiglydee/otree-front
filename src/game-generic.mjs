@@ -1,4 +1,4 @@
-import { delay, sleep } from "../src/timers";
+import { delay, cancel, sleep } from "../src/timers";
 
 /**
  * GenericGame
@@ -22,6 +22,8 @@ import { delay, sleep } from "../src/timers";
         this.page = page;
         this.params = params;
 
+        this.trialtimeout = null;
+
         // NB: custom events are synchronous
         this.page.addEventListener("otree-updated", (e) => {
             delay(() => this.onUpdate(e.detail.update, e.detail.state));
@@ -40,24 +42,41 @@ import { delay, sleep } from "../src/timers";
     }
 
     start() {
-        this.page.resetState();
         this.iterTrial();
     }
 
     async iterTrial() {
+        this.page.reset();
+        this.page.freeze();
+
         let trial = await this.data.getTrial();
         this.page.setState({trial});
+
         performance.clearMarks();
         performance.clearMeasures();
+
         this.page.display();
         performance.mark("display");
-        delay(() => {
-            this.page.unfreeze();
-            performance.mark("input");
-        }, this.params.inputDelay);
+
+        delay(() => this.enableInputs(), this.params.inputDelay);
+        this.trialtimeout = delay(() => this.trialTimeout(), this.params.inputDelay + this.params.trialTimeout);
+    }
+
+    enableInputs() {
+        this.page.unfreeze();
+        performance.mark("input");
+    }
+
+    async trialTimeout() {
+        this.page.freeze();
+        await this.data.handleResponse(this.page.getState('trial'), null);
+        this.page.setState({feedback: 'timeout'});
+        await sleep(this.params.trialDelay);
+        delay(() => this.iterTrial());
     }
 
     async handleResponse(response) {
+        this.trialtimeout = cancel(this.trialtimeout);
         this.page.freeze();
         performance.mark("response");
         performance.measure("reaction", "input", "response");
@@ -65,7 +84,6 @@ import { delay, sleep } from "../src/timers";
         let feedback = await this.data.handleResponse(this.page.getState('trial'), response, reaction_measure.duration);
         this.page.setState({feedback});
         await sleep(this.params.trialDelay);
-        this.page.resetState();
-        this.iterTrial();
+        delay(() => this.iterTrial());
     }
 }

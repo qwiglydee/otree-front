@@ -43,9 +43,14 @@ export class otFeedback extends LitElement {
 
     render() {
         if (this.value === null) return "";
-        return this.value
-            ? html`<span class="valid">✓</span>`
-            : html`<span class="invalid">❌</span>`;
+        switch(this.value) {
+            case 'timeout':
+                return html`<span class="timeout">➖</span>`;
+            case true:
+                return html`<span class="valid">✓</span>`;
+            case false:
+                return html`<span class="invalid">❌</span>`;
+        }
     }
 }
 

@@ -5,5 +5,10 @@ export async function sleep(time) {
 }
 
 export function delay(fn, delay=0) {
-    window.setTimeout(fn, delay);
+    return window.setTimeout(fn, delay);
+}
+
+export function cancel(id) {
+    window.clearTimeout(id);
+    return null;
 }

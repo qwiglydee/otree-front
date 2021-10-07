@@ -38,10 +38,10 @@ export class otPage extends LitElement {
         delay(() => this.broadcastEvent("loaded"));
     }
 
-    resetState(state = {}) {
-        this.state = Object.assign({started: true, error: null, state});
+    reset() {
+        this.state = Object.assign({started: true, error: null});
+        this.frozen = true;
         this.broadcastEvent("reset");
-        this.broadcastEvent("updated", {update: state, state: this.state});
     }
 
     setState(update) {
