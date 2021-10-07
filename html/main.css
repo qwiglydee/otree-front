@@ -4,9 +4,20 @@ html, body {
     padding: 0;
 }
 
+code {
+    text-decoration: underline;
+}
+
+kbd {
+    background-color: #e0e0e0;
+    border-style: outset;
+    color: black;
+}
+
 otree-page {
     height: 100%;
     display: flex;
+    position: relative;
     flex-flow: column;
     align-items: center;
     justify-content: center;
@@ -54,4 +65,31 @@ kbd {
 .buttons {
     display: flex;
     flex-flow: row;
+}
+
+.buttons otree-button {
+    margin: 1em;
+}
+
+otree-start {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+otree-touch {
+    position: absolute;
+    height: 100%;
+    width: 50%;
+}
+
+otree-touch.left {
+    left: 0;
+}
+
+otree-touch.right {
+    right: 0;
 }
