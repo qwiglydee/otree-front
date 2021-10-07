@@ -19,7 +19,7 @@ export class otStart extends LitElement {
     connectedCallback() {
         this.page = this.closest('otree-page');
         window.addEventListener("keydown", (ev) => this._onKey(ev));
-        window.addEventListener("touchstart", (ev) => this._onTouch(ev));
+        this.addEventListener("touchstart", (ev) => this._onTouch(ev));
         this.addEventListener("otree-updated", (ev) => this._onUpdate(ev.detail.update));
     }
 

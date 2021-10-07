@@ -9,7 +9,7 @@
 
 <body>
   <otree-page trialtimeout="5000" aftertrial="1000">
-    <div class="main">
+    <div class="main touchable">
       <otree-stimulus id="aim" delay="0" exposure="1000">⌖</otree-stimulus>
 
       <otree-stimulus id="prime" delay="1010" exposure="500">
@@ -19,6 +19,11 @@
       <otree-stimulus id="stimulus" delay="1520">
         <otree-img obj="trial" field="stimulus"></otree-img>
       </otree-stimulus>
+      <otree-touch class="left" response="positive"></otree-touch>
+      <otree-touch class="right" response="negative"></otree-touch>
+      <otree-start keycode="Space">
+        <p>To start press <kbd>Space</kbd> or touch the screen.</p>
+      </otree-start>
     </div>
 
     <hr>
@@ -30,18 +35,12 @@
 
     <otree-key keycode="KeyF" response="positive"></otree-key>
     <otree-key keycode="KeyJ" response="negative"></otree-key>
-    <otree-touch class="left" response="positive"></otree-touch>
-    <otree-touch class="right" response="negative"></otree-touch>
     <div class="buttons">
       <otree-button response="positive"><button type="button">Positive</button></otree-button>
       <otree-button response="negative"><button type="button">Negative</button></otree-button>
     </div>
     <otree-error errorcode="frozen">Wait for a while...</otree-error>
     <otree-error errorcode="wrongkey">Press <kbd>F</kbd> for <code>Positive</code> or <kbd>J</kbd> for <code>Negative</code></otree-error>
-
-    <otree-start keycode="Space">
-      <p>To start preess <kbd>Space</kbd> or touch the screen.</p>
-    </otree-start>
 
   </otree-page>
 
