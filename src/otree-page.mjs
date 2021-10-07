@@ -10,9 +10,12 @@ export class otPage extends LitElement {
         super();
         this.state = {
             started: false,
-            frozen: false
+            error: null
         };
-        this.otreeElems = Array.from(this.querySelectorAll("*")).filter(e => e.tagName.startsWith('OTREE-'));
+        this.frozen = true;
+        this.otreeElems = Array.from(this.querySelectorAll("*")).filter(e => e.tagName.startsWith('OTREE-') && e.tagName != "OTREE-KEY");
+        this.keymap = new Map(Array.from(this.querySelectorAll("otree-key")).map((elem) => [elem.getAttribute('keycode'), elem.getAttribute('response')]));
+        if (this.keymap.size == 0) this.keymap = null;
     }
 
     createRenderRoot() {
@@ -22,6 +25,7 @@ export class otPage extends LitElement {
 
     connectedCallback() {
         super.connectedCallback();
+        window.addEventListener("keydown", (e) => this._onKey(e));
     }
 
     broadcastEvent(type, data={}) {
@@ -35,12 +39,17 @@ export class otPage extends LitElement {
     }
 
     resetState(state = {}) {
-        this.state = Object.assign({started: this.state.started, frozen: this.state.frozen}, state);
+        this.state = Object.assign({started: true, error: null, state});
         this.broadcastEvent("reset");
         this.broadcastEvent("updated", {update: state, state: this.state});
     }
 
     setState(update) {
+        if ('response' in update && this.frozen) {
+            this.setState({error: 'frozen'});
+            return;
+        }
+
         this.state = Object.assign(this.state, update);
         this.broadcastEvent("updated", {update: update, state: this.state});
     }
@@ -50,15 +59,30 @@ export class otPage extends LitElement {
     }
 
     freeze() {
-        this.setState({frozen: true});
+        this.frozen = true;
+        this.dispatchEvent(otreeEvent("freeze", {frozen: this.frozen}));
     }
 
     unfreeze() {
-        this.setState({frozen: false});
+        this.frozen = false;
+        this.dispatchEvent(otreeEvent("freeze", {frozen: this.frozen}));
+        this.setState({error: null});
     }
 
     display() {
         this.broadcastEvent("display");
+    }
+
+    _onKey(event) {
+        if (this.keymap == null) return;
+        event.preventDefault();
+
+        if (!this.keymap.has(event.code)) {
+            this.setState({error: 'wrongkey'});
+            return;
+        }
+
+        this.setState({response: this.keymap.get(event.code), error: null});
     }
 }
 

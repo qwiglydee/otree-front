@@ -6,7 +6,10 @@ import { MockData } from "./mockdata";
 window.addEventListener("load", () => {
     const page = document.getElementsByTagName("otree-page")[0];
     const data = new MockData();
-    const game = new GenericGame(data, page, {trialDelay: 1000});
+    const game = new GenericGame(data, page, {
+        trialDelay: 2000, // pause after trial
+        inputDelay: 1500  // time to unfreeze inputs
+    });
 
     game.init();
 
@@ -22,10 +25,13 @@ window.addEventListener("load", () => {
         console.debug(e);
     });
 
-    page.addEventListener("otree-updated", (e) => {
-        console.debug(e);
-        console.debug("update", e.detail.update);
+    page.addEventListener("otree-freeze", (e) => {
+        console.debug(e, "freeze:", e.detail.frozen);
     });
 
-    page.resetState({started: false, frozen: false});
+    page.addEventListener("otree-updated", (e) => {
+        console.debug(e, "update:", e.detail.update);
+    });
+
+    page.resetState({started: false});
 })

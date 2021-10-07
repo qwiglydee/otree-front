@@ -11,7 +11,6 @@ import { delay, sleep } from "../src/timers";
  * - goto next iteration
  *
  * TODO: trial timeout and default response
- * TODO: freezing/unfreezing
  * TODO: retries
  * TODO: max iterations
  * TODO: page timeout
@@ -49,9 +48,11 @@ import { delay, sleep } from "../src/timers";
         let trial = await this.data.getTrial();
         this.page.setState({trial});
         this.page.display();
+        delay(() => this.page.unfreeze(), this.params.inputDelay);
     }
 
     async handleResponse(response) {
+        this.page.freeze();
         let feedback = await this.data.handleResponse(this.page.getState('trial'), response);
         this.page.setState({feedback});
         await sleep(this.params.trialDelay);

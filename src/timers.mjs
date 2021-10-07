@@ -4,6 +4,6 @@ export async function sleep(time) {
     });
 }
 
-export function delay(fn) {
-    window.setTimeout(fn, 0);
+export function delay(fn, delay=0) {
+    window.setTimeout(fn, delay);
 }

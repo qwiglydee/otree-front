@@ -24,13 +24,14 @@
     <hr>
 
     <div class="response">
-
-      <otree-key keycode="KeyF" response="positive"></otree-key>
-      <otree-key keycode="KeyJ" response="negative"></otree-key>
-
       <otree-response></otree-response>
       <otree-feedback></otree-feedback>
     </div>
+
+    <otree-key keycode="KeyF" response="positive"></otree-key>
+    <otree-key keycode="KeyJ" response="negative"></otree-key>
+    <otree-error errorcode="frozen">Wait for a while...</otree-error>
+    <otree-error errorcode="wrongkey">Press <kbd>F</kbd> or <kbd>J</kbd></otree-error>
 
     <otree-start keycode="Space">
       <p>Press space to start</p>
@@ -45,9 +46,9 @@
   <script type="module" src="../src/otree-stimulus.mjs"></script>
   <script type="module" src="../src/otree-text.mjs"></script>
   <script type="module" src="../src/otree-img.mjs"></script>
-  <script type="module" src="../src/otree-key.mjs"></script>
   <script type="module" src="../src/otree-response.mjs"></script>
   <script type="module" src="../src/otree-feedback.mjs"></script>
+  <script type="module" src="../src/otree-error.mjs"></script>
   <script type="module" src="mockdata.js"></script>
   <script type="module" src="main.js"></script>
 </body>
