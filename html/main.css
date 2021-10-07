@@ -50,3 +50,8 @@ kbd {
 .choice {
     text-decoration: underline;
 }
+
+.buttons {
+    display: flex;
+    flex-flow: row;
+}
