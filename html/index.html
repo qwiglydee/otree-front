@@ -13,7 +13,7 @@
       <otree-stimulus id="aim" delay="0" exposure="1000">⌖</otree-stimulus>
 
       <otree-stimulus id="prime" delay="1010" exposure="500">
-        <otree-text obj="trial" field="prime"></otree-text>
+        <otree-span when="${trial.prime}">${trial.prime}</otree-span>
       </otree-stimulus>
 
       <otree-stimulus id="stimulus" delay="1520">
