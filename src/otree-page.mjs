@@ -41,7 +41,7 @@ export class otPage extends LitElement {
     reset() {
         this.state = Object.assign({started: true, error: null});
         this.frozen = true;
-        this.broadcastEvent("reset");
+        this.broadcastEvent("reset", {state: this.state});
     }
 
     setState(update) {

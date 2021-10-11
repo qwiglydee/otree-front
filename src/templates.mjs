@@ -1,15 +1,15 @@
 const _slot_re = new RegExp(/\$\{(\w+(\.\w+)*)\}/, 'g');
 
 export function tmpl_slots(tmpl) {
-    return Array.from(tmpl.matchAll(_slot_re)).map(m => m[1]);
+    return new Set(Array.from(tmpl.matchAll(_slot_re)).map(m => m[1]));
 }
 
 export function tmpl_paths(tmpl) {
-    return tmpl_slots(tmpl).map(slot => slot.split('.'));
+    return new Set(Array.from(tmpl_slots(tmpl)).map(slot => slot.split('.')));
 }
 
 export function tmpl_deps(tmpl) {
-    return new Set(tmpl_paths(tmpl).map(path => path[0]));
+    return new Set(Array.from(tmpl_paths(tmpl)).map(path => path[0]));
 }
 
 export function tmpl_interpolate(tmpl, context) {

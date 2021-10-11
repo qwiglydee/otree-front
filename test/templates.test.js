@@ -3,18 +3,18 @@ import { expect } from '@open-wc/testing';
 import { tmpl_slots, tmpl_paths, tmpl_deps, tmpl_interpolate } from "../src/templates";
 
 describe("templates", () => {
-    const tmpl = '<div class="${foo.prop1} ${foo.prop2}">Text ${bar.prop.prop1}, ${bar.prop.prop2}, ${baz}</div>';
+    const tmpl = '<div class="${foo.prop1} ${foo.prop2}" attr="${baz}">Text ${bar.prop.prop1}, ${bar.prop.prop2}, ${baz}</div>';
     const plain = "plain text";
 
 
     it("parse slots", () => {
-        expect(tmpl_slots(tmpl)).to.deep.equal([
+        expect(tmpl_slots(tmpl)).to.deep.equal(new Set([
             'foo.prop1',
             'foo.prop2',
             'bar.prop.prop1',
             'bar.prop.prop2',
             'baz'
-        ]);
+        ]));
     });
 
     it("parse no slots", () => {
@@ -22,13 +22,13 @@ describe("templates", () => {
     });
 
     it("parse paths", () => {
-        expect(tmpl_paths(tmpl)).to.deep.equal([
+        expect(tmpl_paths(tmpl)).to.deep.equal(new Set([
             ['foo', 'prop1'],
             ['foo', 'prop2'],
             ['bar', 'prop', 'prop1'],
             ['bar', 'prop', 'prop2'],
             ['baz']
-        ]);
+        ]));
     });
 
     it("parse no paths", () => {
@@ -63,7 +63,7 @@ describe("templates", () => {
         }
         let result = tmpl_interpolate(tmpl, data);
 
-        expect(result).to.equal('<div class="Foo_prop1 Foo_prop2">Text Bar_prop_prop1, Bar_prop_prop2, Baz</div>');
+        expect(result).to.equal('<div class="Foo_prop1 Foo_prop2" attr="Baz">Text Bar_prop_prop1, Bar_prop_prop2, Baz</div>');
     });
 
     it("render plain", () => {
