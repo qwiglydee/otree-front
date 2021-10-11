@@ -28,9 +28,16 @@
 
     <hr>
 
+    <div>
+      <otree-span>1</otree-span>
+      <otree-span>2</otree-span>
+    </div>
+
     <div class="response">
-      <otree-response></otree-response>
-      <otree-feedback></otree-feedback>
+      <otree-span when="${response}">${response}</otree-span>
+      <otree-span when="${feedback}" match="true" class="feedback valid">✔</otree-span>
+      <otree-span when="${feedback}" match="false" class="feedback invalid">✘</otree-span>
+      <otree-div when="${feedback}" match="timeout">(skipping...)</otree-div>
     </div>
 
     <otree-key keycode="KeyF" response="positive"></otree-key>
@@ -39,8 +46,8 @@
       <otree-button response="positive"><button type="button">Positive</button></otree-button>
       <otree-button response="negative"><button type="button">Negative</button></otree-button>
     </div>
-    <otree-error errorcode="frozen">Wait for a while...</otree-error>
-    <otree-error errorcode="wrongkey">Press <kbd>F</kbd> for <code>Positive</code> or <kbd>J</kbd> for <code>Negative</code></otree-error>
+    <otree-div when="${errorcode}" match="frozen">Wait for a while...</otree-error>
+    <otree-div when="${errorcode}" match="wrongkey">Press <kbd>F</kbd> for <code>Positive</code> or <kbd>J</kbd> for <code>Negative</code></otree-error>
 
   </otree-page>
 
@@ -49,13 +56,10 @@
   <script type="module" src="../src/otree-page.mjs"></script>
   <script type="module" src="../src/otree-start.mjs"></script>
   <script type="module" src="../src/otree-stimulus.mjs"></script>
-  <script type="module" src="../src/otree-text.mjs"></script>
-  <script type="module" src="../src/otree-img.mjs"></script>
-  <script type="module" src="../src/otree-response.mjs"></script>
-  <script type="module" src="../src/otree-feedback.mjs"></script>
-  <script type="module" src="../src/otree-error.mjs"></script>
   <script type="module" src="../src/otree-button.mjs"></script>
   <script type="module" src="../src/otree-touch.mjs"></script>
+  <script type="module" src="../src/otree-tmpl.mjs"></script>
+  <script type="module" src="../src/otree-img.mjs"></script>
   <script type="module" src="mockdata.js"></script>
   <script type="module" src="main.js"></script>
 </body>

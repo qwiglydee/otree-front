@@ -22,20 +22,20 @@ otree-page {
     justify-content: center;
 }
 
+otree-div {
+    display: block;
+}
+
+otree-span {
+    display: inline;
+}
+
 otree-page hr {
     width: 50%;
 }
 
 .main {
     height: 500px;
-    display: flex;
-    flex-flow: column;
-    align-items: center;
-    justify-content: center;
-}
-
-.response {
-    height: 100px;
     display: flex;
     flex-flow: column;
     align-items: center;
@@ -96,4 +96,12 @@ otree-touch.left {
 
 otree-touch.right {
     right: 0;
+}
+
+.feedback.valid {
+    color: green;
+}
+
+.feedback.invalid {
+    color: red;
 }

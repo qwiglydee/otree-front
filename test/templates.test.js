@@ -61,11 +61,11 @@ describe("templates", () => {
         expect(tmpl_interpolate(plain, {})).to.equal(plain);
     });
 
-    it("fail to interpolate broken field", () => {
-        expect(() => tmpl_interpolate('<span>${baz}</span>', {})).to.throw(Error);
+    it("can interpolate broken field", () => {
+        expect(tmpl_interpolate('<span>${baz}</span>', {})).to.equal('<span></span>');
     });
 
-    it("fail to interpolate broken path", () => {
-        expect(() => tmpl_interpolate('<span>${foo.bar.baz}</span>', {foo: {}})).to.throw(Error);
+    it("can interpolate broken path", () => {
+        expect(tmpl_interpolate('<span>${foo.bar.baz}</span>', {foo: {}})).to.equal('<span></span>');
     });
 })

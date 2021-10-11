@@ -19,7 +19,7 @@ export function tmpl_path_extract(path, data) {
 export function tmpl_interpolate(tmpl, context) {
     function extract(p) {
         let val = tmpl_path_extract(p, context);
-        if (val === undefined) throw new Error(`missing data path ${p}`);
+        if (val === undefined) return "";
         return val;
     }
     return tmpl.replaceAll(_slot_re, (m0, m1) => extract(m1, context));
