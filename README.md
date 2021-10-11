@@ -62,3 +62,20 @@ Render page content and handle user inputs.
 
 The global state is modified via global function or page component method.
 Synchronization is performed by broadcasting `update` events to all `otree-*` components, without any explicit subscriptions or dependency tracking.
+
+## Dynamic content
+
+Elements should allow to take data from page state (a trial, a puzzle, user response, feedback, etc) and render it.
+
+- restrict to only access global page state properties (no expressions evaluations or function calls)
+- interpolating plain text
+  - `<span>Your answer: ${response}, correct answer was: ${solution}</span>`
+- interpolating (at least) class attributes
+  - `<div class="stimulus-${stimulus.category}">...</div>`
+- inserting images (which should be already loaded at data source level to avoid render delays), just src won't work
+- conditional rendering using `if` or `switch` logic
+  - `<div if="${feedback}">...render feedback...</div>` 
+  - `<div switch="${feedback}"><span case="true" class="valid">✅</span><span case="false" class="invalid">❌</span></div>`
+- maybe, transparent structural elements to avoid DOM cluttering
+  - like `<ng-container>` 
+  - or just generic `<otree-div>`, `<otree-span>`
