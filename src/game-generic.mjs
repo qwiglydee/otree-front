@@ -21,6 +21,10 @@ import { delay, cancel, sleep } from "../src/timers";
         this.data = data;
         this.page = page;
         this.params = params;
+        this.progress = {
+            total: this.params.num_iterations,
+            iteration: 0
+        }
 
         this.trialtimeout = null;
 
@@ -42,12 +46,14 @@ import { delay, cancel, sleep } from "../src/timers";
     }
 
     start() {
+        this.page.setState({progress: this.progress});
         this.iterTrial();
     }
 
     async iterTrial() {
         this.page.reset();
         this.page.freeze();
+        this.page.setState({progress: this.progress});
 
         let trial = await this.data.getTrial();
         this.page.setState({trial});
@@ -71,6 +77,10 @@ import { delay, cancel, sleep } from "../src/timers";
         this.page.freeze();
         await this.data.handleResponse(this.page.getState('trial'), null);
         this.page.setState({feedback: 'timeout'});
+
+        this.progress.iteration += 1;
+        this.page.setState({progress: this.progress});
+
         await sleep(this.params.trialDelay);
         delay(() => this.iterTrial());
     }
@@ -83,6 +93,10 @@ import { delay, cancel, sleep } from "../src/timers";
         let reaction_measure = performance.getEntriesByName("reaction")[0];
         let feedback = await this.data.handleResponse(this.page.getState('trial'), response, reaction_measure.duration);
         this.page.setState({feedback});
+
+        this.progress.iteration += 1;
+        this.page.setState({progress: this.progress});
+
         await sleep(this.params.trialDelay);
         delay(() => this.iterTrial());
     }

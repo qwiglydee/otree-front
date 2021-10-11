@@ -105,3 +105,7 @@ otree-touch.right {
 .feedback.invalid {
     color: red;
 }
+
+.progress {
+    width: 50%;
+}

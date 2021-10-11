@@ -26,19 +26,16 @@
       </otree-start>
     </div>
 
-    <hr>
-
-    <div>
-      <otree-span>1</otree-span>
-      <otree-span>2</otree-span>
-    </div>
-
     <div class="response">
       <otree-span when="${response}">${response}</otree-span>
       <otree-span when="${feedback}" match="true" class="feedback valid">✔</otree-span>
       <otree-span when="${feedback}" match="false" class="feedback invalid">✘</otree-span>
       <otree-div when="${feedback}" match="timeout">(skipping...)</otree-div>
     </div>
+
+    <otree-div class="progress">
+      <progress max="${progress.total}" value="${progress.iteration}" style="width: 100%"></progress>
+    </otree-div>
 
     <otree-key keycode="KeyF" response="positive"></otree-key>
     <otree-key keycode="KeyJ" response="negative"></otree-key>

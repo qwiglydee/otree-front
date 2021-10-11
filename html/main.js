@@ -8,8 +8,9 @@ window.addEventListener("load", () => {
     const data = new MockData();
     const game = new GenericGame(data, page, {
         inputDelay: 1500,  // time to unfreeze inputs
-        trialDelay: 100000,  // pause after trial
+        trialDelay: 1000,  // pause after trial
         trialTimeout: 3000,
+        num_iterations: 20
     });
 
     game.init();
