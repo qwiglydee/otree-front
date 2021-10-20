@@ -30,6 +30,7 @@ describe("Page controller", () => {
 
 describe("Page controller", () => {
     let elem, page, detail;
+
     beforeEach(async () => {
         elem = await fixture(`<div></div>`);
         page = new Page(elem);
@@ -39,54 +40,46 @@ describe("Page controller", () => {
     it("starts", async () => {
         page.start();
         ({ detail } = await oneEvent(elem, 'ot.start'));
-        expect(detail).to.deep.equal({});
-    });
-
-    it("restarts", async () => {
-        page.start({'foo': "Foo"});
-        ({ detail } = await oneEvent(elem, 'ot.start'));
-        expect(detail).to.deep.equal({});
-        ({ detail } = await oneEvent(elem, 'ot.reset'));
-        expect(detail).to.deep.equal({state: {'foo': "Foo"}});
+        expect(detail).to.deep.equal({ page: page });
     });
 
     it("resets", async () => {
         page.reset();
         expect(page.state).to.deep.equal({});
         ({ detail } = await oneEvent(elem, 'ot.reset'));
-        expect(detail).to.deep.equal({state: {}});
+        expect(detail).to.deep.equal({ page: page });
     });
 
     it("updates empty", async () => {
-        page.update({'foo': "Foo1", 'bar': "Bar1"});
-        expect(page.state).to.deep.equal({'foo': "Foo1", 'bar': "Bar1"});
+        page.update({ 'foo': "Foo1", 'bar': "Bar1" });
+        expect(page.state).to.deep.equal({ 'foo': "Foo1", 'bar': "Bar1" });
         ({ detail } = await oneEvent(elem, 'ot.update'));
-        expect(detail).to.deep.equal({change: {'foo': "Foo1", 'bar': "Bar1"}, state: {'foo': "Foo1", 'bar': "Bar1"}});
+        expect(detail).to.deep.equal({ page: page, change: { 'foo': "Foo1", 'bar': "Bar1" }});
     });
 
     it("updates existing", async () => {
-        page.state = {'foo': "Foo1", 'bar': "Bar1"};
-        page.update({'bar': "Bar2", 'baz': "Baz2"});
-        expect(page.state).to.deep.equal({'foo': "Foo1", 'bar': "Bar2", 'baz': "Baz2"});
+        page.state = { 'foo': "Foo1", 'bar': "Bar1" };
+        page.update({ 'bar': "Bar2", 'baz': "Baz2" });
+        expect(page.state).to.deep.equal({ 'foo': "Foo1", 'bar': "Bar2", 'baz': "Baz2" });
         ({ detail } = await oneEvent(elem, 'ot.update'));
-        expect(detail).to.deep.equal({change: {'bar': "Bar2", 'baz': "Baz2"}, state: {'foo': "Foo1", 'bar': "Bar2", 'baz': "Baz2"}});
+        expect(detail).to.deep.equal({ page: page, change: { 'bar': "Bar2", 'baz': "Baz2" }});
     });
 
     it("displays", async () => {
         page.display();
         ({ detail } = await oneEvent(elem, 'ot.display'));
-        expect(detail).to.deep.equal({});
+        expect(detail).to.deep.equal({ page: page });
     });
 
     it("freezes", async () => {
         page.freeze();
         ({ detail } = await oneEvent(elem, 'ot.freeze'));
-        expect(detail).to.deep.equal({frozen: true});
+        expect(detail).to.deep.equal({ page: page, frozen: true });
     });
 
     it("unfreezes", async () => {
         page.unfreeze();
         ({ detail } = await oneEvent(elem, 'ot.freeze'));
-        expect(detail).to.deep.equal({frozen: false});
+        expect(detail).to.deep.equal({ page: page, frozen: false });
     });
 });

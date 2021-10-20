@@ -10,27 +10,26 @@ export class Page {
 
     init() {
         // TODO: attach directives
+        otWhen.attach(this.root);
     }
 
-    fire(type, detail={}) {
+    fire(type, data={}) {
+        const detail = Object.assign({page: this}, data);
         setTimeout(() => this.root.dispatchEvent(new CustomEvent(`ot.${type}`, {detail})));
     }
 
-    start(state) {
+    start() {
         this.fire('start');
-        if (state !== undefined) {
-            this.reset(state);
-        }
     }
 
-    reset(state) {
+    reset(state = {}) {
         this.state = Object.assign({}, state);
-        this.fire('reset', {state: this.state});
+        this.fire('reset');
     }
 
     update(change) {
         this.state = Object.assign(this.state, change);
-        this.fire('update', {change, state: this.state});
+        this.fire('update', {change});
     }
 
     display() {
