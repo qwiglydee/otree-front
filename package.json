@@ -1,0 +1,35 @@
+{
+  "name": "x-app",
+  "description": "Webcomponent x-app following open-wc recommendations",
+  "license": "MIT",
+  "author": "x-app",
+  "version": "0.0.0",
+  "scripts": {
+    "test": "web-test-runner",
+    "test:coverage": "web-test-runner --coverage",
+    "test:watch": "web-test-runner --watch",
+    "build": "rimraf dist && rollup -c rollup.config.js",
+    "start:build": "web-dev-server --root-dir dist --app-index index.html --open",
+    "analyze": "cem analyze --litelement",
+    "start": "web-dev-server --hmr"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/preset-env": "^7.15.4",
+    "@custom-elements-manifest/analyzer": "^0.4.17",
+    "@open-wc/building-rollup": "^1.10.0",
+    "@open-wc/testing": "next",
+    "@rollup/plugin-babel": "^5.3.0",
+    "@rollup/plugin-node-resolve": "^13.0.4",
+    "@web/dev-server": "^0.1.22",
+    "@web/rollup-plugin-html": "^1.10.1",
+    "@web/rollup-plugin-import-meta-assets": "^1.0.7",
+    "@web/test-runner": "^0.13.17",
+    "babel-plugin-template-html-minifier": "^4.1.0",
+    "deepmerge": "^4.2.2",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.56.3",
+    "rollup-plugin-terser": "^7.0.2",
+    "rollup-plugin-workbox": "^6.2.0"
+  }
+}
