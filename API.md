@@ -11,7 +11,7 @@ A global object responsible for holding global page state (trial/puzzle, respons
 # Events
 
 All events are triggered on `<body>` element of the page with event details.
-- `ot.start` or `ot.start{state}`: the game has been started, or restarted with some state
+- `ot.start`: the game has been started
 - `ot.reset{state: current_state}`: the page has been reset for new iteration
 - `ot.update{update: changes, state: state}`: state has been updated
 - `ot.display`: the trial display sequence initiated
