@@ -54,7 +54,7 @@ describe("Page controller", () => {
         page.update({ 'foo': "Foo1", 'bar': "Bar1" });
         expect(page.state).to.deep.equal({ 'foo': "Foo1", 'bar': "Bar1" });
         ({ detail } = await oneEvent(elem, 'ot.update'));
-        expect(detail).to.deep.equal({ page: page, change: { 'foo': "Foo1", 'bar': "Bar1" }});
+        expect(detail).to.deep.equal({ page: page, changes: { 'foo': "Foo1", 'bar': "Bar1" }});
     });
 
     it("updates existing", async () => {
@@ -62,7 +62,7 @@ describe("Page controller", () => {
         page.update({ 'bar': "Bar2", 'baz': "Baz2" });
         expect(page.state).to.deep.equal({ 'foo': "Foo1", 'bar': "Bar2", 'baz': "Baz2" });
         ({ detail } = await oneEvent(elem, 'ot.update'));
-        expect(detail).to.deep.equal({ page: page, change: { 'bar': "Bar2", 'baz': "Baz2" }});
+        expect(detail).to.deep.equal({ page: page, changes: { 'bar': "Bar2", 'baz': "Baz2" }});
     });
 
     it("displays", async () => {

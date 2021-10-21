@@ -1,3 +1,5 @@
+import { install_otWhen } from "./ot-when";
+
 export class Page {
     constructor(root, conf) {
         this.root = root;
@@ -9,8 +11,7 @@ export class Page {
     }
 
     init() {
-        // TODO: attach directives
-        otWhen.attach(this.root);
+        install_otWhen(this.root);
     }
 
     fire(type, data={}) {
@@ -27,9 +28,9 @@ export class Page {
         this.fire('reset');
     }
 
-    update(change) {
-        this.state = Object.assign(this.state, change);
-        this.fire('update', {change});
+    update(changes) {
+        this.state = Object.assign(this.state, changes);
+        this.fire('update', {changes});
     }
 
     display() {
