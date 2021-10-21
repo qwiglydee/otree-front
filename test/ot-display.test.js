@@ -2,6 +2,25 @@ import { expect, fixture, elementUpdated, aTimeout } from '@open-wc/testing';
 
 import { Page } from '../src/page';
 
+
+describe("ot-display errors", () => {
+    let elem, page;
+
+    it("raise for non numeric delay", async () => {
+        debugger;
+        elem = await fixture(`<div data-ot-display-delay="xxx"></div>`);
+        page = new Page(document.body);
+        expect(()=>page.init()).to.throw();
+    });
+
+    it("raise for non-numerc exposure", async () => {
+        elem = await fixture(`<div data-ot-display-exposure="xxx"></div>`);
+        page = new Page(document.body);
+        expect(()=>page.init()).to.throw();
+    });
+});
+
+
 describe("ot-display", () => {
     let elem, page;
 

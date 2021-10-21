@@ -3,6 +3,23 @@ import { expect, fixture, elementUpdated } from '@open-wc/testing';
 import { Page } from '../src/page';
 
 
+describe("ot-class errors", () => {
+    let elem, page;
+
+    it("raise for invalid path", async () => {
+        elem = await fixture(`<div data-ot-class=".foo"></div>`);
+        page = new Page(document.body);
+        expect(()=>page.init()).to.throw();
+    });
+
+    it("raise for invalid chars", async () => {
+        elem = await fixture(`<div data-ot-class="foo/bar"></div>`);
+        page = new Page(document.body);
+        expect(()=>page.init()).to.throw();
+    });
+});
+
+
 describe("ot-class", () => {
     let elem, page;
     beforeEach(async () => {

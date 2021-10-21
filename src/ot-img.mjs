@@ -21,7 +21,13 @@ function eval_img(params, state) {
 }
 
 function set_img(elem, img) {
-    elem.replaceChildren(img);
+    if (img === undefined) {
+        elem.replaceChildren();
+    } else if (!(img instanceof Image)) {
+        throw new Error(`Invalid value for image`);
+    } else {
+        elem.replaceChildren(img);
+    }
 }
 
 function handle_reset(event, elem, params) {

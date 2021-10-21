@@ -1,5 +1,8 @@
+
+const jspath_re = new RegExp(/^\w+(\.\w+)*$/);
+
 export function jspath_parse(jspath) {
-    // TODO: raise error when wrong syntax
+    if (!jspath.match(jspath_re)) throw new SyntaxError(`Syntax error in var path: ${jspath}`);
     return jspath.split('.');
 }
 

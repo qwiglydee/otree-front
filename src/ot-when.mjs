@@ -11,10 +11,10 @@ export function install_otWhen(root) {
 
 
 function parse_params(elem) {
-    const when_match = elem.dataset.otWhen.match(/^(\w+(\.\w+)*)(==(.+))?$/);
-    // TODO: throw syntax error
-    let path = jspath_parse(when_match[1]);
-    let val = when_match[4];
+    const match = elem.dataset.otWhen.match(/^([\w.]+)(==(.+))?$/);
+    if (!match) throw new Error(`Invalid expression for when: ${elem.dataset.otWhen}`);
+    let path = jspath_parse(match[1]);
+    let val = match[3];
     if (val === "true") val = true;
     if (val === "false") val = false;
     return {path, val};

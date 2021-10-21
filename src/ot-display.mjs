@@ -11,10 +11,17 @@ export function install_otDisplay(root) {
 
 
 function parse_params(elem) {
-    return {
-        delay: 'otDisplayDelay' in elem.dataset ? Number(elem.dataset.otDisplayDelay) : undefined,
-        exposure: 'otDisplayExposure' in elem.dataset ? Number(elem.dataset.otDisplayExposure) : undefined,
-    };
+    const params = {};
+    function parse_param(p, a) {
+        if (!(a in elem.dataset)) return;
+        let value = Number(elem.dataset[a]);
+        if (isNaN(value)) throw Error(`Invalid numeric value: ${elem.dataset[a]}`);
+        params[p] = value;
+    }
+
+    parse_param('delay', 'otDisplayDelay');
+    parse_param('exposure', 'otDisplayExposure');
+    return params;
 }
 
 function display(elem, params) {

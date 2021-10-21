@@ -2,6 +2,26 @@ import { expect, fixture, elementUpdated } from '@open-wc/testing';
 
 import { Page } from '../src/page';
 
+describe("ot-img errors", () => {
+    let elem, page;
+
+    it("raise for invalid path", async () => {
+        elem = await fixture(`<div data-ot-img=".foo"></div>`);
+        page = new Page(document.body);
+        expect(()=>page.init()).to.throw();
+    });
+
+    it("raise for invalid chars", async () => {
+        elem = await fixture(`<div data-ot-img="foo/bar"></div>`);
+        page = new Page(document.body);
+        expect(()=>page.init()).to.throw();
+    });
+
+    it("raise for invalid img value on reset", async () => {
+        // cannot test errors in event handlers
+    });
+
+});
 
 describe("ot-img", () => {
     let elem, page;

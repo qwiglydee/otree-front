@@ -3,8 +3,32 @@ import { expect, fixture, elementUpdated } from '@open-wc/testing';
 import { Page } from '../src/page';
 
 
+describe("ot-when errors", () => {
+    let elem, page;
+
+    it("for invalid path", async () => {
+        elem = await fixture(`<div data-ot-when=".foo"></div>`);
+        page = new Page(document.body);
+        expect(()=>page.init()).to.throw();
+    });
+
+    it("for invalid chars", async () => {
+        elem = await fixture(`<div data-ot-when="foo/bar"></div>`);
+        page = new Page(document.body);
+        expect(()=>page.init()).to.throw();
+    });
+
+    it("for invalid expr", async () => {
+        elem = await fixture(`<div data-ot-when="foo=bar"></div>`);
+        page = new Page(document.body);
+        expect(()=>page.init()).to.throw();
+    });
+});
+
+
 describe("ot-when", () => {
     let elem, page;
+
     describe("var", () => {
         beforeEach(async () => {
             elem = await fixture(`<div data-ot-when="foo.bar"></div>`);
