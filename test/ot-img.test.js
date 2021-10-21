@@ -1,0 +1,45 @@
+import { expect, fixture, nextFrame, oneEvent } from '@open-wc/testing';
+
+import { Page } from '../src/page';
+
+
+describe("ot-img", () => {
+    let elem, page;
+    const img = new Image();
+    img.alt="the_image";
+
+    beforeEach(async () => {
+        elem = await fixture(`<div data-ot-img="foo"></div>`);
+        page = new Page(document.body);
+        page.init();
+    });
+
+    it("resets to empty for unset var", async () => {
+        page.reset();
+        await nextFrame();
+        expect(elem).to.be.empty;
+    });
+
+    it("resets to img", async () => {
+        page.reset({foo: img});
+        await nextFrame();
+        expect(elem).to.contain("img[alt='the_image']");
+    });
+
+    it("changes to empty for unset var", async () => {
+        page.reset({foo: img});
+        await nextFrame();
+        page.update({foo: undefined});
+        await nextFrame();
+        expect(elem).to.be.empty;
+    });
+
+    it("changes to img", async () => {
+        page.reset();
+        await nextFrame();
+        page.update({foo: img});
+        await nextFrame();
+        expect(elem).to.contain("img[alt='the_image']");
+    });
+
+});
