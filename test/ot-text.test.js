@@ -1,4 +1,4 @@
-import { expect, fixture, nextFrame, oneEvent } from '@open-wc/testing';
+import { expect, fixture, elementUpdated } from '@open-wc/testing';
 
 import { Page } from '../src/page';
 
@@ -13,29 +13,29 @@ describe("ot-text", () => {
 
     it("resets to empty for unset var", async () => {
         page.reset();
-        await nextFrame();
+        await elementUpdated(elem);
         expect(elem).to.have.text("");
     });
 
     it("resets to text", async () => {
         page.reset({foo: {bar: "Bar"}});
-        await nextFrame();
+        await elementUpdated(elem);
         expect(elem).to.have.text("Bar");
     });
 
     it("changes to empty for unset var", async () => {
         page.reset({foo: {bar: "Bar"}});
-        await nextFrame();
+        await elementUpdated(elem);
         page.update({foo: undefined});
-        await nextFrame();
+        await elementUpdated(elem);
         expect(elem).to.have.text("");
     });
 
     it("changes to text", async () => {
         page.reset();
-        await nextFrame();
+        await elementUpdated(elem);
         page.update({foo: {bar: "Bar"}});
-        await nextFrame();
+        await elementUpdated(elem);
         expect(elem).to.have.text("Bar");
     });
 

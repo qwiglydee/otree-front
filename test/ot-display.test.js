@@ -1,4 +1,4 @@
-import { expect, fixture, nextFrame, aTimeout } from '@open-wc/testing';
+import { expect, fixture, elementUpdated, aTimeout } from '@open-wc/testing';
 
 import { Page } from '../src/page';
 
@@ -14,15 +14,15 @@ describe("ot-display", () => {
 
         it("hides on reset", async () => {
             page.reset();
-            await nextFrame();
+            await elementUpdated(elem);
             expect(elem).not.to.be.displayed;
         });
 
         it("displays", async () => {
             page.reset();
-            await nextFrame();
+            await elementUpdated(elem);
             page.display();
-            await nextFrame();
+            await elementUpdated(elem);
             expect(elem).not.to.be.displayed;
             await aTimeout(100);
             expect(elem).to.be.displayed;
@@ -43,15 +43,15 @@ describe("ot-display", () => {
 
         it("hides on reset", async () => {
             page.reset();
-            await nextFrame();
+            await elementUpdated(elem);
             expect(elem).not.to.be.displayed;
         });
 
         it("displays", async () => {
             page.reset();
-            await nextFrame();
+            await elementUpdated(elem);
             page.display();
-            await nextFrame();
+            await elementUpdated(elem);
             expect(elem).not.to.be.displayed;
             await aTimeout(100);
             expect(elem).to.be.displayed;
@@ -72,15 +72,15 @@ describe("ot-display", () => {
 
         it("hides on reset", async () => {
             page.reset();
-            await nextFrame();
+            await elementUpdated(elem);
             expect(elem).not.to.be.displayed;
         });
 
         it("displays", async () => {
             page.reset();
-            await nextFrame();
+            await elementUpdated(elem);
             page.display();
-            await nextFrame();
+            await elementUpdated(elem);
             expect(elem).to.be.displayed;
             await aTimeout(200);
             expect(elem).not.to.be.displayed;

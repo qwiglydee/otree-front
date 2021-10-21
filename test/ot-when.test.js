@@ -1,4 +1,4 @@
-import { expect, fixture, nextFrame, oneEvent } from '@open-wc/testing';
+import { expect, fixture, elementUpdated } from '@open-wc/testing';
 
 import { Page } from '../src/page';
 
@@ -14,63 +14,63 @@ describe("ot-when", () => {
 
         it("resets off when var is unset", async () => {
             page.reset();
-            await nextFrame();
+            await elementUpdated(elem);
             expect(elem).not.to.be.displayed;
         });
 
         it("resets off when var is partially unset", async () => {
             page.reset({ foo: {} });
-            await nextFrame();
+            await elementUpdated(elem);
             expect(elem).not.to.be.displayed;
         });
 
         it("resets off when var is false", async () => {
             page.reset({ foo: { bar: false } });
-            await nextFrame();
+            await elementUpdated(elem);
             expect(elem).not.to.be.displayed;
         });
 
         it("resets off when var is empty", async () => {
             page.reset({ foo: { bar: "" } });
-            await nextFrame();
+            await elementUpdated(elem);
             expect(elem).not.to.be.displayed;
         });
 
         it("resets on when var is set", async () => {
             page.reset({ foo: { bar: "t" } });
-            await nextFrame();
+            await elementUpdated(elem);
             expect(elem).to.be.displayed;
         });
 
         it("switches on when var is set", async () => {
             page.reset();
-            await nextFrame();
+            await elementUpdated(elem);
             page.reset({ foo: { bar: "t" } });
-            await nextFrame();
+            await elementUpdated(elem);
             expect(elem).to.be.displayed;
         });
 
         it("switches off when var is unset", async () => {
             page.reset({ foo: { bar: "t" } });
-            await nextFrame();
+            await elementUpdated(elem);
             page.update({foo: undefined});
-            await nextFrame();
+            await elementUpdated(elem);
             expect(elem).not.to.be.displayed;
         });
 
         it("switches off when var is false", async () => {
             page.reset({ foo: { bar: "t" } });
-            await nextFrame();
+            await elementUpdated(elem);
             page.update({ foo: { bar: false } });
-            await nextFrame();
+            await elementUpdated(elem);
             expect(elem).not.to.be.displayed;
         });
 
         it("switches off when var is empty", async () => {
             page.reset({ foo: { bar: "t" } });
-            await nextFrame();
+            await elementUpdated(elem);
             page.reset({ foo: { bar: "" } });
-            await nextFrame();
+            await elementUpdated(elem);
             expect(elem).not.to.be.displayed;
         });
 
@@ -85,44 +85,44 @@ describe("ot-when", () => {
 
         it("resets off when var is unset", async () => {
             page.reset();
-            await nextFrame();
+            await elementUpdated(elem);
             expect(elem).not.to.be.displayed;
         });
 
         it("resets off when var doesn't match", async () => {
             page.reset({ foo: { bar: "xxx" } });
-            await nextFrame();
+            await elementUpdated(elem);
             expect(elem).not.to.be.displayed;
         });
 
         it("resets on when var does match", async () => {
             page.reset({ foo: { bar: "baz" } });
-            await nextFrame();
+            await elementUpdated(elem);
             expect(elem).to.be.displayed;
         });
 
         it("switches on when var does match", async () => {
             page.reset();
-            await nextFrame();
+            await elementUpdated(elem);
             page.update({ foo: { bar: "baz" } });
-            await nextFrame();
+            await elementUpdated(elem);
             expect(elem).to.be.displayed;
         });
 
         it("switches off when var doesn't match", async () => {
             page.reset({ foo: { bar: "baz" } });
-            await nextFrame();
+            await elementUpdated(elem);
             page.update({ foo: { bar: "xxx" } });
-            await nextFrame();
+            await elementUpdated(elem);
             expect(elem).not.to.be.displayed;
         });
 
         it("switches off when var is unset", async () => {
             debugger;
             page.reset({ foo: { bar: "baz" } });
-            await nextFrame();
+            await elementUpdated(elem);
             page.update({ foo: undefined });
-            await nextFrame();
+            await elementUpdated(elem);
             expect(elem).not.to.be.displayed;
         });
     });

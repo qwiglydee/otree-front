@@ -1,4 +1,4 @@
-import { expect, fixture, nextFrame, oneEvent } from '@open-wc/testing';
+import { expect, fixture, elementUpdated } from '@open-wc/testing';
 
 import { Page } from '../src/page';
 
@@ -16,29 +16,29 @@ describe("ot-img", () => {
 
     it("resets to empty for unset var", async () => {
         page.reset();
-        await nextFrame();
+        await elementUpdated(elem);
         expect(elem).to.be.empty;
     });
 
     it("resets to img", async () => {
         page.reset({foo: img});
-        await nextFrame();
+        await elementUpdated(elem);
         expect(elem).to.contain("img[alt='the_image']");
     });
 
     it("changes to empty for unset var", async () => {
         page.reset({foo: img});
-        await nextFrame();
+        await elementUpdated(elem);
         page.update({foo: undefined});
-        await nextFrame();
+        await elementUpdated(elem);
         expect(elem).to.be.empty;
     });
 
     it("changes to img", async () => {
         page.reset();
-        await nextFrame();
+        await elementUpdated(elem);
         page.update({foo: img});
-        await nextFrame();
+        await elementUpdated(elem);
         expect(elem).to.contain("img[alt='the_image']");
     });
 
