@@ -10,8 +10,9 @@ const ALLOWED_ATTRIBS = [
 export function install_otAttr(root) {
     const selector = ALLOWED_ATTRIBS.map(a => `[data-ot-attr-${a}]`).join(",");
     root.querySelectorAll(selector).forEach(elem => {
-        root.addEventListener('ot.reset', handler_reset(elem));
-        root.addEventListener('ot.update', handler_update(elem));
+        const params = parse_params(elem);
+        root.addEventListener('ot.reset', (event) => handle_reset(event, elem, params));
+        root.addEventListener('ot.update', (event) => handle_update(event, elem, params));
     });
 }
 
@@ -44,19 +45,13 @@ function set_attrs(elem, attrs) {
     }
 }
 
-function handler_reset(elem) {
-    const params = parse_params(elem);
-    return function (event) {
-        const { page } = event.detail;
-        set_attrs(elem, eval_attrs(params, page.state));
-    }
+function handle_reset(event, elem, params) {
+    const { page } = event.detail;
+    set_attrs(elem, eval_attrs(params, page.state));
 }
 
-function handler_update(elem) {
-    const params = parse_params(elem);
-    return function (event) {
-        const { page, changes } = event.detail;
-        // TODO: check if attrs in update
-        set_attrs(elem, eval_attrs(params, page.state));
-    }
+function handle_update(event, elem, params) {
+    const { page, changes } = event.detail;
+    // TODO: check if attrs in update
+    set_attrs(elem, eval_attrs(params, page.state));
 }

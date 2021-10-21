@@ -1,10 +1,11 @@
-import {jspath_extract, jspath_parse, toggle_display} from "./utils";
+import { jspath_extract, jspath_parse, toggle_display } from "./utils";
 
 
 export function install_otDisplay(root) {
     root.querySelectorAll("[data-ot-display-delay], [data-ot-display-exposure]").forEach(elem => {
-        root.addEventListener('ot.reset', handler_reset(elem));
-        root.addEventListener('ot.display', handler_display(elem));
+        const params = parse_params(elem);
+        root.addEventListener('ot.reset', (event) => handle_reset(event, elem, params));
+        root.addEventListener('ot.display', (event) => handle_display(event, elem, params));
     });
 }
 
@@ -29,17 +30,11 @@ function display(elem, params) {
     }
 }
 
-function handler_reset(elem) {
-    const params = parse_params(elem);
-    return function(event) {
-        // FIXME: cancel any pending timers
-        toggle_display(elem, false);
-    }
+function handle_reset(event, elem, params) {
+    // FIXME: cancel any pending timers
+    toggle_display(elem, false);
 }
 
-function handler_display(elem) {
-    const params = parse_params(elem);
-    return function(event) {
-        display(elem, params);
-    }
+function handle_display(event, elem, params) {
+    display(elem, params);
 }

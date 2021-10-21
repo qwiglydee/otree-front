@@ -1,10 +1,11 @@
-import {jspath_extract, jspath_parse} from "./utils";
+import { jspath_extract, jspath_parse } from "./utils";
 
 
 export function install_otClass(root) {
     root.querySelectorAll("[data-ot-class]").forEach(elem => {
-        root.addEventListener('ot.reset', handler_reset(elem));
-        root.addEventListener('ot.update', handler_update(elem));
+        const params = parse_params(elem);
+        root.addEventListener('ot.reset', (event) => handle_reset(event, elem, params));
+        root.addEventListener('ot.update', (event) => handle_update(event, elem, params));
     });
 }
 
@@ -12,7 +13,7 @@ export function install_otClass(root) {
 function parse_params(elem) {
     let path = jspath_parse(elem.dataset.otClass);
     let defaults = Array.from(elem.classList);
-    return {path, defaults};
+    return { path, defaults };
 }
 
 function eval_class(params, state) {
@@ -28,19 +29,13 @@ function set_class(elem, defaults, cls) {
     }
 }
 
-function handler_reset(elem) {
-    const params = parse_params(elem);
-    return function(event) {
-        const { page } = event.detail;
-        set_class(elem, params.defaults, eval_class(params, page.state));
-    }
+function handle_reset(event, elem, params) {
+    const { page } = event.detail;
+    set_class(elem, params.defaults, eval_class(params, page.state));
 }
 
-function handler_update(elem) {
-    const params = parse_params(elem);
-    return function(event) {
-        const { page, changes } = event.detail;
-        if (!(params.path[0] in changes)) return;
-        set_class(elem, params.defaults, eval_class(params, page.state));
-    }
+function handle_update(event, elem, params) {
+    const { page, changes } = event.detail;
+    if (!(params.path[0] in changes)) return;
+    set_class(elem, params.defaults, eval_class(params, page.state));
 }

@@ -1,17 +1,18 @@
-import {jspath_extract, jspath_parse, toggle_display} from "./utils";
+import { jspath_extract, jspath_parse, toggle_display } from "./utils";
 
 
 export function install_otImg(root) {
     root.querySelectorAll("[data-ot-img]").forEach(elem => {
-        root.addEventListener('ot.reset', handler_reset(elem));
-        root.addEventListener('ot.update', handler_update(elem));
+        const params = parse_params(elem);
+        root.addEventListener('ot.reset', (event) => handle_reset(event, elem, params));
+        root.addEventListener('ot.update', (event) => handle_update(event, elem, params));
     });
 }
 
 
 function parse_params(elem) {
     let path = jspath_parse(elem.dataset.otImg);
-    return {path};
+    return { path };
 }
 
 function eval_img(params, state) {
@@ -23,19 +24,13 @@ function set_img(elem, img) {
     elem.replaceChildren(img);
 }
 
-function handler_reset(elem) {
-    const params = parse_params(elem);
-    return function(event) {
-        const { page } = event.detail;
-        set_img(elem, eval_img(params, page.state));
-    }
+function handle_reset(event, elem, params) {
+    const { page } = event.detail;
+    set_img(elem, eval_img(params, page.state));
 }
 
-function handler_update(elem) {
-    const params = parse_params(elem);
-    return function(event) {
-        const { page, changes } = event.detail;
-        if (!(params.path[0] in changes)) return;
-        set_img(elem, eval_img(params, page.state));
-    }
+function handle_update(event, elem, params) {
+    const { page, changes } = event.detail;
+    if (!(params.path[0] in changes)) return;
+    set_img(elem, eval_img(params, page.state));
 }
