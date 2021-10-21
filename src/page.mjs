@@ -3,6 +3,7 @@ import { install_otText } from "./ot-text";
 import { install_otClass } from "./ot-class";
 import { install_otAttr } from "./ot-attr";
 import { install_otImg } from "./ot-img";
+import { install_otDisplay } from "./ot-display";
 
 export class Page {
     constructor(root, conf) {
@@ -20,6 +21,7 @@ export class Page {
         install_otClass(this.root);
         install_otAttr(this.root);
         install_otImg(this.root);
+        install_otDisplay(this.root);
     }
 
     fire(type, data={}) {
