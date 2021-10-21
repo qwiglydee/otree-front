@@ -1,4 +1,5 @@
 export function jspath_parse(jspath) {
+    // TODO: raise error when wrong syntax
     return jspath.split('.');
 }
 

@@ -10,9 +10,7 @@ export function install_otText(root) {
 
 
 function parse_params(elem) {
-    const match = elem.dataset.otText.match(/^(\w+(\.\w+)*)$/);
-    // TODO: throw syntax error
-    let path = jspath_parse(match[1]);
+    let path = jspath_parse(elem.dataset.otText);
     return {path};
 }
 

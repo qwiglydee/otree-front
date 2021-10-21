@@ -10,9 +10,7 @@ export function install_otClass(root) {
 
 
 function parse_params(elem) {
-    const match = elem.dataset.otClass.match(/^(\w+(\.\w+)*)$/);
-    // TODO: throw syntax error
-    let path = jspath_parse(match[1]);
+    let path = jspath_parse(elem.dataset.otClass);
     let defaults = Array.from(elem.classList);
     return {path, defaults};
 }
