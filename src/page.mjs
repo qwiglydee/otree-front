@@ -1,4 +1,5 @@
 import { install_otWhen } from "./ot-when";
+import { install_otText } from "./ot-text";
 
 export class Page {
     constructor(root, conf) {
@@ -12,6 +13,7 @@ export class Page {
 
     init() {
         install_otWhen(this.root);
+        install_otText(this.root);
     }
 
     fire(type, data={}) {
