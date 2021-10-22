@@ -77,16 +77,28 @@ function handle_change(event, page, elem, params) {
 
 function handle_click(event, page, elem, params) {
     event.preventDefault();
+    if (elem.disabled) {
+        page.error('frozen_input');
+        return;
+    }
     page.response({ [params.field]: params.val });
 }
 
 function handle_touch(event, page, elem, params) {
     event.preventDefault();
+    if (elem.disabled) {
+        page.error('frozen_input');
+        return;
+    }
     page.response({ [params.field]: params.val });
 }
 
 function handle_key(event, page, elem, params) {
     if (event.code != params.trigger.key) return;
     event.preventDefault();
+    if (elem.disabled) {
+        page.error('frozen_input');
+        return;
+    }
     page.response({ [params.field]: params.val });
 }

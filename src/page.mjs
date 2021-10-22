@@ -48,9 +48,9 @@ export class Page {
     }
 
     response(changes) {
-        // TODO: check frozen state
-        this.state = Object.assign(this.state, changes);
-        this.fire('update', {changes});
+        const delta = Object.assign({}, changes, {error: undefined});
+        this.state = Object.assign(this.state, delta);
+        this.fire('update', {changes: delta});
     }
 
     display() {
@@ -63,5 +63,11 @@ export class Page {
 
     unfreeze() {
         this.fire('freeze', {frozen: false});
+    }
+
+    error(code) {
+        this.state['error'] = code;
+        this.fire('error', {error: code});
+        this.fire('update', {changes: {error: code}});
     }
 }
