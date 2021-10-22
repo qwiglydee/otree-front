@@ -5,6 +5,7 @@ import { install_otAttr } from "./ot-attr";
 import { install_otImg } from "./ot-img";
 import { install_otDisplay } from "./ot-display";
 import { install_otInput } from "./ot-input";
+import { install_otStart } from "./ot-start";
 
 export class Page {
     constructor(root, conf) {
@@ -24,6 +25,7 @@ export class Page {
         install_otImg(this.root);
         install_otDisplay(this.root);
         install_otInput(this.root, this);
+        install_otStart(this.root, this);
     }
 
     fire(type, data={}) {
