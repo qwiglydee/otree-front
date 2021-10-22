@@ -16,7 +16,3 @@ export function jspath_extract(path, obj) {
 export function toggle_display(elem, display) {
     elem.style.display = display ? null : "none";
 }
-
-export function toggle_disabled(elem, disabled) {
-    elem.disabled = disabled;
-}

@@ -29,6 +29,12 @@ describe("ot-input", () => {
             page = new Page(document.body);
             expect(() => page.init()).to.throw();
         });
+
+        it("for invalid expr for custom", async () => {
+            elem = await fixture(`<div data-ot-click data-ot-input="foo"></div>`);
+            page = new Page(document.body);
+            expect(() => page.init()).to.throw();
+        });
     });
 
 
@@ -40,20 +46,20 @@ describe("ot-input", () => {
         });
 
         it("freezes", async () => {
-            elem.disabled = false;
             page.freeze();
             await elementUpdated(elem);
             expect(elem).to.have.attr('disabled');
+            expect(elem).to.have.class('ot-disabled');
         });
 
         it("unfreezes", async () => {
-            elem.disabled = true;
             page.unfreeze();
             await elementUpdated(elem);
             expect(elem).not.to.have.attr('disabled');
+            expect(elem).not.to.have.class('ot-disabled');
         });
 
-        it("triggers response", async () => {
+        it("triggers on change", async () => {
             elem.value = "123";
             elem.dispatchEvent(new InputEvent('change'));
             const { detail } = await oneEvent(page.root, 'ot.update');
@@ -69,20 +75,20 @@ describe("ot-input", () => {
         });
 
         it("freezes", async () => {
-            elem.disabled = false;
             page.freeze();
             await elementUpdated(elem);
             expect(elem).to.have.attr('disabled');
+            expect(elem).to.have.class('ot-disabled');
         });
 
         it("unfreezes", async () => {
-            elem.disabled = true;
             page.unfreeze();
             await elementUpdated(elem);
             expect(elem).not.to.have.attr('disabled');
+            expect(elem).not.to.have.class('ot-disabled');
         });
 
-        it("triggers response", async () => {
+        it("triggers on change", async () => {
             elem.querySelector("option:nth-child(2)").selected = true;
             elem.dispatchEvent(new InputEvent('change'));
             const { detail } = await oneEvent(page.root, 'ot.update');
@@ -98,20 +104,20 @@ describe("ot-input", () => {
         });
 
         it("freezes", async () => {
-            elem.disabled = false;
             page.freeze();
             await elementUpdated(elem);
             expect(elem).to.have.attr('disabled');
+            expect(elem).to.have.class('ot-disabled');
         });
 
         it("unfreezes", async () => {
-            elem.disabled = true;
             page.unfreeze();
             await elementUpdated(elem);
             expect(elem).not.to.have.attr('disabled');
+            expect(elem).not.to.have.class('ot-disabled');
         });
 
-        it("triggers response", async () => {
+        it("triggers on change", async () => {
             elem.value = "123";
             elem.dispatchEvent(new InputEvent('change'));
             const { detail } = await oneEvent(page.root, 'ot.update');
@@ -127,23 +133,64 @@ describe("ot-input", () => {
         });
 
         it("freezes", async () => {
-            elem.disabled = false;
             page.freeze();
             await elementUpdated(elem);
             expect(elem).to.have.attr('disabled');
+            expect(elem).to.have.class('ot-disabled');
         });
 
         it("unfreezes", async () => {
-            elem.disabled = true;
             page.unfreeze();
             await elementUpdated(elem);
             expect(elem).not.to.have.attr('disabled');
+            expect(elem).not.to.have.class('ot-disabled');
         });
 
-        it("triggers response", async () => {
+        it("triggers on click", async () => {
             elem.dispatchEvent(new MouseEvent('click'));
             const { detail } = await oneEvent(page.root, 'ot.update');
             expect(detail.changes).to.deep.eq({ foo: "123" });
         });
     });
+
+    describe("custom", () => {
+        beforeEach(async () => {
+            elem = await fixture(`<div data-ot-click data-ot-touch data-ot-key="Space" data-ot-input="foo=123"></div>`);
+            page = new Page(document.body);
+            page.init();
+        });
+
+        it("freezes", async () => {
+            page.freeze();
+            await elementUpdated(elem);
+            expect(elem.disabled).to.be.true;
+            expect(elem).to.have.class('ot-disabled');
+        });
+
+        it("unfreezes", async () => {
+            page.unfreeze();
+            await elementUpdated(elem);
+            expect(elem.disabled).to.be.false;
+            expect(elem).not.to.have.class('ot-disabled');
+        });
+
+        it("triggers on key", async () => {
+            page.root.dispatchEvent(new KeyboardEvent('keydown', {code: 'Space'}));
+            const { detail } = await oneEvent(page.root, 'ot.update');
+            expect(detail.changes).to.deep.eq({ foo: "123" });
+        });
+
+        it("triggers on touch", async () => {
+            elem.dispatchEvent(new TouchEvent('touchend'));
+            const { detail } = await oneEvent(page.root, 'ot.update');
+            expect(detail.changes).to.deep.eq({ foo: "123" });
+        });
+
+        it("triggers on touch", async () => {
+            elem.dispatchEvent(new MouseEvent('click'));
+            const { detail } = await oneEvent(page.root, 'ot.update');
+            expect(detail.changes).to.deep.eq({ foo: "123" });
+        });
+    });
+
 });
