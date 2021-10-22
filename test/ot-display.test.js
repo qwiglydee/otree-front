@@ -9,25 +9,26 @@ describe("ot-display errors", () => {
     it("raise for non numeric delay", async () => {
         debugger;
         elem = await fixture(`<div data-ot-display-delay="xxx"></div>`);
-        page = new Page(document.body);
+        page = new Page();
         expect(()=>page.init()).to.throw();
     });
 
     it("raise for non-numerc exposure", async () => {
         elem = await fixture(`<div data-ot-display-exposure="xxx"></div>`);
-        page = new Page(document.body);
+        page = new Page();
         expect(()=>page.init()).to.throw();
     });
 });
 
 
 describe("ot-display", () => {
-    let elem, page;
+    let body, elem, page;
 
     describe("with delay and exposure", () => {
         beforeEach(async () => {
-            elem = await fixture(`<div data-ot-display-delay="100" data-ot-display-exposure="200"></div>`);
-            page = new Page(document.body);
+            body = document.createElement('body');
+            elem = await fixture(`<div data-ot-display-delay="100" data-ot-display-exposure="200"></div>`, {parentNode: body});
+            page = new Page(body);
             page.init();
         });
 
@@ -55,8 +56,9 @@ describe("ot-display", () => {
 
     describe("with delay only", () => {
         beforeEach(async () => {
-            elem = await fixture(`<div data-ot-display-delay="100"></div>`);
-            page = new Page(document.body);
+            body = document.createElement('body');
+            elem = await fixture(`<div data-ot-display-delay="100"></div>`, {parentNode: body});
+            page = new Page(body);
             page.init();
         });
 
@@ -84,8 +86,9 @@ describe("ot-display", () => {
 
     describe("with exposure only", () => {
         beforeEach(async () => {
-            elem = await fixture(`<div data-ot-display-exposure="200"></div>`);
-            page = new Page(document.body);
+            body = document.createElement('body');
+            elem = await fixture(`<div data-ot-display-exposure="200"></div>`, {parentNode: body});
+            page = new Page(body);
             page.init();
         });
 
@@ -105,7 +108,6 @@ describe("ot-display", () => {
             expect(elem).not.to.be.displayed;
         });
 
-        // it("hides on emergent reset", async () => {
-        // });
+        it("cancels show/hides timers on emergent reset");
     });
 });

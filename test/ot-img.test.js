@@ -3,34 +3,33 @@ import { expect, fixture, elementUpdated } from '@open-wc/testing';
 import { Page } from '../src/page';
 
 describe("ot-img errors", () => {
-    let elem, page;
+    let body, elem, page;
 
     it("raise for invalid path", async () => {
         elem = await fixture(`<div data-ot-img=".foo"></div>`);
-        page = new Page(document.body);
+        page = new Page();
         expect(()=>page.init()).to.throw();
     });
 
     it("raise for invalid chars", async () => {
         elem = await fixture(`<div data-ot-img="foo/bar"></div>`);
-        page = new Page(document.body);
+        page = new Page();
         expect(()=>page.init()).to.throw();
     });
 
-    it("raise for invalid img value on reset", async () => {
-        // cannot test errors in event handlers
-    });
+    it("raise for invalid img value on reset");
 
 });
 
 describe("ot-img", () => {
-    let elem, page;
+    let body, elem, page;
     const img = new Image();
     img.alt="the_image";
 
     beforeEach(async () => {
-        elem = await fixture(`<div data-ot-img="foo"></div>`);
-        page = new Page(document.body);
+        body = document.createElement('body');
+        elem = await fixture(`<div data-ot-img="foo"></div>`, {parentNode: body});
+        page = new Page(body);
         page.init();
     });
 

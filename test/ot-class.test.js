@@ -8,23 +8,24 @@ describe("ot-class errors", () => {
 
     it("raise for invalid path", async () => {
         elem = await fixture(`<div data-ot-class=".foo"></div>`);
-        page = new Page(document.body);
+        page = new Page();
         expect(()=>page.init()).to.throw();
     });
 
     it("raise for invalid chars", async () => {
         elem = await fixture(`<div data-ot-class="foo/bar"></div>`);
-        page = new Page(document.body);
+        page = new Page();
         expect(()=>page.init()).to.throw();
     });
 });
 
 
 describe("ot-class", () => {
-    let elem, page;
+    let body, elem, page;
     beforeEach(async () => {
-        elem = await fixture(`<div class="foo bar" data-ot-class="baz"></div>`);
-        page = new Page(document.body);
+        body = document.createElement('body');
+        elem = await fixture(`<div class="foo bar" data-ot-class="baz"></div>`, {parentNode: body});
+        page = new Page(body);
         page.init();
     });
 

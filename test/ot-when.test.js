@@ -8,31 +8,32 @@ describe("ot-when errors", () => {
 
     it("for invalid path", async () => {
         elem = await fixture(`<div data-ot-when=".foo"></div>`);
-        page = new Page(document.body);
+        page = new Page();
         expect(()=>page.init()).to.throw();
     });
 
     it("for invalid chars", async () => {
         elem = await fixture(`<div data-ot-when="foo/bar"></div>`);
-        page = new Page(document.body);
+        page = new Page();
         expect(()=>page.init()).to.throw();
     });
 
     it("for invalid expr", async () => {
         elem = await fixture(`<div data-ot-when="foo=bar"></div>`);
-        page = new Page(document.body);
+        page = new Page();
         expect(()=>page.init()).to.throw();
     });
 });
 
 
 describe("ot-when", () => {
-    let elem, page;
+    let body, elem, page;
 
     describe("var", () => {
         beforeEach(async () => {
-            elem = await fixture(`<div data-ot-when="foo.bar"></div>`);
-            page = new Page(document.body);
+            body = document.createElement('body');
+            elem = await fixture(`<div data-ot-when="foo.bar"></div>`, {parentNode: body});
+            page = new Page(body);
             page.init();
         });
 
@@ -102,8 +103,9 @@ describe("ot-when", () => {
 
     describe("var==val", () => {
         beforeEach(async () => {
-            elem = await fixture(`<div data-ot-when="foo.bar==baz"></div>`);
-            page = new Page(document.body);
+            body = document.createElement('body');
+            elem = await fixture(`<div data-ot-when="foo.bar==baz"></div>`, {parentNode: body});
+            page = new Page(body);
             page.init();
         });
 

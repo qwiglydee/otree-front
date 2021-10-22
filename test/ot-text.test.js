@@ -7,23 +7,24 @@ describe("ot-text errors", () => {
 
     it("raise for invalid path", async () => {
         elem = await fixture(`<div data-ot-text=".foo"></div>`);
-        page = new Page(document.body);
+        page = new Page();
         expect(()=>page.init()).to.throw();
     });
 
     it("raise for invalid chars", async () => {
         elem = await fixture(`<div data-ot-text="foo/bar"></div>`);
-        page = new Page(document.body);
+        page = new Page();
         expect(()=>page.init()).to.throw();
     });
 });
 
 
 describe("ot-text", () => {
-    let elem, page;
+    let body, elem, page;
     beforeEach(async () => {
-        elem = await fixture(`<div data-ot-text="foo.bar"></div>`);
-        page = new Page(document.body);
+        body = document.createElement('body');
+        elem = await fixture(`<div data-ot-text="foo.bar"></div>`, {parentNode: body});
+        page = new Page(body);
         page.init();
     });
 

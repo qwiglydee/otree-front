@@ -3,12 +3,12 @@ import { expect, fixture, elementUpdated, oneEvent } from '@open-wc/testing';
 import { Page } from '../src/page';
 
 describe("ot-input", () => {
-    let page, elem;
-
+    let body, page, elem;
 
     beforeEach(async () => {
-        elem = await fixture(`<div data-ot-click data-ot-touch data-ot-key="Space" data-ot-start></div>`);
-        page = new Page(document.body);
+        body = document.createElement('body');
+        elem = await fixture(`<div data-ot-click data-ot-touch data-ot-key="Space" data-ot-start></div>`, {parentNode: body});
+        page = new Page(body);
         page.init();
     });
 
@@ -33,7 +33,5 @@ describe("ot-input", () => {
         expect(elem.disabled).to.be.true;
     });
 
-    it("doesn't trigger disabled", async () => {
-        // TODO
-    });
+    it("doesn't trigger disabled");
 });

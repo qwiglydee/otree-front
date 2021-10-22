@@ -8,22 +8,23 @@ describe("ot-attr errors", () => {
 
     it("raise for invalid path", async () => {
         elem = await fixture(`<div data-ot-attr-value=".foo"></div>`);
-        page = new Page(document.body);
+        page = new Page();
         expect(()=>page.init()).to.throw();
     });
 
     it("raise for invalid chars", async () => {
         elem = await fixture(`<div data-ot-attr-value="foo/bar"></div>`);
-        page = new Page(document.body);
+        page = new Page();
         expect(()=>page.init()).to.throw();
     });
 });
 
 describe("ot-attr", () => {
-    let elem, page;
+    let body, elem, page;
     beforeEach(async () => {
-        elem = await fixture(`<progress data-ot-attr-value="foo" data-ot-attr-max="bar"></progress>`);
-        page = new Page(document.body);
+        body = document.createElement('body');
+        elem = await fixture(`<progress data-ot-attr-value="foo" data-ot-attr-max="bar"></progress>`, {parentNode: body});
+        page = new Page(body);
         page.init();
     });
 
