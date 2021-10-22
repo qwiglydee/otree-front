@@ -69,6 +69,7 @@ function handle_freeze(event, elem) {
 }
 
 function handle_change(event, page, elem, params) {
+    if (elem.disabled) return;
     let value = elem.value;
     if (value === "true") val = true;
     if (value === "false") val = false;
@@ -76,16 +77,19 @@ function handle_change(event, page, elem, params) {
 }
 
 function handle_click(event, page, elem, params) {
+    if (elem.disabled) return;
     event.preventDefault();
     page.response({ [params.field]: params.val });
 }
 
 function handle_touch(event, page, elem, params) {
+    if (elem.disabled) return;
     event.preventDefault();
     page.response({ [params.field]: params.val });
 }
 
 function handle_key(event, page, elem, params) {
+    if (elem.disabled) return;
     if (event.code != params.trigger.key) return;
     event.preventDefault();
     page.response({ [params.field]: params.val });

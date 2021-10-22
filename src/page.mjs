@@ -14,6 +14,7 @@ export class Page {
             this.root = document.querySelector('body');
         }
         this.conf = Object.assign({}, conf);
+        this.frozen = false;
         this.state = {};
     }
 
@@ -26,6 +27,16 @@ export class Page {
         install_otDisplay(this.root);
         install_otInput(this.root, this);
         install_otStart(this.root, this);
+
+        let default_input = (event) => {
+            if (this.frozen) {
+                this.error('frozen_input'); event.preventDefault();
+            }
+            // TODO: ??? invalid key error
+        };
+        this.root.addEventListener('click', default_input);
+        this.root.addEventListener('touchend', default_input);
+        this.root.addEventListener('keydown', default_input);
     }
 
     fire(type, data={}) {
@@ -48,9 +59,9 @@ export class Page {
     }
 
     response(changes) {
-        // TODO: check frozen state
-        this.state = Object.assign(this.state, changes);
-        this.fire('update', {changes});
+        const delta = Object.assign({}, changes, {error: undefined});
+        this.state = Object.assign(this.state, delta);
+        this.fire('update', {changes: delta});
     }
 
     display() {
@@ -58,10 +69,18 @@ export class Page {
     }
 
     freeze() {
+        this.frozen = true;
         this.fire('freeze', {frozen: true});
     }
 
     unfreeze() {
+        this.frozen = false;
         this.fire('freeze', {frozen: false});
+    }
+
+    error(code) {
+        this.state['error'] = code;
+        this.fire('error', {error: code});
+        this.fire('update', {changes: {error: code}});
     }
 }
