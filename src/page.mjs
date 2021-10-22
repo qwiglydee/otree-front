@@ -4,6 +4,7 @@ import { install_otClass } from "./ot-class";
 import { install_otAttr } from "./ot-attr";
 import { install_otImg } from "./ot-img";
 import { install_otDisplay } from "./ot-display";
+import { install_otInput } from "./ot-input";
 
 export class Page {
     constructor(root, conf) {
@@ -22,6 +23,7 @@ export class Page {
         install_otAttr(this.root);
         install_otImg(this.root);
         install_otDisplay(this.root);
+        install_otInput(this.root, this);
     }
 
     fire(type, data={}) {
@@ -39,6 +41,12 @@ export class Page {
     }
 
     update(changes) {
+        this.state = Object.assign(this.state, changes);
+        this.fire('update', {changes});
+    }
+
+    response(changes) {
+        // TODO: check frozen state
         this.state = Object.assign(this.state, changes);
         this.fire('update', {changes});
     }
