@@ -65,9 +65,15 @@ describe("Page controller", () => {
   });
 
   it("displays", async () => {
+    page.display('foo');
+    detail = (await oneEvent(body, "ot.display")).detail;
+    expect(detail).to.deep.equal({ page: page, phase: 'foo' });
+  });
+
+  it("displays null", async () => {
     page.display();
     detail = (await oneEvent(body, "ot.display")).detail;
-    expect(detail).to.deep.equal({ page: page });
+    expect(detail).to.deep.equal({ page: page, phase: undefined});
   });
 
   it("freezes", async () => {

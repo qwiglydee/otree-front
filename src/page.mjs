@@ -65,8 +65,8 @@ export class Page {
         this.fire('update', {changes: delta});
     }
 
-    display() {
-        this.fire('display');
+    display(phase) {
+        this.fire('display', {phase});
     }
 
     freeze() {
