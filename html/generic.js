@@ -5,23 +5,32 @@ import { toggle_display } from "../src/utils";
 
 const page = new Page();
 const data = new DemoData();
-const game = new GenericGame(data, page, {
-    inputDelay: 1502,
-    inputTimeout: 5000,
+const game = new GenericGame(
+  data,
+  page,
+  {
+    trialTimeout: 5000,
     trialPause: 1000,
     numIterations: 5,
-    gameTimeout: 25000
-});
+    gameTimeout: 60000,
+  },
+  [
+    { display: "aim", duration: 1000 },
+    { display: "prime", duration: 500 },
+    { display: "pause", duration: 500 },
+    { display: "target", input: true },
+  ]
+);
 
 data.init();
 page.init();
 page.start(); // FIXME: handle by data-ot-start
 
 try {
-    let result = await game.run();
-    console.debug("ENDED", result);
-} catch(e) {
-    console.debug("FAILED", e);
+  let result = await game.run();
+  console.debug("ENDED", result);
+} catch (e) {
+  console.debug("FAILED", e);
 } finally {
-    toggle_display(page.root, false);
+  toggle_display(page.root, false);
 }
