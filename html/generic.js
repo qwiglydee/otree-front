@@ -24,13 +24,15 @@ const game = new GenericGame(
 
 data.init();
 page.init();
-page.start(); // FIXME: handle by data-ot-start
 
-try {
-  let result = await game.run();
-  console.debug("ENDED", result);
-} catch (e) {
-  console.debug("FAILED", e);
-} finally {
-  toggle_display(page.root, false);
-}
+page.reset();
+page.root.addEventListener('ot.start', async () => {
+  try {
+    let result = await game.run();
+    console.debug("ENDED", result);
+  } catch (e) {
+    console.debug("FAILED", e);
+  } finally {
+    toggle_display(page.root, false);
+  }
+});
