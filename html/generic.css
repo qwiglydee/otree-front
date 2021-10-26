@@ -1,0 +1,72 @@
+html, body {
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+}
+
+
+body {
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+}
+
+code {
+    font-family: sans-serif;
+    text-decoration: underline;
+}
+
+kbd {
+    background-color: #e0e0e0;
+    border-style: outset;
+    color: black;
+    padding: 0.25em;
+    display: inline-block;
+}
+
+hr {
+    width: 50%;
+}
+
+.trial {
+    height: 500px;
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.response {
+    height: 100px;
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+
+}
+
+#aim {
+    font-size: 100px;
+}
+
+#prime {
+    font-size: xx-large;
+}
+
+#prime.positive {
+    color: green;
+}
+
+#prime.negative {
+    color: red;
+}
+
+.feedback.valid {
+    color: green;
+}
+
+.feedback.invalid {
+    color: red;
+}

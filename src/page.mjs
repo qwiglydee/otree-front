@@ -39,8 +39,13 @@ export class Page {
         this.root.addEventListener('keydown', default_input);
     }
 
+    addEventListener(type, handler) {
+        this.root.addEventListener(type, handler);
+    }
+
     fire(type, data={}) {
         const detail = Object.assign({page: this}, data);
+        // NB: queueing a task like a normal event, instead of dispatching synchronously
         setTimeout(() => this.root.dispatchEvent(new CustomEvent(`ot.${type}`, {detail})));
     }
 
