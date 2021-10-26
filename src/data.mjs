@@ -18,15 +18,12 @@ export class LocalData {
     async trial() {
         this.iteration += 1;
         this._trial = await this.generate(this.iteration);
-        console.debug("trial:", this._trial);
         return this._trial;
     }
 
     async response(value, reaction_time) {
         this._response = value;
-        console.debug("response:", this._response, reaction_time);
         this._feedback = await this.validate(this.iteration, this._trial, this._response);
-        console.debug("feedback:", this._feedback);
         return this._feedback;
     }
 

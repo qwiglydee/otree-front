@@ -1,4 +1,5 @@
-import { sleep, delay, cancel} from "./timers";
+import { Timers } from "./timers";
+import { Deferred } from "./utils";
 
 /** GenericGame
  * Generic stimulus/response sequence
@@ -9,6 +10,7 @@ import { sleep, delay, cancel} from "./timers";
  * - defaultResponse: the response to give on input timeout
  * - trialPause: a pause before moving to next trial
  * - numIterations: total number of iterations
+ * - gameTimeout: total timeout of all the game
  */
 
 export class GenericGame {
@@ -20,49 +22,86 @@ export class GenericGame {
             inputTimeout: 0,
             defaultResponse: null,
             trialPause: 1000,
-            numIterations: null
+            numIterations: null,
+            gameTimeout: null
         };
         Object.assign(this.conf, conf);
-        // attach event handlers
-        this.page.addEventListener("ot.update", (e) => this.onUpdate(e));
+
+        this.progress = {};
+
+        this._update_handler = (e) => this.onUpdate(e);
+        this._running = null;
+        // timers: timeout, iter, unfreeze, skip
+        this._timers = new Timers();
     }
 
-    start() {
+    run() {
+        this.page.root.addEventListener("ot.update", this._update_handler);
+        this._running = new Deferred();
+        if (this.conf.gameTimeout) {
+            this._timers.delay('timeout', () => this.stop(new Error("timeout")), this.conf.gameTimeout);
+        }
         if (this.conf.numIterations) this.updateProgress();
-        this.iter();
+
+        this._timers.delay('iter', () => this.iter());
+
+        return this._running.promise;
     }
 
-    async iter() {
+    stop(reason) {
+        this._timers.cancel();
+        this.page.root.removeEventListener("ot.update", this._update_handler);
         this.page.reset();
         this.page.freeze();
 
+        if (reason instanceof Error) {
+            this._running.reject(reason);
+        } else {
+            this._running.resolve(reason);
+        }
+        return this._running.promise;
+    }
+
+    async iter() {
+        this.page.reset({progress: this.progress});
+        this.page.freeze();
+
+        if (this.conf.numIterations && this.data.iteration == this.conf.numIterations) {
+            this.stop("gameover");
+            return;
+        }
+
         let trial = await this.data.trial();
         this.page.update({trial});
+        console.debug("trial:", trial);
 
         performance.clearMarks();
         performance.clearMeasures();
 
         this.page.display();
         performance.mark("display");
+        this._timers.delay('unfreeze', () => this.unfreeze(), this.conf.inputDelay);
+    }
 
-        if (this.conf.inputDelay) {
-            delay(() => this.enableInput(), this.conf.inputDelay);
-        } else {
-            this.enableInputs();
-        }
-        if (this.conf.inputTimeout) {
-            this._timeout = delay(() => this.onTimeout(), this.conf.inputDelay + this.conf.inputTimeout);
-        }
+    next() {
+        if (this._running.state !== null) return; // stopped during some await
+        if (this.conf.numIterations) this.updateProgress();
+        this._timers.delay('iter', () => this.iter(), this.conf.trialPause);
     }
 
     updateProgress() {
-        this.page.update({progress: {
+        this.progress = {
             current: this.data.iteration,
             total: this.conf.numIterations
-        }});
+        };
+        console.debug("progress:", this.progress);
+        this.page.update({progress: this.progress});
     }
 
-    enableInput() {
+    unfreeze() {
+        if (this.conf.inputTimeout) {
+            this._timers.delay('skip', () => this.onSkip(), this.conf.inputTimeout);
+        }
         this.page.unfreeze();
         performance.mark("input");
     }
@@ -73,28 +112,29 @@ export class GenericGame {
     }
 
     async onResponse() {
-        this._timeout = cancel(this._timeout);
+        this._timers.cancel('iter', 'unfreeze', 'skip');
+
         this.page.freeze();
 
         performance.mark("response");
         performance.measure("reaction", "input", "response");
         let reaction_measure = performance.getEntriesByName("reaction")[0];
 
-        let feedback = await this.data.response(this.page.state.response, reaction_measure.duration);
-        this.page.update({feedback});
+        console.debug("response:", this.page.state.response, reaction_measure.duration);
 
-        if (this.conf.numIterations) this.updateProgress();
-        delay(() => this.iter(), this.conf.trialPause);
+        let feedback = await this.data.response(this.page.state.response, reaction_measure.duration);
+        console.debug("feedback:", feedback);
+        this.page.update({feedback});
+        this.next();
     }
 
-    async onTimeout() {
-        this._timeout = undefined;
+    async onSkip() {
+        this._timers.cancel('iter', 'unfreeze', 'skip');
+
         this.page.freeze();
 
         await this.data.response(this.conf.defaultResponse, null);
         this.page.update({feedback: 'timeout'});
-
-        if (this.conf.numIterations) this.updateProgress();
-        delay(() => this.iter(), this.conf.trialPause);
+        this.next();
     }
 }

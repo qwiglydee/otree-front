@@ -7,6 +7,8 @@ html, body {
 
 
 body {
+    max-width: 1024px;
+    margin: auto;
     display: flex;
     flex-flow: column;
     align-items: center;
@@ -27,7 +29,11 @@ kbd {
 }
 
 hr {
-    width: 50%;
+    width: 100%;
+}
+
+progress {
+    width: 100%;
 }
 
 .trial {
