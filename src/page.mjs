@@ -1,11 +1,11 @@
-import { install_otWhen } from "./ot-when";
-import { install_otText } from "./ot-text";
-import { install_otClass } from "./ot-class";
-import { install_otAttr } from "./ot-attr";
-import { install_otImg } from "./ot-img";
-import { install_otDisplay } from "./ot-display";
-import { install_otInput } from "./ot-input";
-import { install_otStart } from "./ot-start";
+import { install_otWhen } from "./directives/ot-when";
+import { install_otText } from "./directives/ot-text";
+import { install_otClass } from "./directives/ot-class";
+import { install_otAttr } from "./directives/ot-attr";
+import { install_otImg } from "./directives/ot-img";
+import { install_otDisplay } from "./directives/ot-display";
+import { install_otInput } from "./directives/ot-input";
+import { install_otStart } from "./directives/ot-start";
 
 export class Page {
     constructor(root, conf) {

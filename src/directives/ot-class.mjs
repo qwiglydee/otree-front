@@ -1,4 +1,4 @@
-import { jspath_extract, jspath_parse } from "./utils";
+import { jspath_extract, jspath_parse } from "../utils";
 
 
 export function install_otClass(root) {

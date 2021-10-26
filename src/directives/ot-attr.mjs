@@ -1,4 +1,4 @@
-import { jspath_extract, jspath_parse, toggle_display } from "./utils";
+import { jspath_extract, jspath_parse, toggle_display } from "../utils";
 
 
 const ALLOWED_ATTRIBS = [

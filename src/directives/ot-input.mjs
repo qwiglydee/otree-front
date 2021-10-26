@@ -1,4 +1,4 @@
-import { jspath_parse } from "./utils";
+import { jspath_parse } from "../utils";
 
 
 export function install_otInput(root, page) {

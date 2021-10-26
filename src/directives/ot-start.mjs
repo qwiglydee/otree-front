@@ -1,4 +1,4 @@
-import { toggle_display } from "./utils";
+import { toggle_display } from "../utils";
 
 
 export function install_otStart(root, page) {
