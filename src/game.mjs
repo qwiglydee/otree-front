@@ -128,6 +128,7 @@ export class GenericGame {
     }
 
     displayPhase(phase) {
+        console.debug("display:", phase);
         this.page.display(phase);
         performance.mark(`display-${phase}`);
     }

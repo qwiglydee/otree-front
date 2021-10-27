@@ -10,15 +10,13 @@ export class DemoData extends LocalData {
 
         return {
             iteration: iteration,
-            prime: prime,
-            prime_cls: prime_mood,
-            stimulus_img: stimulus_img,
-            solution: stimulus_mood,
-            congruent: stimulus_mood == prime_mood
+            cue: cue_side,
+            target: target_side,
+            congruent: cue_side == target_side
         }
     }
 
     async validate(iteration, trial, response) {
-        return trial.solution == response;
+        return trial.target == response;
     }
 }

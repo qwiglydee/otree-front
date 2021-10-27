@@ -15,6 +15,10 @@ body {
     justify-content: center;
 }
 
+.char {
+    font-family: Roboto, monospace;
+}
+
 code {
     font-family: sans-serif;
     text-decoration: underline;
@@ -69,10 +73,10 @@ progress {
     color: red;
 }
 
-.feedback.valid {
+.valid {
     color: green;
 }
 
-.feedback.invalid {
+.invalid {
     color: red;
 }

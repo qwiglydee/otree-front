@@ -4,38 +4,55 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./generic.css" />
+  <link rel="stylesheet" href="./posner.css" />
 </head>
 
 <body>
   <div class="trial">
-    <div id="aim" data-ot-display-exposure="1000">⌖</div>
-    <div id="prime" data-ot-display-delay="1001" data-ot-display-exposure="500" data-ot-class="trial.prime_cls"
-      data-ot-text="trial.prime"></div>
-    <div id="stimulus" data-ot-display-delay="1502" data-ot-img="trial.stimulus_img"></div>
+
+    <div class="left">
+      <div class="box">
+        <span data-ot-display="cue"><span class="cue char" data-ot-when="trial.cue==left">×</span></span>
+        <span data-ot-display="target"><span class="target char" data-ot-when="trial.target==left">⦿</span></span>
+      </div>
+      <div class="feedback" data-ot-when="response==left">
+        <span data-ot-when="feedback==true" class="valid char">✔</span>
+        <span data-ot-when="feedback==false" class="invalid char">✘</span>
+      </div>
+    </div>
+
+    <div class="center aim">
+      <div id="aim" data-ot-display="aim">⌖</div>
+    </div>
+
+    <div class="right">
+      <div class="box">
+        <span data-ot-display="cue"><span class="cue char" data-ot-when="trial.cue==right">×</span></span>
+        <span data-ot-display="target"><span class="target char" data-ot-when="trial.target==right">⦿</span></span>
+      </div>
+      <div class="feedback" data-ot-when="response==right">
+        <span data-ot-when="feedback==true" class="valid char">✔</span>
+        <span data-ot-when="feedback==false" class="invalid char">✘</span>
+      </div>
+    </div>
+
   </div>
 
-  <div class="response">
-    <p>
-      <span data-ot-when="response" data-ot-text="response"></span>
-      <span data-ot-when="feedback==true" class="feedback valid">✔</span>
-      <span data-ot-when="feedback==false" class="feedback invalid">✘</span>
-    </p>
-    <div data-ot-when="feedback==timeout">skipping...</div>
-    <div data-ot-when="error==frozen_input">Wait for a while...</div>
-  </div>
+  <div data-ot-start data-ot-key="Space">Press <kbd>Space</kbd> to start.</div>
 
-  <hr>
+  <span data-ot-when="feedback==timeout" class="invalid char">✘</span>
 
-  <div class="buttons">
-    <button data-ot-input="response=negative" data-ot-key="KeyF">negative</button>
-    <button data-ot-input="response=positive" data-ot-key="KeyJ">positive</button>
-  </div>
 
-  <p>Press <kbd>F</kbd> for <code>negative</code>, or <kbd>J</kbd> for <code>positive</code></p>
+  <p>Press
+    <kbd data-ot-key="ArrowLeft" data-ot-input="response=left">←</kbd>
+    or
+    <kbd data-ot-key="ArrowRight" data-ot-input="response=right">→</kbd>
+  </p>
 
-  <script type="module" src="generic_data.js"></script>
-  <script type="module" src="generic.js"></script>
+  <script type="module" src="posner_data.js"></script>
+  <script type="module" src="posner.js"></script>
 </body>
 
 </html>
