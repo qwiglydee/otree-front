@@ -40,8 +40,11 @@ export class GenericGame {
                 this.sequence.push({start, name: phase.display, input: phase.input});
                 start += phase.duration;
             });
+            // insert a phase to torn off last defined phase
             if (phases.slice(-1)[0].duration !== undefined) {
-                this.sequence.push({start, name: null, input: false});
+                if (!this.conf.trialTimeout || start < this.conf.trialTimeout) {
+                    this.sequence.push({start, name: null, input: false});
+                }
             }
         }
 
