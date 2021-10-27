@@ -28,7 +28,8 @@ export class GenericGame {
             numIterations: null,
             gameTimeout: null,
             responseComplete: true,
-            progress: null
+            progress: null,
+            responseField: 'response',
         };
         Object.assign(this.conf, conf);
 
@@ -144,7 +145,7 @@ export class GenericGame {
 
     onUpdate(event) {
         const { changes } = event.detail;
-        if ('response' in changes) this.onResponse();
+        if (this.conf.responseField in changes) this.onResponse();
     }
 
     async onResponse() {
@@ -157,10 +158,11 @@ export class GenericGame {
         performance.mark("response");
         performance.measure("reaction", "unfreeze", "response");
         let reaction_measure = performance.getEntriesByName("reaction")[0];
+        let response = this.page.state[this.conf.responseField];
 
-        console.debug("response:", this.page.state.response, reaction_measure.duration);
+        console.debug("response:", response, reaction_measure.duration);
 
-        let feedback = await this.data.response(this.page.state.response, reaction_measure.duration);
+        let feedback = await this.data.response(response, reaction_measure.duration);
         console.debug("feedback:", feedback);
         this.page.update({feedback});
 

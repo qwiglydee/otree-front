@@ -46,9 +46,15 @@ describe("ot-input", () => {
   describe("input", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<input data-ot-input="foo"></div>`, { parentNode: body });
+      elem = await fixture(`<input type="text" data-ot-input="foo"></div>`, { parentNode: body });
       page = new Page(body);
       page.init();
+    });
+
+    it("resets", async () => {
+      page.reset();
+      await elementUpdated(elem);
+      expect(elem.value).to.be.empty;
     });
 
     it("freezes", async () => {
@@ -73,6 +79,14 @@ describe("ot-input", () => {
       detail = (await oneEvent(page.root, "ot.update")).detail;
       expect(detail.changes).to.deep.eq({ foo: "123", error: undefined });
     });
+
+    it("triggers on 'Enter'", async () => {
+      elem.value = "123";
+      elem.dispatchEvent(new KeyboardEvent("keydown", { ...EVENT_DEFAULTS, code: "Enter" }));
+      await oneEvent(elem, "change");
+      detail = (await oneEvent(page.root, "ot.update")).detail;
+      expect(detail.changes).to.deep.eq({ foo: "123", error: undefined });
+    });
   });
 
   describe("select", () => {
@@ -84,6 +98,12 @@ describe("ot-input", () => {
       );
       page = new Page(body);
       page.init();
+    });
+
+    it("resets", async () => {
+      page.reset();
+      await elementUpdated(elem);
+      expect(elem.value).to.be.empty;
     });
 
     it("freezes", async () => {
@@ -116,6 +136,12 @@ describe("ot-input", () => {
       elem = await fixture(`<textarea data-ot-input="foo"></textarea>`, { parentNode: body });
       page = new Page(body);
       page.init();
+    });
+
+    it("resets", async () => {
+      page.reset();
+      await elementUpdated(elem);
+      expect(elem.value).to.be.empty;
     });
 
     it("freezes", async () => {

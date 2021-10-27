@@ -4,8 +4,10 @@ import { jspath_parse } from "../utils";
 export function install_otInput(root, page) {
     root.querySelectorAll("[data-ot-input]").forEach(elem => {
         const params = parse_params(elem);
+        root.addEventListener('ot.reset', (event) => handle_reset(event, elem));
         root.addEventListener('ot.freeze', (event) => handle_freeze(event, elem));
         if (params.trigger.change) elem.addEventListener('change', (event) => handle_change(event, page, elem, params));
+        if (params.trigger.change && (elem.type == 'text' || elem.tagName == 'TEXTAREA')) elem.addEventListener('keydown', (event) => handle_enter(event, page, elem, params));
         if (params.trigger.click) elem.addEventListener('click', (event) => handle_click(event, page, elem, params));
         if (params.trigger.touch) elem.addEventListener('touchend', (event) => handle_touch(event, page, elem, params));
         if (params.trigger.key) root.addEventListener('keydown', (event) => handle_key(event, page, elem, params)) ;
@@ -68,6 +70,12 @@ function handle_freeze(event, elem) {
     toggle_disabled(elem, frozen);
 }
 
+
+function handle_reset(event, elem) {
+    elem.value = null;
+}
+
+
 function handle_change(event, page, elem, params) {
     if (elem.disabled) return;
     let value = elem.value;
@@ -87,6 +95,17 @@ function handle_touch(event, page, elem, params) {
     event.preventDefault();
     page.response({ [params.field]: params.val });
 }
+
+function handle_enter(event, page, elem, params) {
+    if (elem.disabled) return;
+    if (event.code == 'Enter') {
+        setTimeout(() => elem.dispatchEvent(new Event('change', {
+            view: window,
+            bubbles: false,
+            cancelable: true})));
+        }
+}
+
 
 function handle_key(event, page, elem, params) {
     if (elem.disabled) return;

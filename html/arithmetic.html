@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <link rel="stylesheet" href="./generic.css" />
+  <link rel="stylesheet" href="./arithmetic.css" />
+</head>
+
+<body>
+  <div class="trial">
+    <div class="puzzle" data-ot-display="puzzle" data-ot-text="trial.equation"></div>
+    <div data-ot-start data-ot-key="Space">Press <kbd>Space</kbd> to start.</div>
+  </div>
+
+  <div class="response">
+    <p>
+      <input type="text" data-ot-input="answer">
+      <span data-ot-when="feedback==true" class="feedback valid char">✔</span>
+      <span data-ot-when="feedback==false" class="feedback invalid char">✘</span>
+    </p>
+    <div data-ot-when="error==frozen_input">Wait for a while...</div>
+  </div>
+
+  <progress data-ot-attr-max="progress.total" data-ot-attr-value="progress.current"></progress>
+
+  <script type="module" src="arithmetic.js"></script>
+</body>
+
+</html>
