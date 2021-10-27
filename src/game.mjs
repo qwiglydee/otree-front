@@ -9,6 +9,8 @@ import { Deferred } from "./utils";
  * - trialTimeout: time to auto skip trial after it displayed
  * - numIterations: total number of iterations
  * - gameTimeout: total timeout of all the game
+ * - responseComplete (bool): response completes trial and moves to next
+ * - progress ('trial' | 'response'): advance progress when trial shows or when response given
  *
  * Display sequence: array of phases
  * - name: name og phase, triggers event `ot.display(phase)` and switches `data-ot-display` directives
@@ -22,9 +24,11 @@ export class GenericGame {
         this.page = page;
         this.conf = {
             trialTimeout: 0,
-            trialPause: 1000,
+            trialPause: 0,
             numIterations: null,
-            gameTimeout: null
+            gameTimeout: null,
+            responseComplete: true,
+            progress: null
         };
         Object.assign(this.conf, conf);
 
@@ -91,6 +95,8 @@ export class GenericGame {
         this.page.update({trial});
         console.debug("trial:", trial);
 
+        if (this.conf.progress == 'trial') this.updateProgress();
+
         performance.clearMarks();
         performance.clearMeasures();
 
@@ -108,12 +114,12 @@ export class GenericGame {
 
     next() {
         if (this._running.state !== null) return; // stopped during some await
-        if (this.conf.numIterations) this.updateProgress();
         this._iter_timers.cancel();
         this._game_timers.delay('iter', () => this.iter(), this.conf.trialPause);
     }
 
     updateProgress() {
+        if (!this.conf.numIterations) return;
         this.progress = {
             current: this.data.iteration,
             total: this.conf.numIterations
@@ -139,7 +145,9 @@ export class GenericGame {
     }
 
     async onResponse() {
-        this._iter_timers.cancel();
+        if (this.conf.responseComplete) {
+            this._iter_timers.cancel();
+        }
 
         this.page.freeze();
 
@@ -152,7 +160,12 @@ export class GenericGame {
         let feedback = await this.data.response(this.page.state.response, reaction_measure.duration);
         console.debug("feedback:", feedback);
         this.page.update({feedback});
-        this.next();
+
+        if (this.conf.progress == 'response') this.updateProgress();
+
+        if (this.conf.responseComplete) {
+            this.next();
+        }
     }
 
     async onTimeout() {

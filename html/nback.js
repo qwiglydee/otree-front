@@ -1,29 +1,32 @@
 import { Page } from "../src/page";
 import { GenericGame } from "../src/game";
-import { DemoData } from "./generic_data";
+import { DemoData } from "./nback_data";
 import { toggle_display } from "../src/utils";
 
 const page = new Page();
-const data = new DemoData();
+const data = new DemoData({
+  n: 2,
+  length: 15,
+  chars: "ABCD"
+});
 const game = new GenericGame(
   data,
   page,
   {
-    trialTimeout: 5000,
-    trialPause: 1000,
-    numIterations: 5,
+    trialTimeout: 3000,
+    numIterations: 15,
     gameTimeout: 60000,
-    progress: 'response'
+    responseComplete: false,
+    progress: 'trial'
   },
   [
-    { display: "aim", duration: 1000 },
-    { display: "prime", duration: 500 },
-    { display: "pause", duration: 500 },
-    { display: "target", input: true },
+    { display: "stimulus", duration: 500 },
+    { display: null, input: true },
   ]
 );
 
 data.init();
+console.debug("sequence:", data.sequence);
 page.init();
 
 page.reset();

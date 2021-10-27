@@ -12,7 +12,6 @@ const game = new GenericGame(
     trialTimeout: 3000,
     trialPause: 1000,
     numIterations: 5,
-    // gameTimeout: 60000,
   },
   [
     { display: "aim", duration: 1000 },

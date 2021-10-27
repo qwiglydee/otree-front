@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <link rel="stylesheet" href="./generic.css" />
+  <link rel="stylesheet" href="./nback.css" />
+</head>
+
+<body>
+  <div class="trial">
+    <div class="stimulus" data-ot-display="stimulus" data-ot-text="trial.char"></div>
+    <div data-ot-start data-ot-key="Space">Press <kbd>Space</kbd> to start.</div>
+  </div>
+
+  <div class="response">
+    <span data-ot-when="feedback==true" class="feedback valid char">✔</span>
+    <span data-ot-when="feedback==false" class="feedback invalid char">✘</span>
+  </div>
+
+  <progress data-ot-attr-max="progress.total" data-ot-attr-value="progress.current"></progress>
+
+  <p>Press <kbd data-ot-key="Enter" data-ot-input="response=true">Enter</kbd> when a char matches that n steps back</p>
+
+  <script type="module" src="nback.js"></script>
+  <script type="module" src="nback.js"></script>
+</body>
+
+</html>
