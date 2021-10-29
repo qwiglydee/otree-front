@@ -12,268 +12,224 @@ describe("ot-input", () => {
   let page, body, elem, detail;
 
   describe("errors", () => {
-    it("for invalid path", async () => {
+    it("invalid path", async () => {
       elem = await fixture(`<input data-ot-input=".foo"></div>`, { parentNode: body });
-      page = new Page();
-      expect(() => page.init()).to.throw();
+      expect(() => new Page(document.body)).to.throw();
     });
 
-    it("for invalid chars", async () => {
+    it("invalid chars", async () => {
       elem = await fixture(`<input data-ot-input="foo/bar"></div>`, { parentNode: body });
-      page = new Page();
-      expect(() => page.init()).to.throw();
+      expect(() => new Page(document.body)).to.throw();
     });
 
-    it("for invalid expr for inputs", async () => {
+    it("invalid expr for inputs", async () => {
       elem = await fixture(`<input data-ot-input="foo=bar"></div>`);
-      page = new Page();
-      expect(() => page.init()).to.throw();
+      expect(() => new Page(document.body)).to.throw();
     });
 
-    it("for invalid expr for button", async () => {
+    it("invalid expr for button", async () => {
       elem = await fixture(`<button data-ot-input="foo"></button>`);
-      page = new Page();
-      expect(() => page.init()).to.throw();
+      expect(() => new Page(document.body)).to.throw();
     });
 
-    it("for invalid expr for custom", async () => {
+    it("invalid expr for custom", async () => {
       elem = await fixture(`<div data-ot-click data-ot-input="foo"></div>`);
-      page = new Page();
-      expect(() => page.init()).to.throw();
+      expect(() => new Page(document.body)).to.throw();
+    });
+
+    it("missing trigger", async () => {
+      elem = await fixture(`<div data-ot-input="foo=val"></div>`);
+      expect(() => new Page(document.body)).to.throw();
     });
   });
 
   describe("input", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<input type="text" data-ot-input="foo"></div>`, { parentNode: body });
+      elem = await fixture(`<input type="text" data-ot-input="fld"></div>`, { parentNode: body });
       page = new Page(body);
-      page.init();
     });
 
     it("resets", async () => {
       page.reset();
       await elementUpdated(elem);
-      expect(elem.value).to.be.empty;
+      expect(elem).to.have.attr("disabled");
+      expect(elem).to.have.class("ot-disabled");
     });
 
-    it("freezes", async () => {
-      page.unfreeze();
-      page.freeze();
+    it("switches", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.toggleInput(true);
+      await elementUpdated(elem);
+      expect(elem).not.to.have.attr("disabled");
+      expect(elem).not.to.have.class("ot-disabled");
+
+      page.toggleInput(false);
       await elementUpdated(elem);
       expect(elem).to.have.attr("disabled");
       expect(elem).to.have.class("ot-disabled");
     });
 
-    it("unfreezes", async () => {
-      page.freeze();
-      page.unfreeze();
-      await elementUpdated(elem);
-      expect(elem).not.to.have.attr("disabled");
-      expect(elem).not.to.have.class("ot-disabled");
-    });
-
     it("triggers on change", async () => {
+      page.toggleInput(true);
+      await elementUpdated(elem);
       elem.value = "123";
       elem.dispatchEvent(new InputEvent("change"));
-      detail = (await oneEvent(page.root, "ot.update")).detail;
-      expect(detail.changes).to.deep.eq({ foo: "123", error: undefined });
+      detail = (await oneEvent(page.root, "ot.response")).detail;
+      expect(detail).to.deep.eq({ page, fld: "123" });
+      await oneEvent(page.root, "ot.update");
     });
 
     it("triggers on 'Enter'", async () => {
+      page.toggleInput(true);
+      await elementUpdated(elem);
       elem.value = "123";
       elem.dispatchEvent(new KeyboardEvent("keydown", { ...EVENT_DEFAULTS, code: "Enter" }));
-      await oneEvent(elem, "change");
-      detail = (await oneEvent(page.root, "ot.update")).detail;
-      expect(detail.changes).to.deep.eq({ foo: "123", error: undefined });
+      detail = (await oneEvent(page.root, "ot.response")).detail;
+      expect(detail).to.deep.eq({ page, fld: "123" });
+      await oneEvent(page.root, "ot.update");
     });
   });
 
-  describe("select", () => {
+  describe("input nested field", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(
-        `<select data-ot-input="foo"><option value="foo1"></option><option value="foo2"></option><option value="foo2"></option></select>`,
-        { parentNode: body }
-      );
+      elem = await fixture(`<input type="text" data-ot-input="obj.sub.fld"></div>`, { parentNode: body });
       page = new Page(body);
-      page.init();
-    });
-
-    it("resets", async () => {
-      page.reset();
-      await elementUpdated(elem);
-      expect(elem.value).to.be.empty;
-    });
-
-    it("freezes", async () => {
-      page.unfreeze();
-      page.freeze();
-      await elementUpdated(elem);
-      expect(elem).to.have.attr("disabled");
-      expect(elem).to.have.class("ot-disabled");
-    });
-
-    it("unfreezes", async () => {
-      page.freeze();
-      page.unfreeze();
-      await elementUpdated(elem);
-      expect(elem).not.to.have.attr("disabled");
-      expect(elem).not.to.have.class("ot-disabled");
     });
 
     it("triggers on change", async () => {
-      elem.querySelector("option:nth-child(2)").selected = true;
-      elem.dispatchEvent(new InputEvent("change", EVENT_DEFAULTS));
-      detail = (await oneEvent(page.root, "ot.update")).detail;
-      expect(detail.changes).to.deep.eq({ foo: "foo2", error: undefined });
-    });
-  });
-
-  describe("textarea", () => {
-    beforeEach(async () => {
-      body = document.createElement("body");
-      elem = await fixture(`<textarea data-ot-input="foo"></textarea>`, { parentNode: body });
-      page = new Page(body);
-      page.init();
-    });
-
-    it("resets", async () => {
-      page.reset();
+      page.toggleInput(true);
       await elementUpdated(elem);
-      expect(elem.value).to.be.empty;
-    });
-
-    it("freezes", async () => {
-      page.unfreeze();
-      page.freeze();
-      await elementUpdated(elem);
-      expect(elem).to.have.attr("disabled");
-      expect(elem).to.have.class("ot-disabled");
-    });
-
-    it("unfreezes", async () => {
-      page.freeze();
-      page.unfreeze();
-      await elementUpdated(elem);
-      expect(elem).not.to.have.attr("disabled");
-      expect(elem).not.to.have.class("ot-disabled");
-    });
-
-    it("triggers on change", async () => {
       elem.value = "123";
-      elem.dispatchEvent(new InputEvent("change", EVENT_DEFAULTS));
-      detail = (await oneEvent(page.root, "ot.update")).detail;
-      expect(detail.changes).to.deep.eq({ foo: "123", error: undefined });
+      elem.dispatchEvent(new InputEvent("change"));
+      detail = (await oneEvent(page.root, "ot.response")).detail;
+      expect(detail).to.deep.eq({ page, obj: { sub: { fld: "123" } } });
+      await oneEvent(page.root, "ot.update") ;
     });
   });
 
   describe("button", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<button data-ot-input="foo=123"></button>`, { parentNode: body });
+      elem = await fixture(`<button data-ot-input="fld=foo"></button>`, { parentNode: body });
       page = new Page(body);
-      page.init();
     });
 
-    it("freezes", async () => {
-      page.unfreeze();
-      page.freeze();
+    it("resets", async () => {
+      page.reset();
       await elementUpdated(elem);
-      expect(elem.disabled).to.be.true;
+      expect(elem).to.have.attr("disabled");
       expect(elem).to.have.class("ot-disabled");
     });
 
-    it("unfreezes", async () => {
-      page.freeze();
-      page.unfreeze();
+    it("switches", async () => {
+      page.reset();
       await elementUpdated(elem);
-      expect(elem.disabled).to.be.false;
+
+      page.toggleInput(true);
+      await elementUpdated(elem);
+      expect(elem).not.to.have.attr("disabled");
       expect(elem).not.to.have.class("ot-disabled");
+
+      page.toggleInput(false);
+      await elementUpdated(elem);
+      expect(elem).to.have.attr("disabled");
+      expect(elem).to.have.class("ot-disabled");
     });
 
     it("triggers on click", async () => {
+      page.toggleInput(true);
+      await elementUpdated(elem);
       elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
-      detail = (await oneEvent(page.root, "ot.update")).detail;
-      expect(detail.changes).to.deep.eq({ foo: "123", error: undefined });
+      detail = (await oneEvent(page.root, "ot.response")).detail;
+      expect(detail).to.deep.eq({ page, fld: "foo" });
+      await oneEvent(page.root, "ot.update");
     });
   });
 
   describe("custom", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-click data-ot-touch data-ot-key="Space" data-ot-input="foo=123"></div>`, {
+      elem = await fixture(`<div data-ot-click data-ot-touch data-ot-key="Space" data-ot-input="fld=foo"></div>`, {
         parentNode: body,
       });
       page = new Page(body);
-      page.init();
     });
 
-    it("freezes", async () => {
-      page.unfreeze();
-      page.freeze();
+    it("resets", async () => {
+      page.reset();
       await elementUpdated(elem);
-      expect(elem.disabled).to.be.true;
       expect(elem).to.have.class("ot-disabled");
     });
 
-    it("unfreezes", async () => {
-      page.freeze();
-      page.unfreeze();
+    it("switches", async () => {
+      page.reset();
       await elementUpdated(elem);
-      expect(elem.disabled).to.be.false;
+
+      page.toggleInput(true);
+      await elementUpdated(elem);
       expect(elem).not.to.have.class("ot-disabled");
+
+      page.toggleInput(false);
+      await elementUpdated(elem);
+      expect(elem).to.have.class("ot-disabled");
     });
 
     it("triggers on key", async () => {
-      page.unfreeze();
+      page.toggleInput(true);
       await elementUpdated(elem);
       page.root.dispatchEvent(new KeyboardEvent("keydown", { ...EVENT_DEFAULTS, code: "Space" }));
-      detail = (await oneEvent(page.root, "ot.update")).detail;
-      expect(detail.changes).to.deep.eq({ foo: "123", error: undefined });
+      detail = (await oneEvent(page.root, "ot.response")).detail;
+      expect(detail).to.deep.eq({ page, fld: "foo" });
+      await oneEvent(page.root, "ot.update");
     });
 
     it("triggers on touch", async () => {
-      page.unfreeze();
+      page.toggleInput(true);
       await elementUpdated(elem);
       elem.dispatchEvent(new TouchEvent("touchend", EVENT_DEFAULTS));
-      detail = (await oneEvent(page.root, "ot.update")).detail;
-      expect(detail.changes).to.deep.eq({ foo: "123", error: undefined });
+      detail = (await oneEvent(page.root, "ot.response")).detail;
+      expect(detail).to.deep.eq({ page, fld: "foo" });
+      await oneEvent(page.root, "ot.update");
     });
 
     it("triggers on click", async () => {
-      page.unfreeze();
+      page.toggleInput(true);
       await elementUpdated(elem);
       elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
-      detail = (await oneEvent(page.root, "ot.update")).detail;
-      expect(detail.changes).to.deep.eq({ foo: "123", error: undefined });
+      detail = (await oneEvent(page.root, "ot.response")).detail;
+      expect(detail).to.deep.eq({ page, fld: "foo" });
+      await oneEvent(page.root, "ot.update");
     });
 
     it("errors frozen on key", async () => {
-      page.freeze();
+      page.toggleInput(false);
       await elementUpdated(elem);
       page.root.dispatchEvent(new KeyboardEvent("keydown", { ...EVENT_DEFAULTS, code: "Space" }));
-      await oneEvent(page.root, "ot.error");
-      detail = (await oneEvent(page.root, "ot.update")).detail;
-      expect(detail.changes).to.deep.eq({ error: "frozen_input" });
+      detail = (await oneEvent(page.root, "ot.error")).detail;
+      expect(detail).to.deep.eq({ page, error: "frozen" });
+      await oneEvent(page.root, "ot.update");
     });
 
     it("errors frozen on touch", async () => {
-      page.freeze();
+      page.toggleInput(false);
       await elementUpdated(elem);
       elem.dispatchEvent(new TouchEvent("touchend", EVENT_DEFAULTS));
-      await oneEvent(page.root, "ot.error");
-      detail = (await oneEvent(page.root, "ot.update")).detail;
-      expect(detail.changes).to.deep.eq({ error: "frozen_input" });
+      detail = (await oneEvent(page.root, "ot.error")).detail;
+      expect(detail).to.deep.eq({ page, error: "frozen" });
+      await oneEvent(page.root, "ot.update");
     });
 
     it("errors frozen on click", async () => {
-      page.freeze();
+      page.toggleInput(false);
       await elementUpdated(elem);
       elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
-      await oneEvent(page.root, "ot.error");
-      detail = (await oneEvent(page.root, "ot.update")).detail;
-      expect(detail.changes).to.deep.eq({ error: "frozen_input" });
+      detail = (await oneEvent(page.root, "ot.error")).detail;
+      expect(detail).to.deep.eq({ page, error: "frozen" });
+      await oneEvent(page.root, "ot.update");
     });
   });
 });

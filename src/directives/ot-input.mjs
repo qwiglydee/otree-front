@@ -1,115 +1,125 @@
-import { jspath_parse } from "../utils";
+import { JSPath } from "../jspath";
 
+import { toggleDisabled, isDisabled } from "../utils";
 
 export function install_otInput(root, page) {
-    root.querySelectorAll("[data-ot-input]").forEach(elem => {
-        const params = parse_params(elem);
-        root.addEventListener('ot.reset', (event) => handle_reset(event, elem));
-        root.addEventListener('ot.freeze', (event) => handle_freeze(event, elem));
-        if (params.trigger.change) elem.addEventListener('change', (event) => handle_change(event, page, elem, params));
-        if (params.trigger.change && (elem.type == 'text' || elem.tagName == 'TEXTAREA')) elem.addEventListener('keydown', (event) => handle_enter(event, page, elem, params));
-        if (params.trigger.click) elem.addEventListener('click', (event) => handle_click(event, page, elem, params));
-        if (params.trigger.touch) elem.addEventListener('touchend', (event) => handle_touch(event, page, elem, params));
-        if (params.trigger.key) root.addEventListener('keydown', (event) => handle_key(event, page, elem, params)) ;
-    });
+  root.querySelectorAll("[data-ot-input]").forEach((elem) => {
+    const params = parse_params(elem);
+    root.addEventListener("ot.reset", (event) => handle_reset(event, elem));
+    root.addEventListener("ot.input", (event) => handle_phase(event, elem));
+    if (params.trigger.change) {
+        elem.addEventListener("change", (event) => handle_change(event, page, elem, params));
+    }
+    if (params.trigger.change && (elem.type == "text" || elem.tagName == "TEXTAREA")) {
+      elem.addEventListener("keydown", (event) => handle_enter(event, page, elem, params));
+    }
+    if (params.trigger.click) {
+        elem.addEventListener("click", (event) => handle_click(event, page, elem, params));
+    }
+    if (params.trigger.touch) {
+        elem.addEventListener("touchend", (event) => handle_touch(event, page, elem, params));
+    }
+    if (params.trigger.key) {
+        root.addEventListener("keydown", (event) => handle_key(event, page, elem, params));
+    }
+  });
 }
 
-
 function parse_trigger(elem) {
-    return {
-        click: 'otClick' in elem.dataset,
-        touch: 'otTouch' in elem.dataset,
-        key: elem.dataset.otKey,
-        change: false
-    };
+  return {
+    click: "otClick" in elem.dataset || elem.tagName == "BUTTON",
+    touch: "otTouch" in elem.dataset,
+    key: "otKey" in elem.dataset ? elem.dataset.otKey : false,
+    change: (elem.tagName == "INPUT" || elem.tagName == "SELECT" || elem.tagName == "TEXTAREA"),
+  };
 }
 
 function parse_params(elem) {
-    const params = {}
-    params.trigger = parse_trigger(elem);
+  const match = elem.dataset.otInput.match(/^([\w.]+)(=(.+))?$/);
+  if (!match) throw new Error(`Invalid expression for input: ${elem.dataset.otInput}`);
 
-    const match = elem.dataset.otInput.match(/^([\w.]+)(=(.+))?$/);
-    if (!match) throw new Error(`Invalid expression for input: ${elem.dataset.otInput}`);
+  let ref = new JSPath(match[1]);
 
-    let path = jspath_parse(match[1]);
-    if (path.length != 1) throw new Error('Nested input var not supported yet');
-    params.field = path[0];
+  let val = match[3];
+  if (val === "true") val = true;
+  if (val === "false") val = false;
 
-    let val = match[3];
-    if (val === "true") val = true;
-    if (val === "false") val = false;
-    params.val = val;
+  let trigger = parse_trigger(elem);
 
-    const tag = elem.tagName;
+  const tag = elem.tagName;
 
-    if (tag == 'BUTTON') {
-        params.trigger.click = true;
-        if (val === undefined) throw new Error(`Button require input value: ${elem.dataset.otInput}`);
-    }
-    else if (tag == 'INPUT' || tag == 'SELECT' || tag == 'TEXTAREA') {
-        params.trigger.change = true;
-        if (val !== undefined) throw new Error(`Built-in input cant use value: ${elem.dataset.otInput}`);
-    }
-    else {
-        if (val === undefined) throw new Error(`Custom input requires input value: ${elem.dataset.otInput}`);
-    }
+  if (Object.values(trigger).every((v) => !v)) {
+    throw new Error(`Input requires trigger: ${elem.dataset.otInput}`);
+  }
 
-    return params;
+  if (trigger.change) {
+    if (val !== undefined) throw new Error(`Built-in inputs don't override value: ${elem.dataset.otInput}`);
+  } else {
+    if (val === undefined) throw new Error(`Input requires value: ${elem.dataset.otInput}`);
+  }
+
+  return { ref, val, trigger };
 }
 
-
-
-function toggle_disabled(elem, disabled) {
-    elem.disabled = disabled;
-    elem.classList.toggle('ot-disabled', disabled);
+function handle_phase(event, elem) {
+  const { phase } = event.detail;
+  toggleDisabled(elem, !phase);
 }
-
-
-function handle_freeze(event, elem) {
-    const { frozen } = event.detail;
-    toggle_disabled(elem, frozen);
-}
-
 
 function handle_reset(event, elem) {
-    elem.value = null;
+  toggleDisabled(elem, true);
+  elem.value = null;
 }
 
-
 function handle_change(event, page, elem, params) {
-    if (elem.disabled) return;
-    let value = elem.value;
-    if (value === "true") val = true;
-    if (value === "false") val = false;
-    page.response({ [params.field]: value });
+  if (elem.disabled) {
+    page.error("frozen");
+    return;
+  }
+  let value = elem.value;
+  if (value === "true") val = true;
+  if (value === "false") val = false;
+  page.response(params.ref.expand(value));
 }
 
 function handle_click(event, page, elem, params) {
-    if (elem.disabled) return;
-    event.preventDefault();
-    page.response({ [params.field]: params.val });
+  if (isDisabled(elem)) {
+    page.error("frozen");
+    return;
+  }
+  event.preventDefault();
+  page.response(params.ref.expand(params.val));
 }
 
 function handle_touch(event, page, elem, params) {
-    if (elem.disabled) return;
-    event.preventDefault();
-    page.response({ [params.field]: params.val });
+  if (isDisabled(elem)) {
+    page.error("frozen");
+    return;
+  }
+  event.preventDefault();
+  page.response(params.ref.expand(params.val));
 }
 
 function handle_enter(event, page, elem, params) {
-    if (elem.disabled) return;
-    if (event.code == 'Enter') {
-        setTimeout(() => elem.dispatchEvent(new Event('change', {
-            view: window,
-            bubbles: false,
-            cancelable: true})));
-        }
+  if (event.code == "Enter") {
+    setTimeout(() =>
+      elem.dispatchEvent(
+        new Event("change", {
+          view: window,
+          bubbles: false,
+          cancelable: true,
+        })
+      )
+    );
+  }
 }
 
-
 function handle_key(event, page, elem, params) {
-    if (elem.disabled) return;
-    if (event.code != params.trigger.key) return;
-    event.preventDefault();
-    page.response({ [params.field]: params.val });
+  if (event.code != params.trigger.key) return;
+  if (isDisabled(elem)) {
+    page.error("frozen");
+    return;
+  }
+  event.preventDefault();
+  page.response(params.ref.expand(params.val));
 }

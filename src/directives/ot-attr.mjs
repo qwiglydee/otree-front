@@ -1,5 +1,6 @@
-import { jspath_extract, jspath_parse, toggle_display } from "../utils";
+import { JSPath } from "../jspath";
 
+import { setAttr } from "../utils";
 
 const ALLOWED_ATTRIBS = [
     'disabled', 'hidden',
@@ -18,40 +19,40 @@ export function install_otAttr(root) {
 
 
 function parse_params(elem) {
-    let params = {};
-    for (let item in elem.dataset) {
-        if (item.startsWith('otAttr')) {
-            params[item.slice(6).toLocaleLowerCase()] = jspath_parse(elem.dataset[item]);
+    let params = new Map();
+    for (let key in elem.dataset) {
+        if (key.startsWith('otAttr')) {
+            params.set(key.slice(6).toLocaleLowerCase(), new JSPath(elem.dataset[key]));
         }
     }
     return params;
 }
 
-function eval_attrs(params, state) {
-    let values = {};
-    for (const [k, path] of Object.entries(params)) {
-        values[k] = jspath_extract(path, state);
+function reset_attrs(elem, params) {
+    for (let k in params.keys()) {
+        elem.removeAttribute(k);
     }
+}
+
+function eval_attrs(params, changes) {
+    let values = new Map();
+    params.forEach((ref, key) => {
+        let val = ref.extract(changes);
+        if (val === undefined) return; // skipping
+        values.set(key, val);
+    });
     return values;
 }
 
-function set_attrs(elem, attrs) {
-    for (const [k, val] of Object.entries(attrs)) {
-        if (val === undefined || val === null) {
-            elem.removeAttribute(k);
-        } else {
-            elem.setAttribute(k, val);
-        }
-    }
+function set_attrs(elem, values) {
+    values.forEach((val, key) => setAttr(elem, key, val));
 }
 
 function handle_reset(event, elem, params) {
-    const { page } = event.detail;
-    set_attrs(elem, eval_attrs(params, page.state));
+    reset_attrs(elem, params);
 }
 
 function handle_update(event, elem, params) {
-    const { page, changes } = event.detail;
-    // TODO: check if attrs in update
-    set_attrs(elem, eval_attrs(params, page.state));
+    const { changes } = event.detail;
+    set_attrs(elem, eval_attrs(params, changes));
 }

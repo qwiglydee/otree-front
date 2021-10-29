@@ -3,88 +3,160 @@ import { expect, fixture, oneEvent } from "@open-wc/testing";
 import { Page } from "../src/page";
 
 describe("Page controller", () => {
-  let body, elem, page;
-
-  describe("initializes", () => {
-    it("with given root elem", async () => {
-      body = document.createElement("body");
-      elem = await fixture(`<div></div>`);
-      page = new Page(body);
-      expect(page.root).to.equal(body);
-    });
-
-    it("with document body", async () => {
-      body = document.body;
-      page = new Page();
-      expect(page.root).to.equal(body);
-    });
-
-    it("with empty initial state", async () => {
-      page = new Page();
-      expect(page.state).to.deep.equal({});
-    });
-  });
-});
-
-describe("Page controller", () => {
   let body, elem, page, detail;
 
-  beforeEach(async () => {
-    body = document.createElement("body");
-    elem = await fixture(`<div></div>`, { parentNode: body });
-    page = new Page(body);
-    detail = null;
+  describe("fires events", () => {
+    beforeEach(async () => {
+      body = document.createElement("body");
+      elem = await fixture(`<div></div>`, { parentNode: body });
+      page = new Page(body);
+    });
+
+    it("arbitrary", async () => {
+      page.fire("foo", { bar: "Bar" });
+      detail = (await oneEvent(body, "ot.foo")).detail;
+      expect(detail).to.deep.equal({ page, bar: "Bar" });
+    });
+
+    it("reset", async () => {
+      page.reset();
+      detail = (await oneEvent(body, "ot.reset")).detail;
+      expect(detail).to.deep.equal({ page: page });
+    });
+
+    it("update", async () => {
+      page.update({ foo: "Foo" });
+      detail = (await oneEvent(body, "ot.update")).detail;
+      expect(detail).to.deep.equal({ page, changes: { foo: "Foo" } });
+    });
+
+    it("response", async () => {
+      page.toggleInput(true);
+      page.response({ foo: "Foo" });
+      detail = (await oneEvent(body, "ot.response")).detail;
+      expect(detail).to.deep.equal({ page, foo: "Foo" });
+      detail = (await oneEvent(body, "ot.update")).detail;
+      expect(detail).to.deep.equal({ page, changes: { foo: "Foo" } });
+    });
+
+    it("error", async () => {
+      page.error("foo");
+      detail = (await oneEvent(body, "ot.error")).detail;
+      expect(detail).to.deep.equal({ page, error: "foo" });
+      detail = (await oneEvent(body, "ot.update")).detail;
+      expect(detail).to.deep.equal({ page, changes: { error: "foo" } });
+    });
+
+    it("toggle display", async () => {
+      page.toggleDisplay("foo");
+      detail = (await oneEvent(body, "ot.display")).detail;
+      expect(detail).to.deep.equal({ page, phase: "foo" });
+    });
+
+    it("toggle input", async () => {
+      page.toggleInput("foo");
+      detail = (await oneEvent(body, "ot.input")).detail;
+      expect(detail).to.deep.equal({ page, phase: "foo" });
+    });
+
+    it("timeout", async () => {
+      page.timeout("foo");
+      detail = (await oneEvent(body, "ot.timeout")).detail;
+      expect(detail).to.deep.equal({ page: page });
+    });
   });
 
-  it("starts", async () => {
-    page.start();
-    detail = (await oneEvent(body, "ot.start")).detail;
-    expect(detail).to.deep.equal({ page: page });
-  });
+  describe("timing", () => {
+    beforeEach(async () => {
+      body = document.createElement("body");
+      elem = await fixture(`<div></div>`, { parentNode: body });
+    });
 
-  it("resets", async () => {
-    page.reset();
-    expect(page.state).to.deep.equal({});
-    detail = (await oneEvent(body, "ot.reset")).detail;
-    expect(detail).to.deep.equal({ page: page });
-  });
+    it("runs", async () => {
+      page = new Page(body);
+      page.run();
+      detail = (await oneEvent(body, "ot.run")).detail;
+      expect(detail).to.deep.equal({ page: page });
+    });
 
-  it("updates empty", async () => {
-    page.update({ foo: "Foo1", bar: "Bar1" });
-    expect(page.state).to.deep.equal({ foo: "Foo1", bar: "Bar1" });
-    detail = (await oneEvent(body, "ot.update")).detail;
-    expect(detail).to.deep.equal({ page: page, changes: { foo: "Foo1", bar: "Bar1" } });
-  });
+    it("runs normal sequence", async () => {
+      page = new Page(body, [
+        { time: 0, display: "foo" },
+        { time: 100, display: null },
+        { time: 200, input: true },
+        { time: 300, input: false },
+        { time: 400, timeout: 500},
+      ]);
 
-  it("updates existing", async () => {
-    page.state = { foo: "Foo1", bar: "Bar1" };
-    page.update({ bar: "Bar2", baz: "Baz2" });
-    expect(page.state).to.deep.equal({ foo: "Foo1", bar: "Bar2", baz: "Baz2" });
-    detail = (await oneEvent(body, "ot.update")).detail;
-    expect(detail).to.deep.equal({ page: page, changes: { bar: "Bar2", baz: "Baz2" } });
-  });
+      page.run();
+      await oneEvent(body, "ot.run");
+      const t0 = Date.now();
 
-  it("displays", async () => {
-    page.display('foo');
-    detail = (await oneEvent(body, "ot.display")).detail;
-    expect(detail).to.deep.equal({ page: page, phase: 'foo' });
-  });
+      detail = (await oneEvent(body, "ot.display")).detail;
+      expect(Date.now() - t0).to.be.within(0, 10);
+      expect(detail).to.deep.equal({ page, phase: "foo" });
 
-  it("displays null", async () => {
-    page.display();
-    detail = (await oneEvent(body, "ot.display")).detail;
-    expect(detail).to.deep.equal({ page: page, phase: undefined});
-  });
+      detail = (await oneEvent(body, "ot.display")).detail;
+      expect(Date.now() - t0).to.be.within(99, 110);
+      expect(detail).to.deep.equal({ page, phase: null });
 
-  it("freezes", async () => {
-    page.freeze();
-    detail = (await oneEvent(body, "ot.freeze")).detail;
-    expect(detail).to.deep.equal({ page: page, frozen: true });
-  });
+      detail = (await oneEvent(body, "ot.input")).detail;
+      expect(Date.now() - t0).to.be.within(199, 210);
+      expect(detail).to.deep.equal({ page, phase: true });
 
-  it("unfreezes", async () => {
-    page.unfreeze();
-    detail = (await oneEvent(body, "ot.freeze")).detail;
-    expect(detail).to.deep.equal({ page: page, frozen: false });
+      detail = (await oneEvent(body, "ot.input")).detail;
+      expect(Date.now() - t0).to.be.within(299, 310);
+      expect(detail).to.deep.equal({ page, phase: false });
+
+      detail = (await oneEvent(body, "ot.timeout")).detail;
+      expect(Date.now() - t0).to.be.within(899, 910);
+      expect(detail).to.deep.equal({ page: page });
+    });
+
+    it("runs combo sequence", async () => {
+      page = new Page(body, [
+        { time: 0, display: "foo", input: true, timeout: 200},
+        { time: 100, display: null, input: false },
+      ]);
+
+      page.run();
+      await oneEvent(body, "ot.run");
+      const t0 = Date.now();
+
+      detail = (await oneEvent(body, "ot.display")).detail;
+      expect(Date.now() - t0).to.be.within(0, 10);
+      expect(detail).to.deep.equal({ page, phase: "foo" });
+
+      detail = (await oneEvent(body, "ot.input")).detail;
+      expect(Date.now() - t0).to.be.within(0, 10);
+      expect(detail).to.deep.equal({ page, phase: true });
+
+      detail = (await oneEvent(body, "ot.display")).detail;
+      expect(Date.now() - t0).to.be.within(100, 110);
+      expect(detail).to.deep.equal({ page, phase: null });
+
+      detail = (await oneEvent(body, "ot.input")).detail;
+      expect(Date.now() - t0).to.be.within(100, 110);
+      expect(detail).to.deep.equal({ page, phase: false });
+
+      detail = (await oneEvent(body, "ot.timeout")).detail;
+      expect(Date.now() - t0).to.be.within(200, 210);
+      expect(detail).to.deep.equal({ page: page });
+    });
+
+    it("runs just timeout", async () => {
+      page = new Page(body, [
+        { timeout: 500 },
+      ]);
+
+      page.run();
+      await oneEvent(body, "ot.run");
+      const t0 = Date.now();
+
+      detail = (await oneEvent(body, "ot.timeout")).detail;
+      expect(Date.now() - t0).to.be.within(500, 510);
+      expect(detail).to.deep.equal({ page: page });
+    });
+
   });
 });

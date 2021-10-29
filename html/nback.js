@@ -3,7 +3,7 @@ import { GenericGame } from "../src/game";
 import { DemoData } from "./nback_data";
 import { toggle_display } from "../src/utils";
 
-const page = new Page();
+const
 const data = new DemoData({
   n: 2,
   length: 15,
@@ -27,7 +27,6 @@ const game = new GenericGame(
 
 data.init();
 console.debug("sequence:", data.sequence);
-page.init();
 
 page.reset();
 page.root.addEventListener('ot.start', async () => {

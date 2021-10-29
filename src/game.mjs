@@ -76,7 +76,7 @@ export class GenericGame {
 
         this.page.root.removeEventListener("ot.update", this._update_handler);
         this.page.reset();
-        this.page.freeze();
+        this.page.toggleInput(false);
 
         if (reason instanceof Error) {
             this._running.reject(reason);
@@ -87,8 +87,8 @@ export class GenericGame {
     }
 
     async iter() {
-        this.page.reset({progress: this.progress});
-        this.page.freeze();
+        this.page.reset();
+        this.page.toggleInput(false);
 
         if (this.conf.numIterations && this.data.iteration == this.conf.numIterations) {
             this.stop("gameover");
@@ -133,13 +133,13 @@ export class GenericGame {
     }
 
     unfreezeInputs() {
-        this.page.unfreeze();
+        this.page.toggleInput(true);
         performance.mark("unfreeze");
     }
 
     displayPhase(phase) {
         console.debug("display:", phase);
-        this.page.display(phase);
+        this.page.toggleDisplay(phase);
         performance.mark(`display-${phase}`);
     }
 
@@ -153,7 +153,7 @@ export class GenericGame {
             this._iter_timers.cancel();
         }
 
-        this.page.freeze();
+        this.page.toggleInput(false);
 
         performance.mark("response");
         performance.measure("reaction", "unfreeze", "response");
@@ -176,7 +176,7 @@ export class GenericGame {
     async onTimeout() {
         this._iter_timers.cancel();
 
-        this.page.freeze();
+        this.page.toggleInput(false);
 
         // await this.data.response(null, null);
         this.page.update({feedback: 'timeout'});

@@ -1,41 +1,37 @@
-import { jspath_extract, jspath_parse } from "../utils";
+import { JSPath } from "../jspath";
 
+import { setClasses } from "../utils";
 
 export function install_otClass(root) {
-    root.querySelectorAll("[data-ot-class]").forEach(elem => {
-        const params = parse_params(elem);
-        root.addEventListener('ot.reset', (event) => handle_reset(event, elem, params));
-        root.addEventListener('ot.update', (event) => handle_update(event, elem, params));
-    });
+  root.querySelectorAll("[data-ot-class]").forEach((elem) => {
+    const params = parse_params(elem);
+    root.addEventListener("ot.reset", (event) => handle_reset(event, elem, params));
+    root.addEventListener("ot.update", (event) => handle_update(event, elem, params));
+  });
 }
-
 
 function parse_params(elem) {
-    let path = jspath_parse(elem.dataset.otClass);
-    let defaults = Array.from(elem.classList);
-    return { path, defaults };
+  return {
+    ref: new JSPath(elem.dataset.otClass),
+    defaults: Array.from(elem.classList),
+  };
 }
 
-function eval_class(params, state) {
-    let _var = jspath_extract(params.path, state);
-    return _var;
-}
-
-function set_class(elem, defaults, cls) {
-    elem.classList.remove(...elem.classList);
-    elem.classList.add(...defaults);
-    if (cls !== undefined) {
-        elem.classList.add(cls);
-    }
+function eval_classes(params, changes) {
+  let val = params.ref.extract(changes);
+  let classes = params.defaults.slice();
+  if (val === undefined) return undefined; // skip changing
+  if (!!val) {
+    classes.push(val);
+  }
+  return classes;
 }
 
 function handle_reset(event, elem, params) {
-    const { page } = event.detail;
-    set_class(elem, params.defaults, eval_class(params, page.state));
+  setClasses(elem, params.defaults);
 }
 
 function handle_update(event, elem, params) {
-    const { page, changes } = event.detail;
-    if (!(params.path[0] in changes)) return;
-    set_class(elem, params.defaults, eval_class(params, page.state));
+  const { changes } = event.detail;
+  setClasses(elem, eval_classes(params, changes));
 }

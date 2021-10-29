@@ -9,7 +9,7 @@ const EVENT_DEFAULTS = {
   };
 
 
-describe("ot-input", () => {
+describe("ot-start", () => {
   let body, page, elem;
 
   beforeEach(async () => {
@@ -18,28 +18,24 @@ describe("ot-input", () => {
         `<div data-ot-click data-ot-touch data-ot-key="Space" data-ot-start></div>`,
         { parentNode: body });
     page = new Page(body);
-    page.init();
   });
 
   it("triggers on key", async () => {
     page.root.dispatchEvent(new KeyboardEvent("keydown", { ...EVENT_DEFAULTS, code: "Space" }));
     await oneEvent(page.root, "ot.start");
+    expect(elem).not.to.be.displayed;
   });
 
   it("triggers on touch", async () => {
     elem.dispatchEvent(new TouchEvent("touchend", EVENT_DEFAULTS));
     await oneEvent(page.root, "ot.start");
+    expect(elem).not.to.be.displayed;
   });
 
   it("triggers on touch", async () => {
     elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
     await oneEvent(page.root, "ot.start");
-  });
-
-  it("disables on start", async () => {
-    page.start();
-    await elementUpdated(elem);
-    expect(elem.disabled).to.be.true;
+    expect(elem).not.to.be.displayed;
   });
 
   it("doesn't trigger disabled");

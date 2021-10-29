@@ -2,151 +2,216 @@ import { expect, fixture, elementUpdated } from "@open-wc/testing";
 
 import { Page } from "../src/page";
 
-describe("ot-when errors", () => {
-  let elem, page;
-
-  it("for invalid path", async () => {
-    elem = await fixture(`<div data-ot-when=".foo"></div>`);
-    page = new Page();
-    expect(() => page.init()).to.throw();
-  });
-
-  it("for invalid chars", async () => {
-    elem = await fixture(`<div data-ot-when="foo/bar"></div>`);
-    page = new Page();
-    expect(() => page.init()).to.throw();
-  });
-
-  it("for invalid expr", async () => {
-    elem = await fixture(`<div data-ot-when="foo=bar"></div>`);
-    page = new Page();
-    expect(() => page.init()).to.throw();
-  });
-});
-
 describe("ot-when", () => {
   let body, elem, page;
 
-  describe("var", () => {
-    beforeEach(async () => {
-      body = document.createElement("body");
-      elem = await fixture(`<div data-ot-when="foo.bar"></div>`, { parentNode: body });
-      page = new Page(body);
-      page.init();
+  describe("errors", () => {
+    it("for invalid path", async () => {
+      elem = await fixture(`<div data-ot-when=".foo"></div>`);
+      expect(() => new Page(document.body)).to.throw();
     });
 
-    it("resets off when var is unset", async () => {
-      page.reset();
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
+    it("for invalid chars", async () => {
+      elem = await fixture(`<div data-ot-when="foo/bar"></div>`);
+      expect(() => new Page(document.body)).to.throw();
     });
 
-    it("resets off when var is partially unset", async () => {
-      page.reset({ foo: {} });
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
-
-    it("resets off when var is false", async () => {
-      page.reset({ foo: { bar: false } });
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
-
-    it("resets off when var is empty", async () => {
-      page.reset({ foo: { bar: "" } });
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
-
-    it("resets on when var is set", async () => {
-      page.reset({ foo: { bar: "t" } });
-      await elementUpdated(elem);
-      expect(elem).to.be.displayed;
-    });
-
-    it("switches on when var is set", async () => {
-      page.reset();
-      await elementUpdated(elem);
-      page.reset({ foo: { bar: "t" } });
-      await elementUpdated(elem);
-      expect(elem).to.be.displayed;
-    });
-
-    it("switches off when var is unset", async () => {
-      page.reset({ foo: { bar: "t" } });
-      await elementUpdated(elem);
-      page.update({ foo: undefined });
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
-
-    it("switches off when var is false", async () => {
-      page.reset({ foo: { bar: "t" } });
-      await elementUpdated(elem);
-      page.update({ foo: { bar: false } });
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
-
-    it("switches off when var is empty", async () => {
-      page.reset({ foo: { bar: "t" } });
-      await elementUpdated(elem);
-      page.reset({ foo: { bar: "" } });
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
+    it("for invalid expr", async () => {
+      elem = await fixture(`<div data-ot-when="foo=bar"></div>`);
+      expect(() => new Page(document.body)).to.throw();
     });
   });
 
-  describe("var==val", () => {
+  describe("fld", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-when="foo.bar==baz"></div>`, { parentNode: body });
+      elem = await fixture(`<div data-ot-when="fld"></div>`, { parentNode: body });
       page = new Page(body);
-      page.init();
     });
 
-    it("resets off when var is unset", async () => {
+    it("resets", async () => {
       page.reset();
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
-    it("resets off when var doesn't match", async () => {
-      page.reset({ foo: { bar: "xxx" } });
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
-
-    it("resets on when var does match", async () => {
-      page.reset({ foo: { bar: "baz" } });
-      await elementUpdated(elem);
-      expect(elem).to.be.displayed;
-    });
-
-    it("switches on when var does match", async () => {
+    it("switches", async () => {
       page.reset();
       await elementUpdated(elem);
-      page.update({ foo: { bar: "baz" } });
+
+      page.update({ fld: true });
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update({ fld: false });
+      await elementUpdated(elem);
+      expect(elem).not.to.be.displayed;
+    });
+
+    it("hides for null", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update({ fld: true });
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update({ fld: null });
+      await elementUpdated(elem);
+      expect(elem).not.to.be.displayed;
+    });
+
+    it("ignores unrelated", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update({ fld: true });
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update({ xxx: "xxx" });
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+    });
+  });
+
+  describe("fld==val", () => {
+    beforeEach(async () => {
+      body = document.createElement("body");
+      elem = await fixture(`<div data-ot-when="fld==foo"></div>`, { parentNode: body });
+      page = new Page(body);
+    });
+
+    it("resets", async () => {
+      page.reset();
+      await elementUpdated(elem);
+      expect(elem).not.to.be.displayed;
+    });
+
+    it("switches", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update({ fld: "foo" });
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update({ fld: "bar" });
+      await elementUpdated(elem);
+      expect(elem).not.to.be.displayed;
+    });
+
+    it("ignores unrelated", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update({ fld: "foo" });
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update({ xxx: "xxx" });
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+    });
+  });
+
+  describe("obj.fld==val", () => {
+    beforeEach(async () => {
+      body = document.createElement("body");
+      elem = await fixture(`<div data-ot-when="obj.fld==foo"></div>`, { parentNode: body });
+      page = new Page(body);
+    });
+
+    it("switches", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update({ obj: { fld: "foo" } });
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update({ obj: { fld: "bar" } });
+      await elementUpdated(elem);
+      expect(elem).not.to.be.displayed;
+    });
+
+    it("switches", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update({ obj: { fld: "foo" } });
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update({ obj: { fld: "bar" } });
+      await elementUpdated(elem);
+      expect(elem).not.to.be.displayed;
+    });
+
+    it("skips missing", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update({ obj: { fld: "foo" } });
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update({ obj: { xxx: "xxx" } });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
     });
 
-    it("switches off when var doesn't match", async () => {
-      page.reset({ foo: { bar: "baz" } });
+    it("ignores unrelated", async () => {
+      page.reset();
       await elementUpdated(elem);
-      page.update({ foo: { bar: "xxx" } });
+
+      page.update({ obj: { fld: "foo" } });
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update({ xxx: "xxx" });
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+    });
+  });
+
+  describe("fld==false", () => {
+    beforeEach(async () => {
+      body = document.createElement("body");
+      elem = await fixture(`<div data-ot-when="fld==false"></div>`, { parentNode: body });
+      page = new Page(body);
+    });
+
+    it("resets", async () => {
+      page.reset();
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
-    it("switches off when var is unset", async () => {
-      debugger;
-      page.reset({ foo: { bar: "baz" } });
+    it("switches", async () => {
+      page.reset();
       await elementUpdated(elem);
-      page.update({ foo: undefined });
+
+      page.update({ fld: false });
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update({ fld: true });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
+    });
+
+    it("ignores unrelated", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update({ fld: false });
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update({ xxx: "xxx" });
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
     });
   });
 });

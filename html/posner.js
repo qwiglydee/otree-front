@@ -3,7 +3,7 @@ import { GenericGame } from "../src/game";
 import { DemoData } from "./posner_data";
 import { toggle_display } from "../src/utils";
 
-const page = new Page();
+const
 const data = new DemoData();
 const game = new GenericGame(
   data,
@@ -22,7 +22,6 @@ const game = new GenericGame(
 );
 
 data.init();
-page.init();
 page.reset();
 page.root.addEventListener('ot.start', async () => {
   try {
