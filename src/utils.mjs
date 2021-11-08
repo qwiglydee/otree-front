@@ -81,3 +81,7 @@ export class Deferred {
     });
   }
 }
+
+export function oTreeEvent(type, data) {
+  return new CustomEvent(`ot.${type}`, {detail: data});
+}

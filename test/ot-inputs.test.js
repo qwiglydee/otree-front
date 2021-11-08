@@ -77,9 +77,9 @@ describe("ot-input", () => {
       await elementUpdated(elem);
       elem.value = "123";
       elem.dispatchEvent(new InputEvent("change"));
-      detail = (await oneEvent(page.root, "ot.response")).detail;
+      detail = (await oneEvent(page.body, "ot.response")).detail;
       expect(detail).to.deep.eq({ page, fld: "123" });
-      await oneEvent(page.root, "ot.update");
+      await oneEvent(page.body, "ot.update");
     });
 
     it("triggers on 'Enter'", async () => {
@@ -87,9 +87,9 @@ describe("ot-input", () => {
       await elementUpdated(elem);
       elem.value = "123";
       elem.dispatchEvent(new KeyboardEvent("keydown", { ...EVENT_DEFAULTS, code: "Enter" }));
-      detail = (await oneEvent(page.root, "ot.response")).detail;
+      detail = (await oneEvent(page.body, "ot.response")).detail;
       expect(detail).to.deep.eq({ page, fld: "123" });
-      await oneEvent(page.root, "ot.update");
+      await oneEvent(page.body, "ot.update");
     });
   });
 
@@ -105,9 +105,9 @@ describe("ot-input", () => {
       await elementUpdated(elem);
       elem.value = "123";
       elem.dispatchEvent(new InputEvent("change"));
-      detail = (await oneEvent(page.root, "ot.response")).detail;
+      detail = (await oneEvent(page.body, "ot.response")).detail;
       expect(detail).to.deep.eq({ page, obj: { sub: { fld: "123" } } });
-      await oneEvent(page.root, "ot.update") ;
+      await oneEvent(page.body, "ot.update") ;
     });
   });
 
@@ -144,9 +144,9 @@ describe("ot-input", () => {
       page.toggleInput(true);
       await elementUpdated(elem);
       elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
-      detail = (await oneEvent(page.root, "ot.response")).detail;
+      detail = (await oneEvent(page.body, "ot.response")).detail;
       expect(detail).to.deep.eq({ page, fld: "foo" });
-      await oneEvent(page.root, "ot.update");
+      await oneEvent(page.body, "ot.update");
     });
   });
 
@@ -181,55 +181,55 @@ describe("ot-input", () => {
     it("triggers on key", async () => {
       page.toggleInput(true);
       await elementUpdated(elem);
-      page.root.dispatchEvent(new KeyboardEvent("keydown", { ...EVENT_DEFAULTS, code: "Space" }));
-      detail = (await oneEvent(page.root, "ot.response")).detail;
+      page.body.dispatchEvent(new KeyboardEvent("keydown", { ...EVENT_DEFAULTS, code: "Space" }));
+      detail = (await oneEvent(page.body, "ot.response")).detail;
       expect(detail).to.deep.eq({ page, fld: "foo" });
-      await oneEvent(page.root, "ot.update");
+      await oneEvent(page.body, "ot.update");
     });
 
     it("triggers on touch", async () => {
       page.toggleInput(true);
       await elementUpdated(elem);
       elem.dispatchEvent(new TouchEvent("touchend", EVENT_DEFAULTS));
-      detail = (await oneEvent(page.root, "ot.response")).detail;
+      detail = (await oneEvent(page.body, "ot.response")).detail;
       expect(detail).to.deep.eq({ page, fld: "foo" });
-      await oneEvent(page.root, "ot.update");
+      await oneEvent(page.body, "ot.update");
     });
 
     it("triggers on click", async () => {
       page.toggleInput(true);
       await elementUpdated(elem);
       elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
-      detail = (await oneEvent(page.root, "ot.response")).detail;
+      detail = (await oneEvent(page.body, "ot.response")).detail;
       expect(detail).to.deep.eq({ page, fld: "foo" });
-      await oneEvent(page.root, "ot.update");
+      await oneEvent(page.body, "ot.update");
     });
 
     it("errors frozen on key", async () => {
       page.toggleInput(false);
       await elementUpdated(elem);
-      page.root.dispatchEvent(new KeyboardEvent("keydown", { ...EVENT_DEFAULTS, code: "Space" }));
-      detail = (await oneEvent(page.root, "ot.error")).detail;
+      page.body.dispatchEvent(new KeyboardEvent("keydown", { ...EVENT_DEFAULTS, code: "Space" }));
+      detail = (await oneEvent(page.body, "ot.error")).detail;
       expect(detail).to.deep.eq({ page, error: "frozen" });
-      await oneEvent(page.root, "ot.update");
+      await oneEvent(page.body, "ot.update");
     });
 
     it("errors frozen on touch", async () => {
       page.toggleInput(false);
       await elementUpdated(elem);
       elem.dispatchEvent(new TouchEvent("touchend", EVENT_DEFAULTS));
-      detail = (await oneEvent(page.root, "ot.error")).detail;
+      detail = (await oneEvent(page.body, "ot.error")).detail;
       expect(detail).to.deep.eq({ page, error: "frozen" });
-      await oneEvent(page.root, "ot.update");
+      await oneEvent(page.body, "ot.update");
     });
 
     it("errors frozen on click", async () => {
       page.toggleInput(false);
       await elementUpdated(elem);
       elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
-      detail = (await oneEvent(page.root, "ot.error")).detail;
+      detail = (await oneEvent(page.body, "ot.error")).detail;
       expect(detail).to.deep.eq({ page, error: "frozen" });
-      await oneEvent(page.root, "ot.update");
+      await oneEvent(page.body, "ot.update");
     });
   });
 });

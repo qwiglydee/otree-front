@@ -21,20 +21,20 @@ describe("ot-start", () => {
   });
 
   it("triggers on key", async () => {
-    page.root.dispatchEvent(new KeyboardEvent("keydown", { ...EVENT_DEFAULTS, code: "Space" }));
-    await oneEvent(page.root, "ot.start");
+    page.body.dispatchEvent(new KeyboardEvent("keydown", { ...EVENT_DEFAULTS, code: "Space" }));
+    await oneEvent(page.body, "ot.start");
     expect(elem).not.to.be.displayed;
   });
 
   it("triggers on touch", async () => {
     elem.dispatchEvent(new TouchEvent("touchend", EVENT_DEFAULTS));
-    await oneEvent(page.root, "ot.start");
+    await oneEvent(page.body, "ot.start");
     expect(elem).not.to.be.displayed;
   });
 
   it("triggers on touch", async () => {
     elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
-    await oneEvent(page.root, "ot.start");
+    await oneEvent(page.body, "ot.start");
     expect(elem).not.to.be.displayed;
   });
 
