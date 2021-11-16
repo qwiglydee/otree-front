@@ -1,6 +1,5 @@
-import { JSPath } from "../jspath";
-
-import { setAttr } from "../utils";
+import { Ref, Changes } from "../utils/changes";
+import { setAttr } from "../utils/dom";
 
 const ALLOWED_ATTRIBS = [
     'disabled', 'hidden',
@@ -22,7 +21,7 @@ function parse_params(elem) {
     let params = new Map();
     for (let key in elem.dataset) {
         if (key.startsWith('otAttr')) {
-            params.set(key.slice(6).toLocaleLowerCase(), new JSPath(elem.dataset[key]));
+            params.set(key.slice(6).toLocaleLowerCase(), new Ref(elem.dataset[key]));
         }
     }
     return params;
@@ -34,18 +33,8 @@ function reset_attrs(elem, params) {
     }
 }
 
-function eval_attrs(params, changes) {
-    let values = new Map();
-    params.forEach((ref, key) => {
-        let val = ref.extract(changes);
-        if (val === undefined) return; // skipping
-        values.set(key, val);
-    });
-    return values;
-}
-
-function set_attrs(elem, values) {
-    values.forEach((val, key) => setAttr(elem, key, val));
+function eval_attr(params, key, changes) {
+    return changes.pick(params.get(key))
 }
 
 function handle_reset(event, elem, params) {
@@ -54,5 +43,10 @@ function handle_reset(event, elem, params) {
 
 function handle_update(event, elem, params) {
     const { changes } = event.detail;
-    set_attrs(elem, eval_attrs(params, changes));
+
+    params.forEach((ref, attr) => {
+        if (changes.affect(ref)) {
+            setAttr(elem, attr, changes.pick(ref));
+        }
+    });
 }

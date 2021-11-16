@@ -1,6 +1,6 @@
 import { expect, fixture, elementUpdated, oneEvent } from "@open-wc/testing";
 
-import { Page } from "../src/page";
+import { Page } from "../../src/page";
 
 const EVENT_DEFAULTS = {
     view: window,

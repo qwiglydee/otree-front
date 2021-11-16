@@ -1,6 +1,7 @@
 import { expect, fixture, oneEvent } from "@open-wc/testing";
 
 import { Page } from "../src/page";
+import { Changes } from "../src/utils/changes";
 
 describe("Page controller", () => {
   let body, elem, page, detail;
@@ -28,16 +29,16 @@ describe("Page controller", () => {
     it("update", async () => {
       page.update({ foo: "Foo" });
       detail = (await oneEvent(body, "ot.update")).detail;
-      expect(detail).to.deep.equal({ page, changes: { foo: "Foo" } });
+      expect(detail.page).to.eq(page);
+      expect(detail.changes).to.eql({ "foo": "Foo" });
     });
 
     it("response", async () => {
       page.toggleInput(true);
       page.response({ foo: "Foo" });
       detail = (await oneEvent(body, "ot.response")).detail;
-      expect(detail).to.deep.equal({ page, foo: "Foo" });
-      detail = (await oneEvent(body, "ot.update")).detail;
-      expect(detail).to.deep.equal({ page, changes: { foo: "Foo" } });
+      expect(detail.page).to.eq(page);
+      expect(detail.changes).to.eql({ "foo": "Foo" });
     });
 
     it("error", async () => {

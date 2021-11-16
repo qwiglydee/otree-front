@@ -1,4 +1,4 @@
-import { oTreeEvent } from "./utils";
+import { oTreeEvent } from "./utils/async";
 
 import { install_otText } from "./directives/ot-text";
 import { install_otClass } from "./directives/ot-class";
@@ -42,8 +42,7 @@ export class Page {
     }
 
     response(changes) {
-        this.fire('response', changes);
-        this.fire('update', {changes});
+        this.fire('response', {changes});
     }
 
     error(code) {
@@ -65,21 +64,4 @@ export class Page {
         this.toggleInput(false);
         this.fire('timeout');
     }
-
-    // run() {
-    //     this.fire('run');
-    //     this.timing.forEach((phase, i) => {
-    //         let delay = phase.time || 0;
-    //         if ('display' in phase) {
-    //             this._timers.delay(`phase-${i}-display`, () => this.toggleDisplay(phase.display), delay);
-    //         }
-    //         if ('input' in phase) {
-    //             this._timers.delay(`phase-${i}-input`, () => this.toggleInput(phase.input),  delay);
-    //         }
-    //         if ('timeout' in phase) {
-    //             this._timers.delay(`phase-${i}-timeout`, () => this.timeout(), delay + phase.timeout);
-    //         }
-    //     })
-    // }
-
 }

@@ -1,6 +1,7 @@
 import { expect, fixture, elementUpdated } from "@open-wc/testing";
 
-import { Page } from "../src/page";
+import { Page } from "../../src/page";
+import { Changes } from "../../src/utils/changes";
 
 describe("ot-when", () => {
   let body, elem, page;
@@ -22,10 +23,10 @@ describe("ot-when", () => {
     });
   });
 
-  describe("fld", () => {
+  describe("updating `var`", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-when="fld"></div>`, { parentNode: body });
+      elem = await fixture(`<div data-ot-when="obj.fld"></div>`, { parentNode: body });
       page = new Page(body);
     });
 
@@ -35,150 +36,207 @@ describe("ot-when", () => {
       expect(elem).not.to.be.displayed;
     });
 
-    it("switches", async () => {
+    it("switches by fld", async () => {
       page.reset();
       await elementUpdated(elem);
 
-      page.update({ fld: true });
+      page.update(new Changes({ "obj.fld": true }));
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
 
-      page.update({ fld: false });
+      page.update(new Changes({ "obj.fld": false }));
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
-    it("hides for null", async () => {
+    it("switches by obj", async () => {
       page.reset();
       await elementUpdated(elem);
 
-      page.update({ fld: true });
+      page.update(new Changes({ obj: { fld: true } }));
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
 
-      page.update({ fld: null });
+      page.update(new Changes({ obj: { fld: false } }));
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
-    it("ignores unrelated", async () => {
+    it("ignores unrelated fld", async () => {
       page.reset();
       await elementUpdated(elem);
 
-      page.update({ fld: true });
+      page.update(new Changes({ "obj.fld": true }));
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
 
-      page.update({ xxx: "xxx" });
+      page.update(new Changes({ "obj.fld2": false }));
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
+    });
+
+    it("ignores unrelated obj", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update(new Changes({ obj: { fld: true } }));
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update(new Changes({ obj2: { fld: false } }));
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+    });
+
+    it("hides by fld deletion", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update(new Changes({ "obj.fld": "foo" }));
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update(new Changes({ "obj.fld": undefined }));
+      await elementUpdated(elem);
+      expect(elem).not.to.be.displayed;
+    });
+
+    it("hides by empty obj", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update(new Changes({ obj: { fld: true } }));
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update(new Changes({ obj: {} }));
+      await elementUpdated(elem);
+      expect(elem).not.to.be.displayed;
+    });
+
+    it("hides by obj deletion", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update(new Changes({ obj: { fld: true } }));
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update(new Changes({ obj: undefined }));
+      await elementUpdated(elem);
+      expect(elem).not.to.be.displayed;
     });
   });
 
-  describe("fld==val", () => {
-    beforeEach(async () => {
-      body = document.createElement("body");
-      elem = await fixture(`<div data-ot-when="fld==foo"></div>`, { parentNode: body });
-      page = new Page(body);
-    });
-
-    it("resets", async () => {
-      page.reset();
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
-
-    it("switches", async () => {
-      page.reset();
-      await elementUpdated(elem);
-
-      page.update({ fld: "foo" });
-      await elementUpdated(elem);
-      expect(elem).to.be.displayed;
-
-      page.update({ fld: "bar" });
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
-
-    it("ignores unrelated", async () => {
-      page.reset();
-      await elementUpdated(elem);
-
-      page.update({ fld: "foo" });
-      await elementUpdated(elem);
-      expect(elem).to.be.displayed;
-
-      page.update({ xxx: "xxx" });
-      await elementUpdated(elem);
-      expect(elem).to.be.displayed;
-    });
-  });
-
-  describe("obj.fld==val", () => {
+  describe("updating `var==val`", () => {
     beforeEach(async () => {
       body = document.createElement("body");
       elem = await fixture(`<div data-ot-when="obj.fld==foo"></div>`, { parentNode: body });
       page = new Page(body);
     });
 
-    it("switches", async () => {
+    it("resets", async () => {
       page.reset();
-      await elementUpdated(elem);
-
-      page.update({ obj: { fld: "foo" } });
-      await elementUpdated(elem);
-      expect(elem).to.be.displayed;
-
-      page.update({ obj: { fld: "bar" } });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
-    it("switches", async () => {
+    it("switches by fld", async () => {
       page.reset();
       await elementUpdated(elem);
 
-      page.update({ obj: { fld: "foo" } });
+      page.update(new Changes({ "obj.fld": "foo" }));
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
 
-      page.update({ obj: { fld: "bar" } });
+      page.update(new Changes({ "obj.fld": "bar" }));
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
-    it("skips missing", async () => {
+    it("switches by obj", async () => {
       page.reset();
       await elementUpdated(elem);
 
-      page.update({ obj: { fld: "foo" } });
+      page.update(new Changes({ obj: { fld: "foo" } }));
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
 
-      page.update({ obj: { xxx: "xxx" } });
+      page.update(new Changes({ obj: { fld: "bar" } }));
+      await elementUpdated(elem);
+      expect(elem).not.to.be.displayed;
+    });
+
+    it("ignores unrelated fld", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update(new Changes({ "obj.fld": "foo" }));
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update(new Changes({ "obj.fld2": "bar" }));
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
     });
 
-    it("ignores unrelated", async () => {
+    it("ignores unrelated obj", async () => {
       page.reset();
       await elementUpdated(elem);
 
-      page.update({ obj: { fld: "foo" } });
+      page.update(new Changes({ obj: { fld: "foo" } }));
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
 
-      page.update({ xxx: "xxx" });
+      page.update(new Changes({ obj2: { fld: "bar" } }));
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
+    });
+
+    it("hides by fld deletion", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update(new Changes({ "obj.fld": "foo" }));
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update(new Changes({ "obj.fld": undefined }));
+      await elementUpdated(elem);
+      expect(elem).not.to.be.displayed;
+    });
+
+    it("hides by empty obj", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update(new Changes({ obj: { fld: "foo" } }));
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update(new Changes({ obj: {} }));
+      await elementUpdated(elem);
+      expect(elem).not.to.be.displayed;
+    });
+
+    it("hides by obj deletion", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update(new Changes({ obj: { fld: "foo" } }));
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update(new Changes({ obj: undefined }));
+      await elementUpdated(elem);
+      expect(elem).not.to.be.displayed;
     });
   });
 
-  describe("fld==false", () => {
+  describe("updating `var==false`", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-when="fld==false"></div>`, { parentNode: body });
+      elem = await fixture(`<div data-ot-when="obj.fld==false"></div>`, { parentNode: body });
       page = new Page(body);
     });
 
@@ -188,30 +246,96 @@ describe("ot-when", () => {
       expect(elem).not.to.be.displayed;
     });
 
-    it("switches", async () => {
+    it("switches by fld", async () => {
       page.reset();
       await elementUpdated(elem);
 
-      page.update({ fld: false });
+      page.update(new Changes({ "obj.fld": false }));
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
 
-      page.update({ fld: true });
+      page.update(new Changes({ "obj.fld": true }));
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
-    it("ignores unrelated", async () => {
+    it("switches by obj", async () => {
       page.reset();
       await elementUpdated(elem);
 
-      page.update({ fld: false });
+      page.update(new Changes({ obj: { fld: false } }));
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
 
-      page.update({ xxx: "xxx" });
+      page.update(new Changes({ obj: { fld: true } }));
+      await elementUpdated(elem);
+      expect(elem).not.to.be.displayed;
+    });
+
+    it("ignores unrelated fld", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update(new Changes({ "obj.fld": false }));
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update(new Changes({ "obj.fld2": "bar" }));
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
     });
+
+    it("ignores unrelated obj", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update(new Changes({ obj: { fld: false } }));
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update(new Changes({ obj2: { fld: "bar" } }));
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+    });
+
+    it("hides by fld deletion", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update(new Changes({ "obj.fld": false }));
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update(new Changes({ "obj.fld": undefined }));
+      await elementUpdated(elem);
+      expect(elem).not.to.be.displayed;
+    });
+
+    it("hides by empty obj", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update(new Changes({ obj: { fld: false } }));
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update(new Changes({ obj: {} }));
+      await elementUpdated(elem);
+      expect(elem).not.to.be.displayed;
+    });
+
+    it("hides by obj deletion", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update(new Changes({ obj: { fld: false } }));
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+
+      page.update(new Changes({ obj: undefined }));
+      await elementUpdated(elem);
+      expect(elem).not.to.be.displayed;
+    });
   });
+
 });

@@ -1,4 +1,4 @@
-import { toggleDisplay, toggleDisabled, isDisabled } from "../utils";
+import { toggleDisplay, toggleDisabled, isDisabled } from "../utils/dom";
 
 
 export function install_otStart(root, page) {

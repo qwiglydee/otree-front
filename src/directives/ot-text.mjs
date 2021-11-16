@@ -1,6 +1,5 @@
-import { setText } from "../utils";
-
-import { JSPath } from "../jspath";
+import { Ref } from "../utils/changes";
+import { setText } from "../utils/dom";
 
 export function install_otText(root) {
   root.querySelectorAll("[data-ot-text]").forEach((elem) => {
@@ -11,11 +10,11 @@ export function install_otText(root) {
 }
 
 function parse_params(elem) {
-  return { ref: new JSPath(elem.dataset.otText) };
+  return { ref: new Ref(elem.dataset.otText) };
 }
 
 function eval_text(params, changes) {
-  return params.ref.extract(changes);
+  return changes.pick(params.ref);
 }
 
 function handle_reset(event, elem, params) {
@@ -24,5 +23,7 @@ function handle_reset(event, elem, params) {
 
 function handle_update(event, elem, params) {
   const { changes } = event.detail;
-  setText(elem, eval_text(params, changes));
+  if (changes.affect(params.ref)) {
+    setText(elem, eval_text(params, changes));
+  }
 }

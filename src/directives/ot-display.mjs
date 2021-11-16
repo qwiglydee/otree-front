@@ -1,4 +1,4 @@
-import { toggleDisplay } from "../utils";
+import { toggleDisplay } from "../utils/dom";
 
 
 export function install_otDisplay(root) {

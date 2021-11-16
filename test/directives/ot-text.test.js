@@ -1,6 +1,7 @@
 import { expect, fixture, elementUpdated } from "@open-wc/testing";
 
-import { Page } from "../src/page";
+import { Page } from "../../src/page";
+import { Changes } from "../../src/utils/changes";
 
 describe("ot-text", () => {
   let body, elem, page;
@@ -17,60 +18,7 @@ describe("ot-text", () => {
     });
   });
 
-  describe("fld", () => {
-    beforeEach(async () => {
-      body = document.createElement("body");
-      elem = await fixture(`<div data-ot-text="fld"></div>`, { parentNode: body });
-      page = new Page(body);
-    });
-
-    it("resets", async () => {
-      page.reset();
-      await elementUpdated(elem);
-      expect(elem).to.have.text("");
-    });
-
-    it("changes", async () => {
-      page.reset();
-      await elementUpdated(elem);
-
-      page.update({ fld: "foo" });
-      await elementUpdated(elem);
-      expect(elem).to.have.text("foo");
-
-      page.update({ fld: "bar" });
-      await elementUpdated(elem);
-      expect(elem).to.have.text("bar");
-    });
-
-    it("deletes null", async () => {
-      page.reset();
-      await elementUpdated(elem);
-
-      page.update({ fld: "foo" });
-      await elementUpdated(elem);
-      expect(elem).to.have.text("foo");
-
-      page.update({ fld: null });
-      await elementUpdated(elem);
-      expect(elem).to.have.text("");
-    });
-
-    it("ignores unrelated", async () => {
-      page.reset();
-      await elementUpdated(elem);
-
-      page.update({ fld: "foo" });
-      await elementUpdated(elem);
-      expect(elem).to.have.text("foo");
-
-      page.update({ xxx: "xxx" });
-      await elementUpdated(elem);
-      expect(elem).to.have.text("foo");
-    });
-  });
-
-  describe("obj.fld", () => {
+  describe("updating", () => {
     beforeEach(async () => {
       body = document.createElement("body");
       elem = await fixture(`<div data-ot-text="obj.fld"></div>`, { parentNode: body });
@@ -83,56 +31,95 @@ describe("ot-text", () => {
       expect(elem).to.have.text("");
     });
 
-    it("changes", async () => {
+    it("changes by fld", async () => {
       page.reset();
       await elementUpdated(elem);
 
-      page.update({ obj: { fld: "foo" } });
+      page.update(new Changes({ "obj.fld": "foo" }));
       await elementUpdated(elem);
       expect(elem).to.have.text("foo");
 
-      page.update({ obj: { fld: "bar" } });
+      page.update(new Changes({ "obj.fld": "bar" }));
       await elementUpdated(elem);
       expect(elem).to.have.text("bar");
     });
 
-    it("deletes null", async () => {
+    it("changes by obj", async () => {
       page.reset();
       await elementUpdated(elem);
 
-      page.update({ obj: { fld: "foo" } });
+      page.update(new Changes({ obj: { fld: "foo" } }));
       await elementUpdated(elem);
       expect(elem).to.have.text("foo");
 
-      page.update({ obj: { fld: null } });
+      page.update(new Changes({ obj: { fld: "bar" } }));
+      await elementUpdated(elem);
+      expect(elem).to.have.text("bar");
+    });
+
+    it("ignores unrelated fld", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update(new Changes({ "obj.fld": "foo" }));
+      await elementUpdated(elem);
+      expect(elem).to.have.text("foo");
+
+      page.update(new Changes({ "obj.fld2": "bar" }));
+      await elementUpdated(elem);
+      expect(elem).to.have.text("foo");
+    });
+
+    it("ignores unrelated obj", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update(new Changes({ obj: { fld: "foo" } }));
+      await elementUpdated(elem);
+      expect(elem).to.have.text("foo");
+
+      page.update(new Changes({ obj2: { fld: "bar" } }));
+      await elementUpdated(elem);
+      expect(elem).to.have.text("foo");
+    });
+
+    it("clears by fld deletion", async () => {
+      page.reset();
+      await elementUpdated(elem);
+
+      page.update(new Changes({ "obj.fld": "foo" }));
+      await elementUpdated(elem);
+      expect(elem).to.have.text("foo");
+
+      page.update(new Changes({ "obj.fld": undefined }));
       await elementUpdated(elem);
       expect(elem).to.have.text("");
     });
 
-    it("skips missing", async () => {
+    it("clears by empty obj", async () => {
       page.reset();
       await elementUpdated(elem);
 
-      page.update({ obj: { fld: "foo" } });
+      page.update(new Changes({ obj: { fld: "foo" } }));
       await elementUpdated(elem);
       expect(elem).to.have.text("foo");
 
-      page.update({ obj: {} });
+      page.update(new Changes({ obj: {} }));
       await elementUpdated(elem);
-      expect(elem).to.have.text("foo");
+      expect(elem).to.have.text("");
     });
 
-    it("ignores unrelated", async () => {
+    it("clears by obj deletion", async () => {
       page.reset();
       await elementUpdated(elem);
 
-      page.update({ obj: { fld: "foo" } });
+      page.update(new Changes({ obj: { fld: "foo" } }));
       await elementUpdated(elem);
       expect(elem).to.have.text("foo");
 
-      page.update({ xxx: "xxx" });
+      page.update(new Changes({ obj: undefined }));
       await elementUpdated(elem);
-      expect(elem).to.have.text("foo");
+      expect(elem).to.have.text("");
     });
   });
 });

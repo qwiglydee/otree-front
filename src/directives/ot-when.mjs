@@ -1,6 +1,5 @@
-import { toggleDisplay } from "../utils";
-
-import { JSPath } from "../jspath";
+import { Ref } from "../utils/changes";
+import { toggleDisplay } from "../utils/dom";
 
 export function install_otWhen(root) {
   root.querySelectorAll("[data-ot-when]").forEach((elem) => {
@@ -13,7 +12,7 @@ export function install_otWhen(root) {
 function parse_params(elem) {
   const match = elem.dataset.otWhen.match(/^([\w.]+)(==(.+))?$/);
   if (!match) throw new Error(`Invalid expression for when: ${elem.dataset.otWhen}`);
-  let ref = new JSPath(match[1]);
+  let ref = new Ref(match[1]);
   let cond = match[3];
   if (cond === "true") cond = true;
   if (cond === "false") cond = false;
@@ -21,11 +20,8 @@ function parse_params(elem) {
 }
 
 function eval_display(params, changes) {
-    let value = params.ref.extract(changes);
+    let value = changes.pick(params.ref);
 
-    if (value === undefined) { // skip changing
-        return undefined;
-    }
     if (params.cond === undefined) { // when="fld"
         // anything true-like
         return !!value;
@@ -41,5 +37,7 @@ function handle_reset(event, elem, params) {
 
 function handle_update(event, elem, params) {
   const { changes } = event.detail;
-  toggleDisplay(elem, eval_display(params, changes));
+  if (changes.affect(params.ref)) {
+    toggleDisplay(elem, eval_display(params, changes));
+  }
 }

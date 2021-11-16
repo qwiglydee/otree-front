@@ -1,6 +1,5 @@
-import { JSPath } from "../jspath";
-
-import { setClasses } from "../utils";
+import { Ref } from "../utils/changes";
+import { setClasses } from "../utils/dom";
 
 export function install_otClass(root) {
   root.querySelectorAll("[data-ot-class]").forEach((elem) => {
@@ -12,15 +11,14 @@ export function install_otClass(root) {
 
 function parse_params(elem) {
   return {
-    ref: new JSPath(elem.dataset.otClass),
+    ref: new Ref(elem.dataset.otClass),
     defaults: Array.from(elem.classList),
   };
 }
 
 function eval_classes(params, changes) {
-  let val = params.ref.extract(changes);
   let classes = params.defaults.slice();
-  if (val === undefined) return undefined; // skip changing
+  let val = changes.pick(params.ref);
   if (!!val) {
     classes.push(val);
   }
@@ -33,5 +31,7 @@ function handle_reset(event, elem, params) {
 
 function handle_update(event, elem, params) {
   const { changes } = event.detail;
-  setClasses(elem, eval_classes(params, changes));
+  if (changes.affect(params.ref)) {
+    setClasses(elem, eval_classes(params, changes));
+  }
 }

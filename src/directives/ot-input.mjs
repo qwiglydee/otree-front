@@ -1,6 +1,5 @@
-import { JSPath } from "../jspath";
-
-import { toggleDisabled, isDisabled } from "../utils";
+import { Ref, Changes } from "../utils/changes";
+import { toggleDisabled, isDisabled } from "../utils/dom";
 
 export function install_otInput(root, page) {
   root.querySelectorAll("[data-ot-input]").forEach((elem) => {
@@ -38,7 +37,7 @@ function parse_params(elem) {
   const match = elem.dataset.otInput.match(/^([\w.]+)(=(.+))?$/);
   if (!match) throw new Error(`Invalid expression for input: ${elem.dataset.otInput}`);
 
-  let ref = new JSPath(match[1]);
+  let ref = new Ref(match[1]);
 
   let val = match[3];
   if (val === "true") val = true;
@@ -77,9 +76,9 @@ function handle_change(event, page, elem, params) {
     return;
   }
   let value = elem.value;
-  if (value === "true") val = true;
-  if (value === "false") val = false;
-  page.response(params.ref.expand(value));
+  if (value === "true") value = true;
+  if (value === "false") value = false;
+  page.response(new Changes([[params.ref, value]]));
 }
 
 function handle_click(event, page, elem, params) {
@@ -88,7 +87,7 @@ function handle_click(event, page, elem, params) {
     return;
   }
   event.preventDefault();
-  page.response(params.ref.expand(params.val));
+  page.response(new Changes([[params.ref, params.val]]));
 }
 
 function handle_touch(event, page, elem, params) {
@@ -97,7 +96,7 @@ function handle_touch(event, page, elem, params) {
     return;
   }
   event.preventDefault();
-  page.response(params.ref.expand(params.val));
+  page.response(new Changes([[params.ref, params.val]]));
 }
 
 function handle_enter(event, page, elem, params) {
@@ -121,5 +120,5 @@ function handle_key(event, page, elem, params) {
     return;
   }
   event.preventDefault();
-  page.response(params.ref.expand(params.val));
+  page.response(new Changes([[params.ref, params.val]]));
 }
