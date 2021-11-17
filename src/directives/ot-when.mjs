@@ -12,7 +12,8 @@ export function install_otWhen(root) {
 function parse_params(elem) {
   const match = elem.dataset.otWhen.match(/^([\w.]+)(==(.+))?$/);
   if (!match) throw new Error(`Invalid expression for when: ${elem.dataset.otWhen}`);
-  let ref = new Ref(match[1]);
+  let ref = match[1];
+  Ref.validate(ref);
   let cond = match[3];
   if (cond === "true") cond = true;
   if (cond === "false") cond = false;
@@ -37,7 +38,7 @@ function handle_reset(event, elem, params) {
 
 function handle_update(event, elem, params) {
   const { changes } = event.detail;
-  if (changes.affect(params.ref)) {
+  if (changes.affects(params.ref)) {
     toggleDisplay(elem, eval_display(params, changes));
   }
 }

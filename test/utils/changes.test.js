@@ -2,310 +2,284 @@ import { expect } from "@open-wc/testing";
 
 import { Ref, Changes } from "../../src/utils/changes";
 
-describe("Ref", () => {
-  describe("parsing", () => {
-    it("fails on empty", () => {
-      expect(() => new Ref("")).to.throw;
+describe("refs", () => {
+
+  describe("validating", () => {
+    it("empty", () => {
+      expect(() => Ref.validate("")).to.throw;
     });
 
-    it("fails on dot", () => {
-      expect(() => new Ref(".")).to.throw;
+    it("dangling dots", () => {
+      expect(() => Ref.validate(".")).to.throw;
+      expect(() => Ref.validate("foo.bar.")).to.throw;
+      expect(() => Ref.validate(".bar.baz")).to.throw;
     });
 
-    it("fails on digits", () => {
-      expect(() => new Ref("1.2.3")).to.throw;
+    it("digits", () => {
+      expect(() => Ref.validate("1")).to.throw;
+      expect(() => Ref.validate("foo1")).not.to.throw;
     });
 
-    it("fails on no tail", () => {
-      expect(() => new Ref("foo.bar.")).to.throw;
+    it("invalid chars", () => {
+      expect(() => Ref.validate("foo/bar")).to.throw;
+      expect(() => Ref.validate(" foo bar ")).to.throw;
     });
 
-    it("fails on no head", () => {
-      expect(() => new Ref(".bar.baz")).to.throw;
-    });
-
-    it("fails on bogus syntax", () => {
-      expect(() => new Ref("foo/bar")).to.throw;
-    });
-
-    it("parses single", () => {
-      let ref = new Ref("foo");
-      expect(ref.length).to.eq(1);
-    });
-
-    it("parses chain", () => {
-      let ref = new Ref("foo.bar.baz");
-      expect(ref.length).to.eq(3);
+    it("chains", () => {
+      expect(() => Ref.validate("foo")).not.to.throw;
+      expect(() => Ref.validate("foo.bar")).not.to.throw;
+      expect(() => Ref.validate("foo.bar.baz")).not.to.throw;
     });
   });
 
-  describe("matching parent/nested", () => {
-    it("does fld/fld", () => {
-      let ref = new Ref("fld"),
-        parent = new Ref("fld");
-      expect(parent.includes(ref)).to.be.true;
-      expect(parent.strip(ref)).to.be.null;
+  describe("checking", () => {
+    it("equal", () => {
+      expect(Ref.includes("foo", "foo")).to.be.true;
+      expect(Ref.includes("foo.bar", "foo.bar")).to.be.true;
     });
 
-    it("doesn't fld2/fld1", () => {
-      let ref = new Ref("foo1"),
-        parent = new Ref("foo2");
-      expect(parent.includes(ref)).to.be.false;
-      expect(() => parent.strip(ref)).to.throw;
+    it("nested", () => {
+      expect(Ref.includes("foo", "foo.bar")).to.be.true;
+      expect(Ref.includes("foo", "foo.bar.baz")).to.be.true;
+      expect(Ref.includes("foo.bar", "foo.bar.baz")).to.be.true;
     });
 
-    it("does obj.fld/obj.fld", () => {
-      let ref = new Ref("obj.fld"),
-        parent = new Ref("obj.fld");
-      expect(parent.includes(ref)).to.be.true;
-      expect(parent.strip(ref)).to.be.null;
+    it("misplaced", () => {
+      expect(Ref.includes("foo.bar", "foo")).to.be.false;
+      expect(Ref.includes("foo.bar.baz", "foo.bar")).to.be.false;
     });
 
-    it("doesn't obj.fld2/obj.fld1", () => {
-      let ref = new Ref("obj.foo1"),
-        parent = new Ref("obj.foo2");
-      expect(parent.includes(ref)).to.be.false;
-      expect(() => parent.strip(ref)).to.throw;
+    it("mismatching", () => {
+      expect(Ref.includes("foo1", "foo2")).to.be.false;
+      expect(Ref.includes("foo.bar1", "foo.bar2")).to.be.false;
+      expect(Ref.includes("foo.bar.baz1", "foo.bar.baz2")).to.be.false;
+    });
+  });
+
+  describe("stripping", () => {
+    it("equal", () => {
+      expect(Ref.strip("foo", "foo")).to.eq("");
+      expect(Ref.strip("foo.bar", "foo.bar")).to.eq("");
     });
 
-    it("doesn't obj2.fld/obj1.fld", () => {
-      let ref = new Ref("bar1.fld"),
-        parent = new Ref("bar2.fld");
-      expect(parent.includes(ref)).to.be.false;
-      expect(() => parent.strip(ref)).to.throw;
-    });
-
-    it("does obj/obj.fld", () => {
-      let ref = new Ref("obj.fld"),
-        parent = new Ref("obj");
-      expect(parent.includes(ref)).to.be.true;
-      expect(parent.strip(ref)).to.eql(new Ref("fld"));
-    });
-
-    it("doesn't obj2/obj1.fld", () => {
-      let ref = new Ref("bar1.fld"),
-        parent = new Ref("bar2");
-      expect(parent.includes(ref)).to.be.false;
-      expect(() => parent.strip(ref)).to.throw;
-    });
-
-    it("doesn't obj.fld/obj", () => {
-      let ref = new Ref("obj"),
-        parent = new Ref("obj.fld");
-      expect(parent.includes(ref)).to.be.false;
-      expect(() => parent.strip(ref)).to.throw;
+    it("nested", () => {
+      expect(Ref.strip("foo", "foo.bar")).to.eq("bar");
+      expect(Ref.strip("foo", "foo.bar.baz")).to.eq("bar.baz");
+      expect(Ref.strip("foo.bar", "foo.bar.baz")).to.eq("baz");
     });
   });
 
   describe("extracting", () => {
-    const data = { foo: { bar: { baz: 123 } } };
-
-    it("nested field", () => {
-      let ref = new Ref("foo.bar.baz");
-      expect(ref.extract(data)).to.eq(123);
+    it("fields", () => {
+      expect(Ref.extract({ foo: { bar: { baz: "Baz" } } }, "foo.bar.baz")).to.eq("Baz");
     });
 
-    it("nested obj", () => {
-      let ref = new Ref("foo.bar");
-      expect(ref.extract(data)).to.eql({ baz: 123 });
+    it("subobjects", () => {
+      expect(Ref.extract({ foo: { bar: { baz: "Baz" } } }, "foo.bar")).to.eql({ baz: "Baz" });
+      expect(Ref.extract({ foo: { bar: { baz: "Baz" } } }, "foo")).to.eql({ bar: { baz: "Baz" } });
     });
 
-    it("top obj", () => {
-      let ref = new Ref("foo");
-      expect(ref.extract(data)).to.eql({ bar: { baz: 123 } });
-    });
-
-    it("missing nested field", () => {
-      let ref = new Ref("foo.bar.baz2");
-      expect(ref.extract(data)).to.be.undefined;
-    });
-
-    it("missing nested obj", () => {
-      let ref = new Ref("foo.bar2");
-      expect(ref.extract(data)).to.be.undefined;
-    });
-
-    it("missing top obj", () => {
-      let ref = new Ref("foo2");
-      expect(ref.extract(data)).to.be.undefined;
+    it("elems", () => {
+      expect(Ref.extract({ foo: { bar: ["a", "b", "c"] } }, "foo.bar.1")).to.eql("b");
     });
   });
 
   describe("updating", () => {
     let data;
 
-    beforeEach(() => {
-      data = { foo: { bar: { baz: 123 } } };
+    it("changes field", () => {
+      data = { foo: { bar1: "Bar1", bar2: "Bar2" } };
+      Ref.update(data, "foo.bar1", "Bar11");
+      expect(data).to.eql({ foo: { bar1: "Bar11", bar2: "Bar2" } });
     });
 
-    it("nested field", () => {
-      let ref = new Ref("foo.bar.baz");
-      ref.update(data, "ABC");
-      expect(data).to.eql({ foo: { bar: { baz: "ABC" } } });
+    it("adds field", () => {
+      data = { foo: { bar1: "Bar1", bar2: "Bar2" } };
+      Ref.update(data, "foo.bar3", "Bar3");
+      expect(data).to.eql({ foo: { bar1: "Bar1", bar2: "Bar2", bar3: "Bar3" } });
     });
 
-    it("nested obj", () => {
-      let ref = new Ref("foo.bar");
-      ref.update(data, { qux: "ABC" });
-      expect(data).to.eql({ foo: { bar: { qux: "ABC" } } });
+    it("deletes field", () => {
+      data = { foo: { bar1: "Bar1", bar2: "Bar2", bar3: "Bar3" } };
+      Ref.update(data, "foo.bar3", undefined);
+      expect(data).to.eql({ foo: { bar1: "Bar1", bar2: "Bar2" } });
     });
 
-    it("top obj", () => {
-      let ref = new Ref("foo");
-      ref.update(data, { bar: { qux: "ABC" } });
-      expect(data).to.eql({ foo: { bar: { qux: "ABC" } } });
+    it("replaces obj", () => {
+      data = { foo: { bar: { baz: "Baz" } } };
+      Ref.update(data, "foo.bar", { baz2: "Baz2" });
+      expect(data).to.eql({ foo: { bar: { baz2: "Baz2" } } });
     });
 
-    it("missing nested field", () => {
-      let ref = new Ref("foo.bar.baz2");
-      ref.update(data, "ABC");
-      expect(data).to.eql({ foo: { bar: { baz: 123, baz2: "ABC" } } });
+    it("adds obj", () => {
+      data = { foo: { bar: { baz: "Baz" } } };
+      Ref.update(data, "foo.bar2", { baz2: "Baz2" });
+      expect(data).to.eql({ foo: { bar: { baz: "Baz" }, bar2: { baz2: "Baz2" } } });
     });
 
-    it("missing nested obj", () => {
-      let ref = new Ref("foo.bar2");
-      ref.update(data, { qux: "ABC" });
-      expect(data).to.eql({ foo: { bar: { baz: 123 }, bar2: { qux: "ABC" } } });
+    it("deletes obj", () => {
+      data = { foo: { bar: { baz: "Baz" }, bar2: { baz2: "Baz2" } } };
+      Ref.update(data, "foo.bar2", undefined);
+      expect(data).to.eql({ foo: { bar: { baz: "Baz" } } });
     });
 
-    it("missing top obj", () => {
-      let ref = new Ref("foo2");
-      ref.update(data, { bar2: { qux: "ABC" } });
-      expect(data).to.eql({ foo: { bar: { baz: 123 } }, foo2: { bar2: { qux: "ABC" } } });
+    it("replaces elem", () => {
+      data = { foo: { bar: ["a", "b", "c"] } };
+      Ref.update(data, "foo.bar.1", "z");
+      expect(data).to.eql({ foo: { bar: ["a", "z", "c"] } });
+    });
+
+    it("adds elem", () => {
+      data = { foo: { bar: ["a", "b", "c"] } };
+      Ref.update(data, "foo.bar.3", "z");
+      expect(data).to.eql({ foo: { bar: ["a", "b", "c", "z"] } });
+    });
+
+    it("deletes elem", () => {
+      data = { foo: { bar: ["a", "b", "c"] } };
+      Ref.update(data, "foo.bar.1", undefined);
+      expect(data).to.eql({ foo: { bar: ["a", undefined, "c"] } });
     });
   });
 });
 
 describe("changes", () => {
+  let data, changes, ref;
 
-  describe("initializing", () => {
-    it("from obj", () => {
-      let changes = new Changes({ foo: "Foo", bar: "Bar" });
-      expect([...changes.keys()]).to.eql([new Ref("foo"), new Ref("bar")]);
-    });
-
-    it("from obj of refs", () => {
-      let changes = new Changes({ [new Ref("foo")]: "Foo", [new Ref("bar")]: "Bar" });
-      expect([...changes.keys()]).to.eql([new Ref("foo"), new Ref("bar")]);
-    });
-
-    it("from array", () => {
-      let changes = new Changes([
-        ["foo", "Foo"],
-        ["bar", "Bar"],
-      ]);
-      expect([...changes.keys()]).to.eql([new Ref("foo"), new Ref("bar")]);
-    });
-
-    it("from array of refs", () => {
-      let changes = new Changes([
-        [new Ref("foo"), "Foo"],
-        [new Ref("bar"), "Bar"],
-      ]);
-      expect([...changes.keys()]).to.eql([new Ref("foo"), new Ref("bar")]);
-    });
-
-  });
-
-  describe("updating vars changes/ref", () => {
+  describe("checking and extracting", () => {
     it("does fld/fld", () => {
-      let ref = new Ref("fld"),
-        changes = new Changes({ fld: "Foo" });
-      expect(changes.affect(ref)).to.be.true;
+      changes = new Changes({ fld: "Foo" });
+      ref = "fld";
+      expect(changes.affects(ref)).to.be.true;
       expect(changes.pick(ref)).to.eq("Foo");
     });
 
     it("doesn't fld2/fld1", () => {
-      let ref = new Ref("fld1"),
-        changes = new Changes({ fld2: "Foo" });
-      expect(changes.affect(ref)).to.be.false;
+      changes = new Changes({ fld2: "Foo" });
+      ref = "fld1";
+      expect(changes.affects(ref)).to.be.false;
       expect(() => changes.pick(ref)).to.throw;
     });
 
     it("does obj.fld/obj.fld", () => {
-      let ref = new Ref("obj.fld"),
-        changes = new Changes({ "obj.fld": "Foo" });
-      expect(changes.affect(ref)).to.be.true;
+      changes = new Changes({ "obj.fld": "Foo" });
+      ref = "obj.fld";
+      expect(changes.affects(ref)).to.be.true;
       expect(changes.pick(ref)).to.eq("Foo");
     });
 
     it("doesn't obj.fld2/obj.fld1", () => {
-      let ref = new Ref("obj.fld1"),
-        changes = new Changes({ "obj.fld2": "Foo" });
-      expect(changes.affect(ref)).to.be.false;
+      changes = new Changes({ "obj.fld2": "Foo" });
+      ref = "obj.fld1";
+      expect(changes.affects(ref)).to.be.false;
       expect(() => changes.pick(ref)).to.throw;
     });
 
     it("doesn't obj2.fld/obj1.fld", () => {
-      let ref = new Ref("obj1.fld"),
-        changes = new Changes({ "obj2.fld": "Foo" });
-      expect(changes.affect(ref)).to.be.false;
+      changes = new Changes({ "obj2.fld": "Foo" });
+      ref = "obj1.fld";
+      expect(changes.affects(ref)).to.be.false;
       expect(() => changes.pick(ref)).to.throw;
     });
 
     it("does obj/obj.fld", () => {
-      let ref = new Ref("obj.fld"),
-        changes = new Changes({ obj: { fld: "Foo" } });
-      expect(changes.affect(ref)).to.be.true;
+      changes = new Changes({ obj: { fld: "Foo" } });
+      ref = "obj.fld";
+      expect(changes.affects(ref)).to.be.true;
+      expect(changes.pick(ref)).to.eq("Foo");
+    });
+
+    it("does obj.subobj/obj.subobj.fld", () => {
+      changes = new Changes({ "obj.subobj": { fld: "Foo" } });
+      ref = "obj.subobj.fld";
+      expect(changes.affects(ref)).to.be.true;
+      expect(changes.pick(ref)).to.eq("Foo");
+    });
+
+    it("does obj/obj.subobj.fld", () => {
+      changes = new Changes({ obj: { subobj: { fld: "Foo" } } });
+      ref = "obj.subobj.fld";
+      expect(changes.affects(ref)).to.be.true;
       expect(changes.pick(ref)).to.eq("Foo");
     });
 
     it("doesn't obj2/obj1.fld", () => {
-      let ref = new Ref("obj1.fld"),
-        changes = new Changes({ obj2: { fld: "Foo" } });
-      expect(changes.affect(ref)).to.be.false;
+      changes = new Changes({ obj2: { fld: "Foo" } });
+      ref = "obj1.fld";
+      expect(changes.affects(ref)).to.be.false;
       expect(() => changes.pick(ref)).to.throw;
     });
 
     it("doesn't obj.fld/obj", () => {
-      let ref = new Ref("obj"),
-        changes = new Changes({ "obj.fld": "Foo" });
-      expect(changes.affect(ref)).to.be.false;
+      changes = new Changes({ "obj.fld": "Foo" });
+      ref = "obj";
+      expect(changes.affects(ref)).to.be.false;
       expect(() => changes.pick(ref)).to.throw;
     });
   });
 
-  describe("patching data", () => {
-    let data;
-
-    beforeEach(() => {
-      data = { foo: { bar: { baz: 123, bax: 456 } } };
+  describe("patching fields", () => {
+    it("changes field", () => {
+      data = { foo: { bar1: "Bar1", bar2: "Bar2" } };
+      changes = new Changes({ "foo.bar1": "Bar11" });
+      changes.patch(data);
+      expect(data).to.eql({ foo: { bar1: "Bar11", bar2: "Bar2" } });
     });
 
-    it("changes fld", () => {
-      let changes = new Changes({ "foo.bar.baz": "ABC" });
+    it("adds field", () => {
+      data = { foo: { bar1: "Bar1", bar2: "Bar2" } };
+      changes = new Changes({ "foo.bar3": "Bar3" });
       changes.patch(data);
-      expect(data).to.eql({ foo: { bar: { baz: "ABC", bax: 456 } } });
+      expect(data).to.eql({ foo: { bar1: "Bar1", bar2: "Bar2", bar3: "Bar3" } });
     });
 
-    it("changes obj", () => {
-      let changes = new Changes({ "foo.bar": { qux: "ABC" } });
+    it("deletes field", () => {
+      data = { foo: { bar1: "Bar1", bar2: "Bar2", bar3: "Bar3" } };
+      changes = new Changes({ "foo.bar3": undefined });
       changes.patch(data);
-      expect(data).to.eql({ foo: { bar: { qux: "ABC" } } });
+      expect(data).to.eql({ foo: { bar1: "Bar1", bar2: "Bar2" } });
     });
 
-    it("adds fld", () => {
-      let changes = new Changes({ "foo.bar.qux": "ABC" });
+    it("replaces obj", () => {
+      data = { foo: { bar: { baz: "Baz" } } };
+      changes = new Changes({ "foo.bar": { baz2: "Baz2" } });
       changes.patch(data);
-      expect(data).to.eql({ foo: { bar: { baz: 123, bax: 456, qux: "ABC" } } });
+      expect(data).to.eql({ foo: { bar: { baz2: "Baz2" } } });
     });
 
     it("adds obj", () => {
-      let changes = new Changes({ "foo.bar2": { qux: "ABC" } });
+      data = { foo: { bar: { baz: "Baz" } } };
+      changes = new Changes({ "foo.bar2": { baz2: "Baz2" } });
       changes.patch(data);
-      expect(data).to.eql({ foo: { bar: { baz: 123, bax: 456 }, bar2: { qux: "ABC" } } });
-    });
-
-    it("deletes fld", () => {
-      let changes = new Changes({ "foo.bar.baz": undefined });
-      changes.patch(data);
-      expect(data).to.eql({ foo: { bar: { bax: 456 } } });
+      expect(data).to.eql({ foo: { bar: { baz: "Baz" }, bar2: { baz2: "Baz2" } } });
     });
 
     it("deletes obj", () => {
-      let changes = new Changes({ "foo.bar": undefined });
+      data = { foo: { bar: { baz: "Baz" }, bar2: { baz2: "Baz2" } } };
+      changes = new Changes({ "foo.bar2": undefined });
       changes.patch(data);
-      expect(data).to.eql({ foo: {} });
+      expect(data).to.eql({ foo: { bar: { baz: "Baz" } } });
+    });
+
+    it("replaces elem", () => {
+      data = { foo: { bar: ["a", "b", "c"] } };
+      changes = new Changes({ "foo.bar.1": "z" });
+      changes.patch(data);
+      expect(data).to.eql({ foo: { bar: ["a", "z", "c"] } });
+    });
+
+    it("adds elem", () => {
+      data = { foo: { bar: ["a", "b", "c"] } };
+      changes = new Changes({ "foo.bar.3": "z" });
+      changes.patch(data);
+      expect(data).to.eql({ foo: { bar: ["a", "b", "c", "z"] } });
+    });
+
+    it("deletes elem", () => {
+      data = { foo: { bar: ["a", "b", "c"] } };
+      changes = new Changes({ "foo.bar.1": undefined });
+      changes.patch(data);
+      expect(data).to.eql({ foo: { bar: ["a", undefined, "c"] } });
     });
   });
 });

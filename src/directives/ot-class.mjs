@@ -10,8 +10,10 @@ export function install_otClass(root) {
 }
 
 function parse_params(elem) {
+  let ref = elem.dataset.otClass;
+  Ref.validate(ref);
   return {
-    ref: new Ref(elem.dataset.otClass),
+    ref,
     defaults: Array.from(elem.classList),
   };
 }
@@ -31,7 +33,7 @@ function handle_reset(event, elem, params) {
 
 function handle_update(event, elem, params) {
   const { changes } = event.detail;
-  if (changes.affect(params.ref)) {
+  if (changes.affects(params.ref)) {
     setClasses(elem, eval_classes(params, changes));
   }
 }

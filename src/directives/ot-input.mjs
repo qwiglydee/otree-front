@@ -7,19 +7,19 @@ export function install_otInput(root, page) {
     root.addEventListener("ot.reset", (event) => handle_reset(event, elem));
     root.addEventListener("ot.input", (event) => handle_phase(event, elem));
     if (params.trigger.change) {
-        elem.addEventListener("change", (event) => handle_change(event, page, elem, params));
+      elem.addEventListener("change", (event) => handle_change(event, page, elem, params));
     }
     if (params.trigger.change && (elem.type == "text" || elem.tagName == "TEXTAREA")) {
       elem.addEventListener("keydown", (event) => handle_enter(event, page, elem, params));
     }
     if (params.trigger.click) {
-        elem.addEventListener("click", (event) => handle_click(event, page, elem, params));
+      elem.addEventListener("click", (event) => handle_click(event, page, elem, params));
     }
     if (params.trigger.touch) {
-        elem.addEventListener("touchend", (event) => handle_touch(event, page, elem, params));
+      elem.addEventListener("touchend", (event) => handle_touch(event, page, elem, params));
     }
     if (params.trigger.key) {
-        root.addEventListener("keydown", (event) => handle_key(event, page, elem, params));
+      root.addEventListener("keydown", (event) => handle_key(event, page, elem, params));
     }
   });
 }
@@ -29,7 +29,7 @@ function parse_trigger(elem) {
     click: "otClick" in elem.dataset || elem.tagName == "BUTTON",
     touch: "otTouch" in elem.dataset,
     key: "otKey" in elem.dataset ? elem.dataset.otKey : false,
-    change: (elem.tagName == "INPUT" || elem.tagName == "SELECT" || elem.tagName == "TEXTAREA"),
+    change: elem.tagName == "INPUT" || elem.tagName == "SELECT" || elem.tagName == "TEXTAREA",
   };
 }
 
@@ -37,7 +37,8 @@ function parse_params(elem) {
   const match = elem.dataset.otInput.match(/^([\w.]+)(=(.+))?$/);
   if (!match) throw new Error(`Invalid expression for input: ${elem.dataset.otInput}`);
 
-  let ref = new Ref(match[1]);
+  let ref = match[1];
+  Ref.validate(ref);
 
   let val = match[3];
   if (val === "true") val = true;
@@ -78,7 +79,7 @@ function handle_change(event, page, elem, params) {
   let value = elem.value;
   if (value === "true") value = true;
   if (value === "false") value = false;
-  page.response(new Changes([[params.ref, value]]));
+  page.response(new Changes({ [params.ref]: value }));
 }
 
 function handle_click(event, page, elem, params) {
@@ -87,7 +88,7 @@ function handle_click(event, page, elem, params) {
     return;
   }
   event.preventDefault();
-  page.response(new Changes([[params.ref, params.val]]));
+  page.response(new Changes({ [params.ref]: params.val }));
 }
 
 function handle_touch(event, page, elem, params) {
@@ -96,7 +97,7 @@ function handle_touch(event, page, elem, params) {
     return;
   }
   event.preventDefault();
-  page.response(new Changes([[params.ref, params.val]]));
+  page.response(new Changes({ [params.ref]: params.val }));
 }
 
 function handle_enter(event, page, elem, params) {
@@ -120,5 +121,5 @@ function handle_key(event, page, elem, params) {
     return;
   }
   event.preventDefault();
-  page.response(new Changes([[params.ref, params.val]]));
+  page.response(new Changes({ [params.ref]: params.val }));
 }

@@ -10,7 +10,9 @@ export function install_otText(root) {
 }
 
 function parse_params(elem) {
-  return { ref: new Ref(elem.dataset.otText) };
+  let ref = elem.dataset.otText;
+  Ref.validate(ref);
+  return { ref };
 }
 
 function eval_text(params, changes) {
@@ -23,7 +25,7 @@ function handle_reset(event, elem, params) {
 
 function handle_update(event, elem, params) {
   const { changes } = event.detail;
-  if (changes.affect(params.ref)) {
+  if (changes.affects(params.ref)) {
     setText(elem, eval_text(params, changes));
   }
 }
