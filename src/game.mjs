@@ -144,7 +144,7 @@ export class GenericGame {
     }
 
     onUpdate(event) {
-        const { changes } = event.detail;
+        const changes = event.detail;
         if (this.conf.responseField in changes) this.onResponse();
     }
 

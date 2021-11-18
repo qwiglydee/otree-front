@@ -1,4 +1,4 @@
-// import { playwrightLauncher } from '@web/test-runner-playwright';
+import { defaultReporter } from '@web/test-runner';
 
 const filteredLogs = ['Lit is in dev mode'];
 
@@ -38,4 +38,8 @@ export default /** @type {import("@web/test-runner").TestRunnerConfig} */ ({
   // ],
 
   // See documentation for all available options
+
+  reporters: [
+    defaultReporter({ reportTestResults: true, reportTestProgress: true }),
+  ],
 });

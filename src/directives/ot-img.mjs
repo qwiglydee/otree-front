@@ -1,11 +1,12 @@
 import { Ref } from "../utils/changes";
+import { onPage } from "../utils/events";
 import { setChild } from "../utils/dom";
 
-export function install_otImg(root) {
-  root.querySelectorAll("[data-ot-img]").forEach((elem) => {
+export function otImg(page) {
+  page.body.querySelectorAll("[data-ot-img]").forEach((elem) => {
     const params = parse_params(elem);
-    root.addEventListener("ot.reset", (event) => handle_reset(event, elem, params));
-    root.addEventListener("ot.update", (event) => handle_update(event, elem, params));
+    onPage(page, elem, params, 'otree.reset', handle_reset);
+    onPage(page, elem, params, 'otree.update', handle_update);
   });
 }
 
@@ -23,13 +24,13 @@ function eval_img(params, changes) {
   return img;
 }
 
-function handle_reset(event, elem, params) {
-  setChild(elem, null);
+function handle_reset(page, target, params, event) {
+  setChild(target, null);
 }
 
-function handle_update(event, elem, params) {
-  const { changes } = event.detail;
+function handle_update(page, target, params, event) {
+  const changes = event.detail;
   if (changes.affects(params.ref)) {
-    setChild(elem, eval_img(params, changes));
+    setChild(target, eval_img(params, changes));
   }
 }

@@ -45,3 +45,7 @@ export function setChild(elem, child) {
     elem.replaceChildren(child);
   }
 }
+
+export function isTextInput(elem) {
+  return (elem.tagName == "INPUT" && elem.type == "text") || elem.tagName == "TEXTAREA";
+}

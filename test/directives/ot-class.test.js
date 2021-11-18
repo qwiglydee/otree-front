@@ -31,19 +31,6 @@ describe("ot-class", () => {
       expect([...elem.classList]).to.eql(["cls1", "cls2"]);
     });
 
-    // it("changes by fld", async () => {
-    //   page.reset();
-    //   await elementUpdated(elem);
-
-    //   page.update({ obj: { fld: "foo" } });
-    //   await elementUpdated(elem);
-    //   expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
-
-    //   page.update({ obj: { fld: "bar" } });
-    //   await elementUpdated(elem);
-    //   expect([...elem.classList]).to.eql(["cls1", "cls2", "bar"]);
-    // });
-
     it("changes by fld", async () => {
       page.reset();
       await elementUpdated(elem);
@@ -134,7 +121,5 @@ describe("ot-class", () => {
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2"]);
     });
-
-
   });
 });

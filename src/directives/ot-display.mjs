@@ -1,14 +1,13 @@
+import { onPage } from "../utils/events";
 import { toggleDisplay } from "../utils/dom";
 
-
-export function install_otDisplay(root) {
-    root.querySelectorAll("[data-ot-display]").forEach(elem => {
+export function otDisplay(page) {
+    page.body.querySelectorAll("[data-ot-display]").forEach(elem => {
         const params = parse_params(elem);
-        root.addEventListener('ot.reset', (event) => handle_reset(event, elem, params));
-        root.addEventListener('ot.display', (event) => handle_phase(event, elem, params));
+        onPage(page, elem, params, 'otree.reset', handle_reset);
+        onPage(page, elem, params, 'otree.phase', handle_phase);
     });
 }
-
 
 function parse_params(elem) {
     const match = elem.dataset.otDisplay.match(/^\w+$/);
@@ -19,10 +18,10 @@ function parse_params(elem) {
     };
 }
 
-function handle_reset(event, elem, params) {
-    toggleDisplay(elem, false);
+function handle_reset(page, target, params, event) {
+    toggleDisplay(target, false);
 }
 
-function handle_phase(event, elem, params) {
-    toggleDisplay(elem, event.detail.phase == params.phase);
+function handle_phase(page, target, params, event) {
+    toggleDisplay(target, event.detail.display == params.phase);
 }

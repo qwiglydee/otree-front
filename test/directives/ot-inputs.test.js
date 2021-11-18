@@ -11,6 +11,15 @@ const EVENT_DEFAULTS = {
 describe("ot-input", () => {
   let page, body, elem, detail;
 
+
+  async function pageEvent(type) {
+    return (await oneEvent(body, type)).detail;
+  }
+
+  async function elemEvent(type) {
+    return (await oneEvent(elem, type)).detail;
+  }
+
   describe("errors", () => {
     it("invalid path", async () => {
       elem = await fixture(`<input data-ot-input=".foo"></div>`, { parentNode: body });
@@ -57,33 +66,33 @@ describe("ot-input", () => {
       expect(elem).to.have.class("ot-disabled");
     });
 
-    it("switches on phase");
-    /*
-    it("switches", async () => {
+    it("switches on phase", async () => {
       page.reset();
       await elementUpdated(elem);
 
-      page.toggleInput(true);
+      page.toggle({input: true});
       await elementUpdated(elem);
       expect(elem).not.to.have.attr("disabled");
       expect(elem).not.to.have.class("ot-disabled");
 
-      page.toggleInput(false);
+      page.toggle({input: false});
       await elementUpdated(elem);
       expect(elem).to.have.attr("disabled");
       expect(elem).to.have.class("ot-disabled");
     });
-    */
 
     it("triggers on change", async () => {
-      page.toggleInput(true);
+      page.toggle({input: true});
       await elementUpdated(elem);
-      elem.value = "123";
+
+      elem.value = "Foo";
       elem.dispatchEvent(new InputEvent("change"));
-      detail = (await oneEvent(page.body, "ot.response")).detail;
-      expect(detail.page).to.eq(page);
-      expect(detail.changes).to.eql(new Changes({ "obj.fld": "123" }));
+
+      detail = await pageEvent("otree.response");
+      expect(detail).to.eql(new Changes({ "obj.fld": "Foo" }));
     });
+
+    it("triggers on enter");
   });
 
   describe("button", () => {
@@ -100,29 +109,27 @@ describe("ot-input", () => {
       expect(elem).to.have.class("ot-disabled");
     });
 
-    it("switches on phase");
-    // it("switches", async () => {
-    //   page.reset();
-    //   await elementUpdated(elem);
+    it("switches on phase", async () => {
+      page.reset();
+      await elementUpdated(elem);
 
-    //   page.toggleInput(true);
-    //   await elementUpdated(elem);
-    //   expect(elem).not.to.have.attr("disabled");
-    //   expect(elem).not.to.have.class("ot-disabled");
+      page.toggle({input: true});
+      await elementUpdated(elem);
+      expect(elem).not.to.have.attr("disabled");
+      expect(elem).not.to.have.class("ot-disabled");
 
-    //   page.toggleInput(false);
-    //   await elementUpdated(elem);
-    //   expect(elem).to.have.attr("disabled");
-    //   expect(elem).to.have.class("ot-disabled");
-    // });
+      page.toggle({input: false});
+      await elementUpdated(elem);
+      expect(elem).to.have.attr("disabled");
+      expect(elem).to.have.class("ot-disabled");
+    });
 
     it("triggers on click", async () => {
-      page.toggleInput(true);
+      page.toggle({input: true});
       await elementUpdated(elem);
       elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
-      detail = (await oneEvent(page.body, "ot.response")).detail;
-      expect(detail.page).to.eq(page);
-      expect(detail.changes).to.eql(new Changes({ "obj.fld": "foo" }));
+      detail = await pageEvent("otree.response");
+      expect(detail).to.eql(new Changes({ "obj.fld": "foo" }));
     });
   });
 
@@ -141,77 +148,45 @@ describe("ot-input", () => {
       expect(elem).to.have.class("ot-disabled");
     });
 
-    it("switches on phase");
-    // it("switches", async () => {
-    //   page.reset();
-    //   await elementUpdated(elem);
+    it("switches on phase", async () => {
+      page.reset();
+      await elementUpdated(elem);
 
-    //   page.toggleInput(true);
-    //   await elementUpdated(elem);
-    //   expect(elem).not.to.have.class("ot-disabled");
+      page.toggle({input: true});
+      await elementUpdated(elem);
+      expect(elem).not.to.have.class("ot-disabled");
 
-    //   page.toggleInput(false);
-    //   await elementUpdated(elem);
-    //   expect(elem).to.have.class("ot-disabled");
-    // });
+      page.toggle({input: false});
+      await elementUpdated(elem);
+      expect(elem).to.have.class("ot-disabled");
+    });
 
     it("triggers on key", async () => {
-      page.toggleInput(true);
+      page.toggle({input: true});
       await elementUpdated(elem);
       page.body.dispatchEvent(new KeyboardEvent("keydown", { ...EVENT_DEFAULTS, code: "Space" }));
-      detail = (await oneEvent(page.body, "ot.response")).detail;
-      expect(detail.page).to.eq(page);
-      expect(detail.changes).to.eql(new Changes({ "obj.fld": "foo" }));
+      detail = await pageEvent("otree.response");
+      expect(detail).to.eql(new Changes({ "obj.fld": "foo" }));
     });
 
     it("triggers on touch", async () => {
-      page.toggleInput(true);
+      page.toggle({input: true});
       await elementUpdated(elem);
       elem.dispatchEvent(new TouchEvent("touchend", EVENT_DEFAULTS));
-      detail = (await oneEvent(page.body, "ot.response")).detail;
-      expect(detail.page).to.eq(page);
-      expect(detail.changes).to.eql(new Changes({ "obj.fld": "foo" }));
+      detail = await pageEvent("otree.response");
+      expect(detail).to.eql(new Changes({ "obj.fld": "foo" }));
     });
 
     it("triggers on click", async () => {
-      page.toggleInput(true);
+      page.toggle({input: true});
       await elementUpdated(elem);
       elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
-      detail = (await oneEvent(page.body, "ot.response")).detail;
-      expect(detail.page).to.eq(page);
-      expect(detail.changes).to.eql(new Changes({ "obj.fld": "foo" }));
+      detail = await pageEvent("otree.response");
+      expect(detail).to.eql(new Changes({ "obj.fld": "foo" }));
     });
 
     it("errors frozen on key");
     it("errors frozen on touch");
     it("errors frozen on click");
-    /*
-    it("errors frozen on key", async () => {
-      page.toggleInput(false);
-      await elementUpdated(elem);
-      page.body.dispatchEvent(new KeyboardEvent("keydown", { ...EVENT_DEFAULTS, code: "Space" }));
-      detail = (await oneEvent(page.body, "ot.error")).detail;
-      expect(detail).to.deep.eq({ page, error: "frozen" });
-      await oneEvent(page.body, "ot.update");
-    });
-
-    it("errors frozen on touch", async () => {
-      page.toggleInput(false);
-      await elementUpdated(elem);
-      elem.dispatchEvent(new TouchEvent("touchend", EVENT_DEFAULTS));
-      detail = (await oneEvent(page.body, "ot.error")).detail;
-      expect(detail).to.deep.eq({ page, error: "frozen" });
-      await oneEvent(page.body, "ot.update");
-    });
-
-    it("errors frozen on click", async () => {
-      page.toggleInput(false);
-      await elementUpdated(elem);
-      elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
-      detail = (await oneEvent(page.body, "ot.error")).detail;
-      expect(detail).to.deep.eq({ page, error: "frozen" });
-      await oneEvent(page.body, "ot.update");
-    });
-*/
   });
 });

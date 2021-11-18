@@ -1,67 +1,77 @@
-import { oTreeEvent } from "./utils/async";
+import { Changes } from "./utils/changes";
+import { firePage } from "./utils/events";
 
-import { install_otText } from "./directives/ot-text";
-import { install_otClass } from "./directives/ot-class";
-import { install_otImg } from "./directives/ot-img";
-import { install_otAttr } from "./directives/ot-attr";
+import { otText } from "./directives/ot-text";
+import { otClass } from "./directives/ot-class";
+import { otImg } from "./directives/ot-img";
+import { otAttr } from "./directives/ot-attr";
 
-import { install_otWhen } from "./directives/ot-when";
-import { install_otDisplay } from "./directives/ot-display";
-import { install_otInput } from "./directives/ot-input";
+import { otWhen } from "./directives/ot-when";
+import { otDisplay } from "./directives/ot-display";
+import { otInput } from "./directives/ot-input";
 
-import { install_otStart } from "./directives/ot-start";
+import { otStart } from "./directives/ot-start";
 
 
 export class Page {
     constructor(body) {
-        this.body = body;
+        this.body = body || document.body;
         this.phase = {};
-
-        install_otText(this.body);
-        install_otClass(this.body);
-        install_otImg(this.body);
-        install_otAttr(this.body);
-        install_otWhen(this.body);
-        install_otDisplay(this.body);
-        install_otInput(this.body, this);
-        install_otStart(this.body, this);
+        this.init();
     }
 
-    fire(type, data={}) {
-        // NB: queueing a task like a normal event, instead of dispatching synchronously
-        setTimeout(() => this.body.dispatchEvent(oTreeEvent(type, {page: this, ...data})));
+    init() {
+        otText(this);
+        otClass(this);
+        otImg(this);
+        otAttr(this);
+        otWhen(this);
+        otDisplay(this);
+        otInput(this);
+        otStart(this);
+    }
+
+    fire(type, detail) {
+        firePage(this, type, detail);
     }
 
     reset() {
-        this.phase = {display: null, input: null};
-        this.fire('reset');
+        this.phase = {};
+        this.fire('otree.reset');
+    }
+
+    start() {
+        this.fire('otree.start');
     }
 
     update(changes) {
-        this.fire('update', {changes});
+        if (!(changes instanceof Changes)) changes = new Changes(changes);
+        this.fire('otree.update', changes);
     }
 
     response(changes) {
-        this.fire('response', {changes});
+        if (!(changes instanceof Changes)) changes = new Changes(changes);
+        this.fire('otree.response', changes);
     }
 
-    error(code) {
-        this.fire('error', {error: code});
-        this.fire('update', {changes: {error: code}});
+    error(code, message) {
+        if (code == null) {
+            this.fire('otree.error');
+            this.fire('otree.update', {error: undefined});
+        } else {
+            let error = {code, message};
+            if (!message) delete error.message;
+            this.fire('otree.error', error);
+            this.fire('otree.update', {error});
+        }
     }
 
-    toggleDisplay(phase) {
-        this.phase.display = phase;
-        this.fire('display', {phase});
-    }
-
-    toggleInput(phase) {
-        this.phase.input = phase;
-        this.fire('input', {phase});
+    toggle(phase) {
+        this.phase = phase;
+        this.fire('otree.phase', phase);
     }
 
     timeout() {
-        this.toggleInput(false);
-        this.fire('timeout');
+        this.fire('otree.timeout');
     }
 }

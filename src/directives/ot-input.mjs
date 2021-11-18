@@ -1,26 +1,17 @@
 import { Ref, Changes } from "../utils/changes";
-import { toggleDisabled, isDisabled } from "../utils/dom";
+import { onPage, onTarget } from "../utils/events";
+import { toggleDisabled, isDisabled, isTextInput } from "../utils/dom";
 
-export function install_otInput(root, page) {
-  root.querySelectorAll("[data-ot-input]").forEach((elem) => {
+export function otInput(page) {
+  page.body.querySelectorAll("[data-ot-input]").forEach((elem) => {
     const params = parse_params(elem);
-    root.addEventListener("ot.reset", (event) => handle_reset(event, elem));
-    root.addEventListener("ot.input", (event) => handle_phase(event, elem));
-    if (params.trigger.change) {
-      elem.addEventListener("change", (event) => handle_change(event, page, elem, params));
-    }
-    if (params.trigger.change && (elem.type == "text" || elem.tagName == "TEXTAREA")) {
-      elem.addEventListener("keydown", (event) => handle_enter(event, page, elem, params));
-    }
-    if (params.trigger.click) {
-      elem.addEventListener("click", (event) => handle_click(event, page, elem, params));
-    }
-    if (params.trigger.touch) {
-      elem.addEventListener("touchend", (event) => handle_touch(event, page, elem, params));
-    }
-    if (params.trigger.key) {
-      root.addEventListener("keydown", (event) => handle_key(event, page, elem, params));
-    }
+    onPage(page, elem, params, "otree.reset", handle_reset);
+    onPage(page, elem, params, "otree.phase", handle_phase);
+    if (params.trigger.change) onTarget(page, elem, params, "change", handle_change);
+    if (isTextInput(elem)) onTarget(page, elem, params, "keydown", handle_enter);
+    if (params.trigger.click) onTarget(page, elem, params, "click", handle_click);
+    if (params.trigger.touch) onTarget(page, elem, params, "touchend", handle_touch);
+    if (params.trigger.key) onPage(page, elem, params, "keydown", handle_key);
   });
 }
 
@@ -61,29 +52,29 @@ function parse_params(elem) {
   return { ref, val, trigger };
 }
 
-function handle_phase(event, elem) {
-  const { phase } = event.detail;
-  toggleDisabled(elem, !phase);
+function handle_phase(page, target, params, event) {
+  const phase = event.detail;
+  toggleDisabled(target, !phase.input);
 }
 
-function handle_reset(event, elem) {
-  toggleDisabled(elem, true);
-  elem.value = null;
+function handle_reset(page, target, params, event) {
+  toggleDisabled(target, true);
+  target.value = null;
 }
 
-function handle_change(event, page, elem, params) {
-  if (elem.disabled) {
+function handle_change(page, target, params, event) {
+  if (target.disabled) {
     page.error("frozen");
     return;
   }
-  let value = elem.value;
+  let value = target.value;
   if (value === "true") value = true;
   if (value === "false") value = false;
   page.response(new Changes({ [params.ref]: value }));
 }
 
-function handle_click(event, page, elem, params) {
-  if (isDisabled(elem)) {
+function handle_click(page, target, params, event) {
+  if (isDisabled(target)) {
     page.error("frozen");
     return;
   }
@@ -91,8 +82,8 @@ function handle_click(event, page, elem, params) {
   page.response(new Changes({ [params.ref]: params.val }));
 }
 
-function handle_touch(event, page, elem, params) {
-  if (isDisabled(elem)) {
+function handle_touch(page, target, params, event) {
+  if (isDisabled(target)) {
     page.error("frozen");
     return;
   }
@@ -100,10 +91,10 @@ function handle_touch(event, page, elem, params) {
   page.response(new Changes({ [params.ref]: params.val }));
 }
 
-function handle_enter(event, page, elem, params) {
+function handle_enter(page, target, params, event) {
   if (event.code == "Enter") {
     setTimeout(() =>
-      elem.dispatchEvent(
+      target.dispatchEvent(
         new Event("change", {
           view: window,
           bubbles: false,
@@ -114,9 +105,9 @@ function handle_enter(event, page, elem, params) {
   }
 }
 
-function handle_key(event, page, elem, params) {
+function handle_key(page, target, params, event) {
   if (event.code != params.trigger.key) return;
-  if (isDisabled(elem)) {
+  if (isDisabled(target)) {
     page.error("frozen");
     return;
   }

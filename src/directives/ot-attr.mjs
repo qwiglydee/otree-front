@@ -1,14 +1,15 @@
 import { Ref } from "../utils/changes";
+import { onPage } from "../utils/events";
 import { setAttr } from "../utils/dom";
 
 const ALLOWED_ATTRIBS = ["disabled", "hidden", "height", "width", "min", "max", "low", "high", "optimum", "value"];
 
-export function install_otAttr(root) {
+export function otAttr(page) {
   const selector = ALLOWED_ATTRIBS.map((a) => `[data-ot-attr-${a}]`).join(",");
-  root.querySelectorAll(selector).forEach((elem) => {
+  page.body.querySelectorAll(selector).forEach((elem) => {
     const params = parse_params(elem);
-    root.addEventListener("ot.reset", (event) => handle_reset(event, elem, params));
-    root.addEventListener("ot.update", (event) => handle_update(event, elem, params));
+    onPage(page, elem, params, 'otree.reset', handle_reset);
+    onPage(page, elem, params, 'otree.update', handle_update);
   });
 }
 
@@ -32,16 +33,16 @@ function eval_attr(params, key, changes) {
   return changes.pick(params.get(key));
 }
 
-function handle_reset(event, elem, params) {
-  reset_attrs(elem, params);
+function handle_reset(page, target, params, event) {
+  reset_attrs(target, params);
 }
 
-function handle_update(event, elem, params) {
-  const { changes } = event.detail;
+function handle_update(page, target, params, event) {
+  const changes = event.detail;
 
   params.forEach((ref, attr) => {
     if (changes.affects(ref)) {
-      setAttr(elem, attr, changes.pick(ref));
+      setAttr(target, attr, changes.pick(ref));
     }
   });
 }

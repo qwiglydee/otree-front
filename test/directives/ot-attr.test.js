@@ -37,7 +37,6 @@ describe("ot-attr", () => {
     });
 
     it("changes by fld", async () => {
-      debugger;
       page.reset();
       await elementUpdated(elem);
 

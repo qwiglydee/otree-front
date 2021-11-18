@@ -31,11 +31,11 @@ describe("ot-display", () => {
       page.reset();
       await elementUpdated(elem);
 
-      page.toggleDisplay("foo");
+      page.toggle({ display: "foo" });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
 
-      page.toggleDisplay("bar");
+      page.toggle({ display: "bar" });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });

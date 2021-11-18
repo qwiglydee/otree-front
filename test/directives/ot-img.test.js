@@ -8,8 +8,6 @@ describe("ot-img", () => {
   const
     foo_img = new Image(),
     bar_img = new Image();
-  foo_img.alt = "the_foo";
-  bar_img.alt = "the_bar";
 
   describe("errors", () => {
     it("invalid path", async () => {
