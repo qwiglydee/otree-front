@@ -20,65 +20,74 @@ describe("events", () => {
     return (await oneEvent(elem, type)).detail;
   }
 
-  it("works on page", async () => {
-    let counter = 0;
-    let passed = null;
-    let wrapper;
+  describe("on page", () => {
+    it("requires `page` in conf", async () => {
+      expect(() => onPage({}, "foo", () => {})).to.throw;
+    });
 
-    function handler(page, target, params, event) {
-      counter ++;
-      passed = {page, target, params, event};
-    }
+    it("works", async () => {
+      let counter = 0;
+      let passed = null;
+      let wrapper;
 
-    wrapper = onPage(page, elem, {baz: "Baz"}, 'foo', handler);
+      function handler(conf, event) {
+        counter++;
+        passed = { conf, event };
+      }
 
-    firePage(page, 'foo', {bar: "Bar"});
-    detail = await pageEvent('foo');
-    expect(detail).to.eql({bar: "Bar"});
+      wrapper = onPage({ page, baz: "Baz" }, "foo", handler);
 
-    expect(counter).to.eq(1);
-    expect(passed.page).to.eq(page);
-    expect(passed.target).to.eq(elem);
-    expect(passed.params).to.eql({baz: "Baz"});
-    expect(passed.event).to.be.instanceof(CustomEvent);
+      firePage(page, "foo", { bar: "Bar" });
+      detail = await pageEvent("foo");
+      expect(detail).to.eql({ bar: "Bar" });
 
-    offPage(wrapper);
-    firePage(page, 'foo', {bar: "Bar2"});
-    detail = await pageEvent('foo');
-    expect(detail).to.eql({bar: "Bar2"});
+      expect(counter).to.eq(1);
+      expect(passed.conf).to.eql({ page, baz: "Baz" });
+      expect(passed.event).to.be.instanceof(CustomEvent);
 
-    expect(counter).to.eq(1);
+      offPage(wrapper);
+      firePage(page, "foo", { bar: "Bar2" });
+      detail = await pageEvent("foo");
+      expect(detail).to.eql({ bar: "Bar2" });
+
+      expect(counter).to.eq(1);
+    });
   });
 
-  it("works on elem", async () => {
-    let counter = 0;
-    let passed = null;
-    let wrapper;
+  describe("on elem", () => {
+    const target = elem;
 
-    function handler(page, target, params, event) {
-      counter ++;
-      passed = {page, target, params, event};
-    }
+    it("requires `target` in conf", async () => {
+      expect(() => onPage({}, "foo", () => {})).to.throw;
+    });
 
-    wrapper = onTarget(page, elem, {baz: "Baz"}, 'foo', handler);
+    it("works", async () => {
+      let counter = 0;
+      let passed = null;
+      let wrapper;
 
-    fireTarget(elem, 'foo', {bar: "Bar"});
-    detail = await elemEvent('foo');
-    expect(detail).to.eql({bar: "Bar"});
+      function handler(conf, event) {
+        counter++;
+        passed = { conf, event };
+      }
 
-    expect(counter).to.eq(1);
-    expect(passed.page).to.eq(page);
-    expect(passed.target).to.eq(elem);
-    expect(passed.params).to.eql({baz: "Baz"});
-    expect(passed.event).to.be.instanceof(CustomEvent);
+      wrapper = onTarget({ page, target: elem, baz: "Baz" }, "foo", handler);
 
-    offTarget(wrapper);
+      fireTarget(elem, "foo", { bar: "Bar" });
+      detail = await elemEvent("foo");
+      expect(detail).to.eql({ bar: "Bar" });
 
-    fireTarget(elem, 'foo', {bar: "Bar2"});
-    detail = await elemEvent('foo');
-    expect(detail).to.eql({bar: "Bar2"});
+      expect(counter).to.eq(1);
+      expect(passed.conf).to.eql({ page, target: elem, baz: "Baz" });
+      expect(passed.event).to.be.instanceof(CustomEvent);
 
-    expect(counter).to.eq(1);
+      offTarget(wrapper);
+
+      fireTarget(elem, "foo", { bar: "Bar2" });
+      detail = await elemEvent("foo");
+      expect(detail).to.eql({ bar: "Bar2" });
+
+      expect(counter).to.eq(1);
+    });
   });
-
 });

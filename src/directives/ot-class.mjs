@@ -3,10 +3,10 @@ import { onPage } from "../utils/events";
 import { setClasses } from "../utils/dom";
 
 export function otClass(page) {
-  page.body.querySelectorAll("[data-ot-class]").forEach((elem) => {
-    const params = parse_params(elem);
-    onPage(page, elem, params, 'otree.reset', handle_reset);
-    onPage(page, elem, params, 'otree.update', handle_update);
+  page.body.querySelectorAll("[data-ot-class]").forEach((target) => {
+    const params = parse_params(target);
+    onPage({ page, target, ...params }, "otree.reset", handle_reset);
+    onPage({ page, target, ...params }, "otree.update", handle_update);
   });
 }
 
@@ -28,13 +28,13 @@ function eval_classes(params, changes) {
   return classes;
 }
 
-function handle_reset(page, target, params, event) {
-  setClasses(target, params.defaults);
+function handle_reset(conf, event) {
+  setClasses(conf.target, conf.defaults);
 }
 
-function handle_update(page, target, params, event) {
+function handle_update(conf, event) {
   const changes = event.detail;
-  if (changes.affects(params.ref)) {
-    setClasses(target, eval_classes(params, changes));
+  if (changes.affects(conf.ref)) {
+    setClasses(conf.target, eval_classes(conf, changes));
   }
 }

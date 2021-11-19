@@ -4,17 +4,16 @@
 
 /** adds event handler to the page
  *
- * @param page {Page} the page
- * @param target {HTMLElement} an element the event designated for
- * @param params {Object} some config params to pass to the handler
+ * @param conf {Object} event-independent config, at least `page` required
  * @param type {String} event type
- * @param handler {function(page, target, params, event)} handler
- * @returns {Object} handler wrapper
+ * @param handler {function(page, target, conf, event)} handler
+ * @returns {Object} handler wrapper {conf, type, listener}
  */
-export function onPage(page, target, params, type, handler) {
-  const listener = (event) => handler(page, target, params, event)
-  page.body.addEventListener(type, listener);
-  return {page, target, type, listener};
+export function onPage(conf, type, handler) {
+  if (!('page' in conf)) throw new Error("Handler conf missed `page`");
+  const listener = (event) => handler(conf, event);
+  conf.page.body.addEventListener(type, listener);
+  return {conf, type, listener};
 }
 
 /** removes event listener from page
@@ -22,29 +21,28 @@ export function onPage(page, target, params, type, handler) {
  * @param wrapper a wrapper returned by `onPage`
  */
 export function offPage(wrapper) {
-  wrapper.page.body.removeEventListener(wrapper.type, wrapper.listener);
+  wrapper.conf.page.body.removeEventListener(wrapper.type, wrapper.listener);
 }
 
 /** adds event handler to an element
  *
- * @param page {Page} the page
- * @param target {HTMLElement} an element the event designated for
- * @param params {Object} some config params to pass to the handler
+ * @param conf {Object} event-independent config, at least `target` required
  * @param type {String} event type
- * @param handler {function(page, target, params, event)} handler
- * @returns {Object} handler wrapper
+ * @param handler {function(page, target, conf, event)} handler
+ * @returns {Object} handler wrapper {conf, type, listener}
  */
-export function onTarget(page, target, params, type, handler) {
-  const listener = (event) => handler(page, target, params, event)
-  target.addEventListener(type, listener);
-  return {page, target, type, listener};
+export function onTarget(conf, type, handler) {
+  if (!('page' in conf)) throw new Error("Handler conf missed `target`");
+  const listener = (event) => handler(conf, event)
+  conf.target.addEventListener(type, listener);
+  return {conf, type, listener};
 }
 
 /** removes event listener from an element
  * @param wrapper a wrapper returned by `onPage`
  */
 export function offTarget(wrapper) {
-  wrapper.target.removeEventListener(wrapper.type, wrapper.listener);
+  wrapper.conf.target.removeEventListener(wrapper.type, wrapper.listener);
 }
 
 /** triggers an event on the page

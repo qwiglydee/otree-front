@@ -3,34 +3,35 @@ import { onPage } from "../utils/events";
 import { setChild } from "../utils/dom";
 
 export function otImg(page) {
-  page.body.querySelectorAll("[data-ot-img]").forEach((elem) => {
-    const params = parse_params(elem);
-    onPage(page, elem, params, 'otree.reset', handle_reset);
-    onPage(page, elem, params, 'otree.update', handle_update);
+  page.body.querySelectorAll("[data-ot-img]").forEach((target) => {
+    const ref = parse_params(target);
+    onPage({ page, target }, "otree.reset", handle_reset);
+    onPage({ page, target, ref }, "otree.update", handle_update);
   });
 }
 
 function parse_params(elem) {
   let ref = elem.dataset.otImg;
   Ref.validate(ref);
-  return { ref };
+  return ref;
 }
 
-function eval_img(params, changes) {
-  let img = changes.pick(params.ref);
+function eval_img(ref, changes) {
+  let img = changes.pick(ref);
   if (!!img && !(img instanceof Image)) {
     throw new Error(`Invalid value for image: ${img}`);
   }
   return img;
 }
 
-function handle_reset(page, target, params, event) {
-  setChild(target, null);
+function handle_reset(conf, event) {
+  setChild(conf.target, null);
 }
 
-function handle_update(page, target, params, event) {
+function handle_update(conf, event) {
+  const { target } = conf;
   const changes = event.detail;
-  if (changes.affects(params.ref)) {
-    setChild(target, eval_img(params, changes));
+  if (changes.affects(conf.ref)) {
+    setChild(target, eval_img(conf.ref, changes));
   }
 }

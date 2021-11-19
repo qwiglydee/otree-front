@@ -1,17 +1,17 @@
-import { Ref, Changes } from "../utils/changes";
+import { Ref } from "../utils/changes";
 import { onPage, onTarget } from "../utils/events";
 import { toggleDisabled, isDisabled, isTextInput } from "../utils/dom";
 
 export function otInput(page) {
-  page.body.querySelectorAll("[data-ot-input]").forEach((elem) => {
-    const params = parse_params(elem);
-    onPage(page, elem, params, "otree.reset", handle_reset);
-    onPage(page, elem, params, "otree.phase", handle_phase);
-    if (params.trigger.change) onTarget(page, elem, params, "change", handle_change);
-    if (isTextInput(elem)) onTarget(page, elem, params, "keydown", handle_enter);
-    if (params.trigger.click) onTarget(page, elem, params, "click", handle_click);
-    if (params.trigger.touch) onTarget(page, elem, params, "touchend", handle_touch);
-    if (params.trigger.key) onPage(page, elem, params, "keydown", handle_key);
+  page.body.querySelectorAll("[data-ot-input]").forEach((target) => {
+    const params = parse_params(target);
+    onPage({ page, target }, "otree.reset", handle_reset);
+    onPage({ page, target, ...params }, "otree.phase", handle_phase);
+    if (params.trigger.change) onTarget({ page, target, ...params }, "change", handle_change);
+    if (isTextInput(target)) onTarget({ page, target, ...params }, "keydown", handle_enter);
+    if (params.trigger.click) onTarget({ page, target, ...params }, "click", handle_click);
+    if (params.trigger.touch) onTarget({ page, target, ...params }, "touchend", handle_touch);
+    if (params.trigger.key) onPage({ page, target, ...params }, "keydown", handle_key);
   });
 }
 
@@ -52,46 +52,52 @@ function parse_params(elem) {
   return { ref, val, trigger };
 }
 
-function handle_phase(page, target, params, event) {
+function handle_phase(conf, event) {
+  const { page, target } = conf;
   const phase = event.detail;
-  toggleDisabled(target, !phase.input);
+  toggleDisabled(conf.target, !phase.input);
 }
 
-function handle_reset(page, target, params, event) {
+function handle_reset(conf, event) {
+  const { target } = conf;
   toggleDisabled(target, true);
   target.value = null;
 }
 
-function handle_change(page, target, params, event) {
-  if (target.disabled) {
+function handle_change(conf, event) {
+  const { page, target } = conf;
+  if (conf.target.disabled) {
     page.error("frozen");
     return;
   }
   let value = target.value;
   if (value === "true") value = true;
   if (value === "false") value = false;
-  page.response(new Changes({ [params.ref]: value }));
+  page.response({ [conf.ref]: value });
 }
 
-function handle_click(page, target, params, event) {
+function handle_click(conf, event) {
+  const { page, target } = conf;
   if (isDisabled(target)) {
     page.error("frozen");
     return;
   }
   event.preventDefault();
-  page.response(new Changes({ [params.ref]: params.val }));
+  page.response({ [conf.ref]: conf.val });
 }
 
-function handle_touch(page, target, params, event) {
+function handle_touch(conf, event) {
+  const { page, target } = conf;
   if (isDisabled(target)) {
     page.error("frozen");
     return;
   }
   event.preventDefault();
-  page.response(new Changes({ [params.ref]: params.val }));
+  page.response({ [conf.ref]: conf.val });
 }
 
-function handle_enter(page, target, params, event) {
+function handle_enter(conf, event) {
+  const { target } = conf;
   if (event.code == "Enter") {
     setTimeout(() =>
       target.dispatchEvent(
@@ -105,12 +111,13 @@ function handle_enter(page, target, params, event) {
   }
 }
 
-function handle_key(page, target, params, event) {
-  if (event.code != params.trigger.key) return;
+function handle_key(conf, event) {
+  const { page, target } = conf;
+  if (event.code != conf.trigger.key) return;
   if (isDisabled(target)) {
     page.error("frozen");
     return;
   }
   event.preventDefault();
-  page.response(new Changes({ [params.ref]: params.val }));
+  page.response({ [conf.ref]: conf.val });
 }
