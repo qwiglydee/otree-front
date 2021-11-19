@@ -94,4 +94,13 @@ describe("Page controller", () => {
     detail = await pageEvent("otree.timeout");
     expect(detail).to.be.null;
   });
+
+  it("fires status", async () => {
+    page.status({ foo: "Foo", bar: "Bar"});
+    detail = await pageEvent("otree.status");
+    expect(detail).to.eql({ foo: "Foo", bar: "Bar"});
+    detail = await pageEvent("otree.update");
+    expect(detail).to.eql(new Changes({ 'status.foo': "Foo", 'status.bar': "Bar"}));
+  });
+
 });

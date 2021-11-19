@@ -44,6 +44,12 @@ export class Page {
         this.fire('otree.start');
     }
 
+    status(data) {
+        this.fire('otree.status', data);
+        // convert status object `{ foo: val }` to changes of form `{ 'status.foo': val }`
+        this.fire('otree.update', new Map([...Object.entries(data)].map(([k,v]) => ["status."+k, v])));
+    }
+
     update(changes) {
         if (!(changes instanceof Changes)) changes = new Changes(changes);
         this.fire('otree.update', changes);
