@@ -83,6 +83,7 @@ export class Page {
    * @param target {?HTMLElement} an element to fire at, instead of the page itself
    */
   fire(type, detail, target) {
+    // console.debug("firing", type, detail);
     const event = new CustomEvent(type, {detail});
     target = target || this.body;
     // NB: queueing a task like a normal event, instead of dispatching synchronously
@@ -137,4 +138,12 @@ export class Page {
   timeout() {
     this.fire("otree.timeout");
   }
+}
+
+
+/** Live Page
+ * handles live messages
+ * converts incoming and outgoing messages to events like `otree.live.type`
+ */
+export class LivePage extends Page {
 }

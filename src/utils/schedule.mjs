@@ -41,6 +41,8 @@ export class Schedule {
   }
 
   run() {
+    performance.clearMeasures();
+    performance.clearMarks();
     this.phases.forEach((phase, i) => {
       this._timers.delay(`phase-${i}`, () => this.page.fire('otree.phase', phase), phase.time);
       if ('timeout' in phase) {
