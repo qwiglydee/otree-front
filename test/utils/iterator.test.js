@@ -2,7 +2,6 @@ import { expect, fixture, oneEvent, aTimeout, nextFrame } from "@open-wc/testing
 
 import { Deferred } from "../../src/utils/deferred";
 import { Page } from "../../src/page";
-import { onPage } from "../../src/utils/events";
 import { playRounds } from "../../src/utils/iterator";
 
 

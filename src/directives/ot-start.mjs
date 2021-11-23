@@ -1,12 +1,11 @@
-import { onPage, onTarget } from "../utils/events";
 import { toggleDisplay, toggleDisabled, isDisabled } from "../utils/dom";
 
 export function otStart(page) {
-  page.body.querySelectorAll("[data-ot-start]").forEach((target) => {
-    const params = parse_trigger(target);
-    if (params.click) onTarget({ page, target, ...params }, "click", handle_click);
-    if (params.touch) onTarget({ page, target, ...params }, "touchend", handle_touch);
-    if (params.key) onPage({ page, target, ...params }, "keydown", handle_key);
+  page.body.querySelectorAll("[data-ot-start]").forEach((elem) => {
+    const params = parse_trigger(elem);
+    if (params.click) page.on("click", handle_click, { elem, ...params }, elem);
+    if (params.touch) page.on("touchend", handle_touch, { elem, ...params }, elem);
+    if (params.key) page.on("keydown", handle_key, { elem, ...params });
   });
 }
 
@@ -24,27 +23,27 @@ function disable(elem) {
   elem.disabled = true;
 }
 
-function handle_click(conf, event) {
-  const { page, target } = conf;
-  if (isDisabled(target)) return;
+function handle_click(page, conf, event) {
+  const { elem } = conf;
+  if (isDisabled(elem)) return;
   event.preventDefault();
   page.start();
-  disable(target);
+  disable(elem);
 }
 
-function handle_touch(conf, event) {
-  const { page, target } = conf;
-  if (isDisabled(target)) return;
+function handle_touch(page, conf, event) {
+  const { elem } = conf;
+  if (isDisabled(elem)) return;
   event.preventDefault();
   page.start();
-  disable(target);
+  disable(elem);
 }
 
-function handle_key(conf, event) {
-  const { page, target, key } = conf;
-  if (isDisabled(target)) return;
+function handle_key(page, conf, event) {
+  const { elem, key } = conf;
+  if (isDisabled(elem)) return;
   if (event.code != key) return;
   event.preventDefault();
   page.start();
-  disable(target);
+  disable(elem);
 }

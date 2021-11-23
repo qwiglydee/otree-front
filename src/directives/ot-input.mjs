@@ -1,17 +1,16 @@
 import { Ref } from "../utils/changes";
-import { onPage, onTarget } from "../utils/events";
 import { toggleDisabled, isDisabled, isTextInput } from "../utils/dom";
 
 export function otInput(page) {
-  page.body.querySelectorAll("[data-ot-input]").forEach((target) => {
-    const params = parse_params(target);
-    onPage({ page, target }, "otree.reset", handle_reset);
-    onPage({ page, target, ...params }, "otree.phase", handle_phase);
-    if (params.trigger.change) onTarget({ page, target, ...params }, "change", handle_change);
-    if (isTextInput(target)) onTarget({ page, target, ...params }, "keydown", handle_enter);
-    if (params.trigger.click) onTarget({ page, target, ...params }, "click", handle_click);
-    if (params.trigger.touch) onTarget({ page, target, ...params }, "touchend", handle_touch);
-    if (params.trigger.key) onPage({ page, target, ...params }, "keydown", handle_key);
+  page.body.querySelectorAll("[data-ot-input]").forEach((elem) => {
+    const params = parse_params(elem);
+    page.on("otree.reset", handle_reset, { elem });
+    page.on("otree.phase", handle_phase, { elem, ...params });
+    if (params.trigger.change) page.on("change", handle_change, { elem, ...params }, elem);
+    if (isTextInput(elem)) page.on("keydown", handle_enter, { elem, ...params }, elem);
+    if (params.trigger.click) page.on("click", handle_click, { elem, ...params }, elem);
+    if (params.trigger.touch) page.on("touchend", handle_touch, { elem, ...params }, elem);
+    if (params.trigger.key) page.on("keydown", handle_key, { elem, ...params });
   });
 }
 
@@ -52,55 +51,55 @@ function parse_params(elem) {
   return { ref, val, trigger };
 }
 
-function handle_phase(conf, event) {
-  const { page, target } = conf;
+function handle_phase(page, conf, event) {
+  const { elem } = conf;
   const phase = event.detail;
-  toggleDisabled(conf.target, !phase.input);
+  toggleDisabled(elem, !phase.input);
 }
 
-function handle_reset(conf, event) {
-  const { target } = conf;
-  toggleDisabled(target, true);
-  target.value = null;
+function handle_reset(page, conf, event) {
+  const { elem } = conf;
+  toggleDisabled(elem, true);
+  elem.value = null;
 }
 
-function handle_change(conf, event) {
-  const { page, target } = conf;
-  if (conf.target.disabled) {
+function handle_change(page, conf, event) {
+  const { elem, ref } = conf;
+  if (elem.disabled) {
     page.error("frozen");
     return;
   }
-  let value = target.value;
+  let value = elem.value;
   if (value === "true") value = true;
   if (value === "false") value = false;
-  page.response({ [conf.ref]: value });
+  page.response({ [ref]: value });
 }
 
-function handle_click(conf, event) {
-  const { page, target } = conf;
-  if (isDisabled(target)) {
+function handle_click(page, conf, event) {
+  const { elem, ref, val } = conf;
+  if (isDisabled(elem)) {
     page.error("frozen");
     return;
   }
   event.preventDefault();
-  page.response({ [conf.ref]: conf.val });
+  page.response({ [ref]: val });
 }
 
-function handle_touch(conf, event) {
-  const { page, target } = conf;
-  if (isDisabled(target)) {
+function handle_touch(page, conf, event) {
+  const { elem, ref, val } = conf;
+  if (isDisabled(elem)) {
     page.error("frozen");
     return;
   }
   event.preventDefault();
-  page.response({ [conf.ref]: conf.val });
+  page.response({ [ref]: val });
 }
 
-function handle_enter(conf, event) {
-  const { target } = conf;
+function handle_enter(page, conf, event) {
+  const { elem } = conf;
   if (event.code == "Enter") {
     setTimeout(() =>
-      target.dispatchEvent(
+      elem.dispatchEvent(
         new Event("change", {
           view: window,
           bubbles: false,
@@ -111,13 +110,13 @@ function handle_enter(conf, event) {
   }
 }
 
-function handle_key(conf, event) {
-  const { page, target } = conf;
-  if (event.code != conf.trigger.key) return;
-  if (isDisabled(target)) {
+function handle_key(page, conf, event) {
+  const { elem, ref, val, trigger } = conf;
+  if (event.code != trigger.key) return;
+  if (isDisabled(elem)) {
     page.error("frozen");
     return;
   }
   event.preventDefault();
-  page.response({ [conf.ref]: conf.val });
+  page.response({ [ref]: val });
 }

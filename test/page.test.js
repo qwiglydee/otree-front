@@ -104,3 +104,105 @@ describe("Page controller", () => {
   });
 
 });
+
+describe("events", () => {
+  let body, page, elem, detail;
+
+  beforeEach(async () => {
+    body = document.createElement("body");
+    elem = await fixture(`<div></div>`, { parentNode: body });
+    page = new Page(body);
+  });
+
+  async function pageEvent(type) {
+    return (await oneEvent(body, type)).detail;
+  }
+
+  async function elemEvent(type) {
+    return (await oneEvent(elem, type)).detail;
+  }
+
+  describe("on page", () => {
+    it("requires `page` in conf", async () => {
+      expect(() => onPage({}, "foo", () => {})).to.throw;
+    });
+
+    it("works", async () => {
+      let counter = 0;
+      let passed = null;
+      let wrapper;
+
+      function handler(page, conf, event) {
+        counter++;
+        passed = arguments;
+      }
+
+      wrapper = page.on("foo", handler, { baz: "Baz" });
+
+      page.fire("foo", { bar: "Bar" });
+      detail = await pageEvent("foo");
+      expect(detail).to.eql({ bar: "Bar" });
+
+      expect(counter).to.eq(1);
+      expect(passed[0]).to.eq(page);
+      expect(passed[1]).to.eql({ baz: "Baz" });
+      expect(passed[2]).to.be.instanceof(CustomEvent);
+
+      page.off(wrapper);
+      page.fire("foo", { bar: "Bar2" });
+      detail = await pageEvent("foo");
+      expect(detail).to.eql({ bar: "Bar2" });
+
+      expect(counter).to.eq(1);
+    });
+
+    it("waits", async () => {
+      let counter=0;
+
+      page.wait('foo').then(()=>{counter++});
+      page.fire('foo');
+      await nextFrame();
+      expect(counter).to.eq(1);
+
+      page.fire('foo');
+      await nextFrame();
+      expect(counter).to.eq(1);
+    });
+  });
+
+  describe("on elem", () => {
+    it("requires `target` in conf", async () => {
+      expect(() => onPage({}, "foo", () => {})).to.throw;
+    });
+
+    it("works", async () => {
+      let counter = 0;
+      let passed = null;
+      let wrapper;
+
+      function handler(page, conf, event) {
+        counter++;
+        passed = arguments;
+      }
+
+      wrapper = page.on("foo", handler, { baz: "Baz" }, elem);
+
+      page.fire("foo", { bar: "Bar" }, elem);
+      detail = await elemEvent("foo");
+      expect(detail).to.eql({ bar: "Bar" });
+
+      expect(counter).to.eq(1);
+      expect(passed[0]).to.eq(page);
+      expect(passed[1]).to.eql({ baz: "Baz" });
+      expect(passed[2]).to.be.instanceof(CustomEvent);
+
+      page.off(wrapper);
+
+      page.fire("foo", { bar: "Bar2" }, elem);
+      detail = await elemEvent("foo");
+      expect(detail).to.eql({ bar: "Bar2" });
+
+      expect(counter).to.eq(1);
+    });
+  });
+});

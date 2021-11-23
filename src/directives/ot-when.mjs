@@ -1,12 +1,11 @@
 import { Ref } from "../utils/changes";
-import { onPage } from "../utils/events";
 import { toggleDisplay } from "../utils/dom";
 
 export function otWhen(page) {
-  page.body.querySelectorAll("[data-ot-when]").forEach((target) => {
-    const params = parse_params(target);
-    onPage({ page, target }, "otree.reset", handle_reset);
-    onPage({ page, target, ...params }, "otree.update", handle_update);
+  page.body.querySelectorAll("[data-ot-when]").forEach((elem) => {
+    const params = parse_params(elem);
+    page.on("otree.reset", handle_reset, { elem });
+    page.on("otree.update", handle_update, { elem, ...params });
   });
 }
 
@@ -35,14 +34,14 @@ function eval_display(params, changes) {
   }
 }
 
-function handle_reset(conf, event) {
-  toggleDisplay(conf.target, false);
+function handle_reset(page, conf, event) {
+  toggleDisplay(conf.elem, false);
 }
 
-function handle_update(conf, event) {
-  const { target, ref } = conf;
+function handle_update(page, conf, event) {
+  const { elem, ref } = conf;
   const changes = event.detail;
   if (changes.affects(ref)) {
-    toggleDisplay(target, eval_display(conf, changes));
+    toggleDisplay(elem, eval_display(conf, changes));
   }
 }

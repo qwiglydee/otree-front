@@ -1,15 +1,14 @@
 import { Ref } from "../utils/changes";
-import { onPage } from "../utils/events";
 import { setAttr } from "../utils/dom";
 
 const ALLOWED_ATTRIBS = ["disabled", "hidden", "height", "width", "min", "max", "low", "high", "optimum", "value"];
 
 export function otAttr(page) {
   const selector = ALLOWED_ATTRIBS.map((a) => `[data-ot-attr-${a}]`).join(",");
-  page.body.querySelectorAll(selector).forEach((target) => {
-    const attrs = parse_params(target);
-    onPage({ page, target, attrs }, "otree.reset", handle_reset);
-    onPage({ page, target, attrs }, "otree.update", handle_update);
+  page.body.querySelectorAll(selector).forEach((elem) => {
+    const attrs = parse_params(elem);
+    page.on("otree.reset", handle_reset, { elem, attrs });
+    page.on("otree.update", handle_update, { elem, attrs });
   });
 }
 
@@ -35,17 +34,17 @@ function eval_attr(params, key, changes) {
   return changes.pick(params.get(key));
 }
 
-function handle_reset(conf, event) {
-  reset_attrs(conf.target, conf.attrs);
+function handle_reset(page, conf, event) {
+  reset_attrs(conf.elem, conf.attrs);
 }
 
-function handle_update(conf, event) {
-  const { target, attrs } = conf;
+function handle_update(page, conf, event) {
+  const { elem, attrs } = conf;
   const changes = event.detail;
 
   attrs.forEach((ref, attr) => {
     if (changes.affects(ref)) {
-      setAttr(target, attr, changes.pick(ref));
+      setAttr(elem, attr, changes.pick(ref));
     }
   });
 }

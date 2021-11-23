@@ -1,5 +1,4 @@
 import { Timers } from "./timers";
-import { firePage } from "./events";
 
 /** Schedule of timing phases.
  * Fires events according to timing table.
@@ -20,10 +19,10 @@ export class Schedule {
 
   run(page) {
     this.phases.forEach((phase, i) => {
-      this._timers.delay(`phase-${i}`, () => firePage(page, 'otree.phase', phase), phase.time);
+      this._timers.delay(`phase-${i}`, () => page.fire('otree.phase', phase), phase.time);
       if ('timeout' in phase) {
         this._timers.delay(`timeout`, () => {
-          firePage(page, 'otree.timeout');
+          page.fire('otree.timeout');
           this._timers.cancel();
         }, phase.time + phase.timeout);
       }
