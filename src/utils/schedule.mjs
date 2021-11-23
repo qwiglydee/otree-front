@@ -6,30 +6,66 @@ import { Timers } from "./timers";
  * Each phase:
  * - { time: number, display: string, input: bool, ...} -- a phase to happen at specified time in ms, and with given parameters
  * - { time, ..., timeout: number} -- fires timeout after defined phase
+ * - { name: "name", ... } -- defines custom phase to trigger manually with .trigger("name")
  */
 export class Schedule {
-  constructor(phases) {
+  constructor(page, phases) {
+    this.page = page;
+
+    this.validate(phases);
     this.phases = phases;
 
-    let timeout_phase = phases.filter(item => 'timeout' in item);
-    if (timeout_phase.length > 1) throw new Error("More than one timeouts in phases");
-
     this._timers = new Timers();
+
+    this.init();
   }
 
-  run(page) {
+  validate(phases) {
+    if (phases.filter(it => 'timeout' in it).length > 1) throw new Error("Multiple timeouts in phases");
+    if (phases.filter(it => it.input === true).length > 1) throw new Error("Multiple input phases not supported");
+    let named = phases.filter(it => 'name' in it);
+    let names = new Set(named.map(it => it.name));
+    if (named.length != names.size) throw new Error("Duplicated phase names");
+  } 
+
+  init() {
+    this.page.on('otree.phase', (page, conf, event) => {
+      if (event.detail.input) {
+        performance.mark('input');
+      }
+    })
+    this.page.on('otree.response', (page, conf, event) => {
+      performance.mark('response');
+      performance.measure('reaction_time', 'input', 'response');
+    })
+  }
+
+  run() {
     this.phases.forEach((phase, i) => {
-      this._timers.delay(`phase-${i}`, () => page.fire('otree.phase', phase), phase.time);
+      this._timers.delay(`phase-${i}`, () => this.page.fire('otree.phase', phase), phase.time);
       if ('timeout' in phase) {
         this._timers.delay(`timeout`, () => {
-          page.fire('otree.timeout');
+          this.page.fire('otree.timeout');
           this._timers.cancel();
         }, phase.time + phase.timeout);
       }
     });
   }
 
+  trigger(name) {
+    let m = this.phases.filter(item => item.name == name);
+    if (m.length == 0) throw new Error(`Phase ${name} not defined`);
+    let phase = m[0];
+    this.page.fire('otree.phase', phase);
+  }
+
   cancel() {
     this._timers.cancel();
+  }
+
+  reaction_time() {
+    let m = performance.getEntriesByName('reaction_time').slice(-1);
+    if (m.length == 0) return undefined;
+    return m[0].duration;
   }
 }

@@ -1,4 +1,4 @@
-import { expect, oneEvent, aTimeout } from "@open-wc/testing";
+import { expect, oneEvent, aTimeout, nextFrame  } from "@open-wc/testing";
 
 import { Page } from "../../src/page";
 import { Schedule } from "../../src/utils/schedule";
@@ -16,14 +16,14 @@ describe("schedule", () => {
   });
 
   it("runs phases", async () => {
-    schedule = new Schedule([
+    schedule = new Schedule(page, [
       { time: 0, foo: "foo0" },
       { time: 100, foo: "foo1" },
       { time: 200, foo: "foo2" },
     ]);
 
     const t0 = Date.now();
-    schedule.run(page);
+    schedule.run();
 
     detail = await pageEvent("otree.phase");
     expect(detail).to.eql({ time: 0, foo: "foo0" });
@@ -41,7 +41,7 @@ describe("schedule", () => {
   it("fails to take 2 timeouts", async () => {
     expect(
       () =>
-        new Schedule([
+        new Schedule(page, [
           { time: 100, foo: "foo1", timeout: 200 },
           { time: 200, foo: "foo1", timeout: 200 },
         ])
@@ -49,10 +49,10 @@ describe("schedule", () => {
   });
 
   it("timeouts", async () => {
-    schedule = new Schedule([{ time: 100, foo: "foo1", timeout: 200 }]);
+    schedule = new Schedule(page, [{ time: 100, foo: "foo1", timeout: 200 }]);
 
     const t0 = Date.now();
-    schedule.run(page);
+    schedule.run();
 
     detail = await pageEvent("otree.phase");
     expect(detail).to.eql({ time: 100, foo: "foo1", timeout: 200 });
@@ -70,13 +70,13 @@ describe("schedule", () => {
       counter++;
     });
 
-    schedule = new Schedule([
+    schedule = new Schedule(page, [
       { time: 100, foo: "foo1", timeout: 200 },
       { time: 500, foo: "foo5" },
     ]);
 
     const t0 = Date.now();
-    schedule.run(page);
+    schedule.run();
 
     detail = await pageEvent("otree.phase");
     expect(counter).to.eq(1);
@@ -89,5 +89,41 @@ describe("schedule", () => {
 
     await aTimeout(1000);
     expect(counter).to.eq(1);
+  });
+
+  it("fails to take 2 named", async () => {
+    expect(
+      () =>
+        new Schedule(page, [
+          { name: "foo", foo: "foo1", timeout: 200 },
+          { name: "foo", foo: "foo1", timeout: 200 },
+        ])
+    ).to.throw;
+  });
+
+  it("triggers named phases", async () => {
+    schedule = new Schedule(page, [{ name: "foo", foo: "foo1" }]);
+
+    schedule.trigger("foo");
+    detail = await pageEvent("otree.phase");
+    expect(detail).to.eql({ name: "foo", foo: "foo1" });
+  });
+
+  it("measures reaction", async () => {
+    schedule = new Schedule(page, [{ time: 100, foo: "foo1", input: true }]);
+    
+    schedule.run();
+    
+    await pageEvent("otree.phase");
+
+    await aTimeout(200);
+    page.fire('otree.response');
+
+    await pageEvent("otree.response");
+
+    let reaction = schedule.reaction_time();
+
+    expect(reaction).to.be.within(200, 210);
+
   });
 });
