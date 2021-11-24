@@ -1,13 +1,13 @@
 import { Changes } from "./utils/changes";
 
-import { otText } from "./directives/ot-text";
-import { otClass } from "./directives/ot-class";
-import { otImg } from "./directives/ot-img";
-import { otAttr } from "./directives/ot-attr";
-import { otWhen } from "./directives/ot-when";
-import { otDisplay } from "./directives/ot-display";
-import { otInput } from "./directives/ot-input";
-import { otStart } from "./directives/ot-start";
+// import { otText } from "./directives/ot-text";
+// import { otClass } from "./directives/ot-class";
+// import { otImg } from "./directives/ot-img";
+// import { otAttr } from "./directives/ot-attr";
+// import { otWhen } from "./directives/ot-when";
+// import { otDisplay } from "./directives/ot-display";
+// import { otInput } from "./directives/ot-input";
+// import { otStart } from "./directives/ot-start";
 
 export class Page {
   constructor(body) {
@@ -17,14 +17,14 @@ export class Page {
   }
 
   init() {
-    otText(this);
-    otClass(this);
-    otImg(this);
-    otAttr(this);
-    otWhen(this);
-    otDisplay(this);
-    otInput(this);
-    otStart(this);
+    // otText(this);
+    // otClass(this);
+    // otImg(this);
+    // otAttr(this);
+    // otWhen(this);
+    // otDisplay(this);
+    // otInput(this);
+    // otStart(this);
   }
 
   /** adds event handler
@@ -32,22 +32,15 @@ export class Page {
    * @param type {String} event type
    * @param handler {function(page, conf, event)} handler
    * @param target {?HTMLElement} an element to bind handler, instead of the page itself
-   * @param conf {Object} event-independent config, at least `page` required
-   * @returns {Object} handler wrapper {conf, type, listener}
+   * @returns {Function} handler wrapper bound to events, 
+   *   the wrapper has method off() to unbind itself
    */
-  on(type, handler, conf, target) {
-    const listener = (event) => handler(this, conf, event);
+  on(type, handler, target) {
     target = target || this.body;
+    const listener = (event) => handler(event, this, target);
+    listener.off = () => target.removeEventListener(type, listener); 
     target.addEventListener(type, listener);
-    return { type, listener, target };
-  }
-
-  /** removes event handler
-   *
-   * @param wrapper a wrapper returned by `onPage`
-   */
-  off(wrapper) {
-    wrapper.target.removeEventListener(wrapper.type, wrapper.listener);
+    return listener;
   }
 
   /** waits for an event
@@ -67,13 +60,13 @@ export class Page {
    * @param type {String} event type
    * @returns {Promise} resolved when event fired
    */
-  wait(type) {
+  wait(type, target) {
     let hnd;
     return new Promise((resolve) => {
       hnd = this.on(type, (event) => {
-        this.off(hnd);
+        hnd.off();
         resolve(event);
-      });
+      }, target);
     });
   }
 

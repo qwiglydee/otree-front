@@ -123,86 +123,106 @@ describe("events", () => {
   }
 
   describe("on page", () => {
-    it("requires `page` in conf", async () => {
-      expect(() => onPage({}, "foo", () => {})).to.throw;
-    });
+    it("binds", async () => {
+      let wrapper, called;
 
-    it("works", async () => {
-      let counter = 0;
-      let passed = null;
-      let wrapper;
-
-      function handler(page, conf, event) {
-        counter++;
-        passed = arguments;
+      function handler(event, page) {
+        called = arguments;
       }
 
-      wrapper = page.on("foo", handler, { baz: "Baz" });
+      wrapper = page.on("foo", handler);
 
       page.fire("foo", { bar: "Bar" });
       detail = await pageEvent("foo");
       expect(detail).to.eql({ bar: "Bar" });
+    
+      await nextFrame();
+      expect(called).not.to.be.undefined;
+      expect(called[0]).to.be.instanceof(CustomEvent);
+      expect(called[1]).to.eq(page);
+    });
 
-      expect(counter).to.eq(1);
-      expect(passed[0]).to.eq(page);
-      expect(passed[1]).to.eql({ baz: "Baz" });
-      expect(passed[2]).to.be.instanceof(CustomEvent);
+    it("unbinds", async () => {
+      let wrapper, called;
 
-      page.off(wrapper);
-      page.fire("foo", { bar: "Bar2" });
-      detail = await pageEvent("foo");
-      expect(detail).to.eql({ bar: "Bar2" });
+      function handler(event, page) {
+        called = arguments;
+      }
 
-      expect(counter).to.eq(1);
+      wrapper = page.on("foo", handler);
+
+      page.fire("foo", { bar: "Bar" });
+      await pageEvent("foo");
+      await nextFrame();
+      expect(called).not.to.be.undefined;
+
+      called = undefined;
+      wrapper.off();
+
+      page.fire("foo", { bar: "Bar" });
+      await pageEvent("foo");
+      await nextFrame();
+      expect(called).to.be.undefined;
     });
 
     it("waits", async () => {
-      let counter=0;
-
-      page.wait('foo').then(()=>{counter++});
+      let waiting = page.wait('foo');
       page.fire('foo');
-      await nextFrame();
-      expect(counter).to.eq(1);
-
-      page.fire('foo');
-      await nextFrame();
-      expect(counter).to.eq(1);
+      await pageEvent("foo");
+      await waiting;
     });
   });
 
   describe("on elem", () => {
-    it("requires `target` in conf", async () => {
-      expect(() => onPage({}, "foo", () => {})).to.throw;
-    });
+    it("binds", async () => {
+      let wrapper, called;
 
-    it("works", async () => {
-      let counter = 0;
-      let passed = null;
-      let wrapper;
-
-      function handler(page, conf, event) {
-        counter++;
-        passed = arguments;
+      function handler(event, page) {
+        called = arguments;
       }
 
-      wrapper = page.on("foo", handler, { baz: "Baz" }, elem);
+      wrapper = page.on("foo", handler, elem);
 
       page.fire("foo", { bar: "Bar" }, elem);
       detail = await elemEvent("foo");
       expect(detail).to.eql({ bar: "Bar" });
+    
+      await nextFrame();
+      expect(called).not.to.be.undefined;
+      expect(called[0]).to.be.instanceof(CustomEvent);
+      expect(called[1]).to.eq(page);
+      expect(called[2]).to.eq(elem);
+    });
 
-      expect(counter).to.eq(1);
-      expect(passed[0]).to.eq(page);
-      expect(passed[1]).to.eql({ baz: "Baz" });
-      expect(passed[2]).to.be.instanceof(CustomEvent);
+    it("unbinds", async () => {
+      let wrapper, called;
 
-      page.off(wrapper);
+      function handler(event, page) {
+        called = arguments;
+      }
 
-      page.fire("foo", { bar: "Bar2" }, elem);
-      detail = await elemEvent("foo");
-      expect(detail).to.eql({ bar: "Bar2" });
+      wrapper = page.on("foo", handler, elem);
 
-      expect(counter).to.eq(1);
+      page.fire("foo", { bar: "Bar" }, elem);
+      await elemEvent("foo");
+      await nextFrame();
+      expect(called).not.to.be.undefined;
+
+      called = undefined;
+      wrapper.off();
+
+      page.fire("foo", { bar: "Bar" }, elem);
+      await elemEvent("foo");
+      await nextFrame();
+      expect(called).to.be.undefined;
+    });
+
+    it("waits", async () => {
+      let waiting = page.wait('foo', elem);
+      page.fire('foo', {}, elem);
+      await elemEvent("foo", elem);
+      await waiting;
     });
   });
+
 });

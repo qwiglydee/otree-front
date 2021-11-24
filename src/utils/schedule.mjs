@@ -29,12 +29,12 @@ export class Schedule {
   } 
 
   init() {
-    this.page.on('otree.phase', (page, conf, event) => {
+    this.page.on('otree.phase', (event) => {
       if (event.detail.input) {
         performance.mark('input');
       }
     })
-    this.page.on('otree.response', (page, conf, event) => {
+    this.page.on('otree.response', () => {
       performance.mark('response');
       performance.measure('reaction_time', 'input', 'response');
     })
