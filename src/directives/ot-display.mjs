@@ -1,24 +1,30 @@
 import { toggleDisplay } from "../utils/dom";
+import { Directive, registerDirective } from "./base";
 
-export function otDisplay(page) {
-  page.body.querySelectorAll("[data-ot-display]").forEach((elem) => {
-    const phase = parse_params(elem);
-    page.on("otree.reset", handle_reset, { elem });
-    page.on("otree.phase", handle_phase, { elem, phase });
-  });
+class otDisplay extends Directive {
+  get name() {
+    return "display";
+  }
+
+  init() {
+    this.phase = this.param();
+    const match = this.phase.match(/^\w+$/);
+    if (!match) throw new Error(`Invalid display phase: ${this.phase}`);
+  }
+
+  setup() {
+    this.on('otree.reset', this.onReset);
+    this.on('otree.phase', this.onPhase);
+  }
+
+  onReset() {
+    toggleDisplay(this.elem, false);
+  }
+  
+  onPhase(event) {
+    const phase = event.detail;
+    toggleDisplay(this.elem, phase.display == this.phase);
+  }
 }
 
-function parse_params(elem) {
-  const match = elem.dataset.otDisplay.match(/^\w+$/);
-  if (!match) throw new Error(`Invalid display phase: ${elem.dataset.otDisplay}`);
-
-  return elem.dataset.otDisplay;
-}
-
-function handle_reset(page, conf, event) {
-  toggleDisplay(conf.elem, false);
-}
-
-function handle_phase(page, conf, event) {
-  toggleDisplay(conf.elem, event.detail.display == conf.phase);
-}
+registerDirective("[data-ot-display]", otDisplay);

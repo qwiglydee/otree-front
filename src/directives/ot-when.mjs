@@ -1,47 +1,53 @@
 import { Ref } from "../utils/changes";
 import { toggleDisplay } from "../utils/dom";
 
-export function otWhen(page) {
-  page.body.querySelectorAll("[data-ot-when]").forEach((elem) => {
-    const params = parse_params(elem);
-    page.on("otree.reset", handle_reset, { elem });
-    page.on("otree.update", handle_update, { elem, ...params });
-  });
-}
+import { Directive, registerDirective } from "./base";
 
-function parse_params(elem) {
-  const match = elem.dataset.otWhen.match(/^([\w.]+)(==(.+))?$/);
-  if (!match) throw new Error(`Invalid expression for when: ${elem.dataset.otWhen}`);
-  let ref = match[1];
-  Ref.validate(ref);
-  let cond = match[3];
-  if (cond === "true") cond = true;
-  if (cond === "false") cond = false;
-  return { ref, cond };
-}
+class otWhen extends Directive {
+  get name() {
+    return "when";
+  }
 
-function eval_display(params, changes) {
-  let value = changes.pick(params.ref);
+  init() {
+    const when = this.param();
+    const match = when.match(/^([\w.]+)(==(.+))?$/);
+    if (!match) throw new Error(`Invalid expression for when: ${when}`);
+    
+    this.ref = match[1];
+    Ref.validate(this.ref);
+    
+    this.cond = match[3];
+    if (this.cond === "true") this.cond = true;
+    if (this.cond === "false") this.cond = false; 
+  }
 
-  if (params.cond === undefined) {
-    // when="fld"
-    // anything true-like
-    return !!value;
-  } else {
-    // when="fld==val"
-    // non-strict eq so that numbers work
-    return value == params.cond;
+  reset() {
+    toggleDisplay(this.elem, false);    
+  }
+
+  eval(changes) {
+    let value = changes.pick(this.ref);
+
+    if (this.cond === undefined) {
+      // when="fld"
+      // anything true-like
+      return !!value;
+    } else {
+      // when="fld==val"
+      // non-strict eq so that numbers work
+      return value == this.cond;
+    }  
+  }
+
+  update(changes) {
+    let value = changes.pick(this.ref);
+
+    // for ot-when="fld" -- any true-like
+    // for ot-when="fld=val" -- any non-strict equivalent
+    let toggle = (this.cond !== undefined) ? value == this.cond : !!value;  
+
+    toggleDisplay(this.elem, toggle);
   }
 }
 
-function handle_reset(page, conf, event) {
-  toggleDisplay(conf.elem, false);
-}
-
-function handle_update(page, conf, event) {
-  const { elem, ref } = conf;
-  const changes = event.detail;
-  if (changes.affects(ref)) {
-    toggleDisplay(elem, eval_display(conf, changes));
-  }
-}
+registerDirective("[data-ot-when]", otWhen);

@@ -3,6 +3,8 @@ import { expect, fixture, elementUpdated } from "@open-wc/testing";
 import { Page } from "../../src/page";
 import { Changes } from "../../src/utils/changes";
 
+import "../../src/directives/ot-attr";
+
 describe("ot-attr", () => {
   let body, elem, page;
 
@@ -10,12 +12,12 @@ describe("ot-attr", () => {
     let elem;
 
     it("invalid path", async () => {
-      elem = await fixture(`<div data-ot-attr-value=".foo"></div>`);
+      elem = await fixture(`<div data-ot-value=".foo"></div>`);
       expect(() => new Page(document.body)).to.throw();
     });
 
     it("invalid chars", async () => {
-      elem = await fixture(`<div data-ot-attr-value="foo/bar"></div>`);
+      elem = await fixture(`<div data-ot-value="foo/bar"></div>`);
       expect(() => new Page(document.body)).to.throw();
     });
   });
@@ -23,7 +25,7 @@ describe("ot-attr", () => {
   describe("updating", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<progress data-ot-attr-value="obj.val" data-ot-attr-max="obj.max"></progress>`, {
+      elem = await fixture(`<progress data-ot-value="obj.val" data-ot-max="obj.max"></progress>`, {
         parentNode: body,
       });
       page = new Page(body);

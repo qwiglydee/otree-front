@@ -1,32 +1,18 @@
-import { Ref } from "../utils/changes";
 import { setText } from "../utils/dom";
+import { Directive, registerDirective } from "./base";
 
-export function otText(page) {
-  page.body.querySelectorAll("[data-ot-text]").forEach((elem) => {
-    const ref = parse_params(elem);
-    page.on("otree.reset", handle_reset, { elem });
-    page.on("otree.update", handle_update, { elem, ref });
-  });
-}
+class otText extends Directive {
+  get name() {
+    return "text";
+  }
 
-function parse_params(elem) {
-  let ref = elem.dataset.otText;
-  Ref.validate(ref);
-  return ref;
-}
+  reset() {
+    setText(this.elem, null);  
+  }
 
-function eval_text(ref, changes) {
-  return changes.pick(ref);
-}
-
-function handle_reset(page, conf, event) {
-  setText(conf.elem, null);
-}
-
-function handle_update(page, conf, event) {
-  const { elem, ref } = conf;
-  const changes = event.detail;
-  if (changes.affects(ref)) {
-    setText(elem, eval_text(ref, changes));
+  update(changes) {
+    setText(this.elem, changes.pick(this.ref)); 
   }
 }
+
+registerDirective("[data-ot-text]", otText);

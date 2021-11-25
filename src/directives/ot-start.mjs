@@ -1,49 +1,43 @@
 import { toggleDisplay, toggleDisabled, isDisabled } from "../utils/dom";
 
-export function otStart(page) {
-  page.body.querySelectorAll("[data-ot-start]").forEach((elem) => {
-    const params = parse_trigger(elem);
-    if (params.click) page.on("click", handle_click, { elem, ...params }, elem);
-    if (params.touch) page.on("touchend", handle_touch, { elem, ...params }, elem);
-    if (params.key) page.on("keydown", handle_key, { elem, ...params });
-  });
+import { Directive, registerDirective } from "./base";
+
+class otStart extends Directive {
+  get name() {
+    return "start";
+  }
+
+  init() {
+    const dataset = this.elem.dataset;
+    this.trigger = {
+      click: "otClick" in dataset,
+      touch: "otTouch" in dataset,
+      key: "otKey" in dataset ? dataset.otKey : false,
+    }
+  }
+
+  setup() {
+    if (this.trigger.key) this.on("keydown", this.onKey, this.page);
+    if (this.trigger.touch) this.on("touchend", this.onClick, this.elem);
+    if (this.trigger.click) this.on("click", this.onClick, this.elem);
+    this.on('otree.start', this.onStart);
+  }
+
+  onKey(event) {
+    if (event.code != this.trigger.key) return;
+    event.preventDefault();
+    this.page.start(); 
+  }
+
+  onClick(event) {
+    event.preventDefault();
+    this.page.start();
+  }
+
+  onStart() {
+    toggleDisplay(this.elem, false);
+    this.off();
+  }
 }
 
-function parse_trigger(elem) {
-  return {
-    click: "otClick" in elem.dataset,
-    touch: "otTouch" in elem.dataset,
-    key: "otKey" in elem.dataset ? elem.dataset.otKey : false,
-  };
-}
-
-function disable(elem) {
-  // TODO: detach handlers
-  toggleDisplay(elem, false);
-  elem.disabled = true;
-}
-
-function handle_click(page, conf, event) {
-  const { elem } = conf;
-  if (isDisabled(elem)) return;
-  event.preventDefault();
-  page.start();
-  disable(elem);
-}
-
-function handle_touch(page, conf, event) {
-  const { elem } = conf;
-  if (isDisabled(elem)) return;
-  event.preventDefault();
-  page.start();
-  disable(elem);
-}
-
-function handle_key(page, conf, event) {
-  const { elem, key } = conf;
-  if (isDisabled(elem)) return;
-  if (event.code != key) return;
-  event.preventDefault();
-  page.start();
-  disable(elem);
-}
+registerDirective("[data-ot-start]", otStart);

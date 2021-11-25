@@ -3,6 +3,9 @@ import { expect, fixture, elementUpdated, oneEvent } from "@open-wc/testing";
 import { Page } from "../../src/page";
 import { Ref, Changes } from "../../src/utils/changes";
 
+import "../../src/directives/ot-input";
+
+
 const EVENT_DEFAULTS = {
   view: window,
   bubbles: true,
@@ -45,14 +48,9 @@ describe("ot-input", () => {
       elem = await fixture(`<div data-ot-click data-ot-input="foo"></div>`);
       expect(() => new Page(document.body)).to.throw();
     });
-
-    it("missing trigger", async () => {
-      elem = await fixture(`<div data-ot-input="foo=val"></div>`);
-      expect(() => new Page(document.body)).to.throw();
-    });
   });
 
-  describe("input", () => {
+  describe("real", () => {
     beforeEach(async () => {
       body = document.createElement("body");
       elem = await fixture(`<input type="text" data-ot-input="obj.fld"></div>`, { parentNode: body });

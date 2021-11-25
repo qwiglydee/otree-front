@@ -3,6 +3,9 @@ import { expect, fixture, elementUpdated } from "@open-wc/testing";
 import { Page } from "../../src/page";
 import { Changes } from "../../src/utils/changes";
 
+import "../../src/directives/ot-img";
+
+
 describe("ot-img", () => {
   let body, elem, page;
   const

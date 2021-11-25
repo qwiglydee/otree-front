@@ -1,13 +1,6 @@
 import { Changes } from "./utils/changes";
 
-// import { otText } from "./directives/ot-text";
-// import { otClass } from "./directives/ot-class";
-// import { otImg } from "./directives/ot-img";
-// import { otAttr } from "./directives/ot-attr";
-// import { otWhen } from "./directives/ot-when";
-// import { otDisplay } from "./directives/ot-display";
-// import { otInput } from "./directives/ot-input";
-// import { otStart } from "./directives/ot-start";
+import { registry } from "./directives/base";
 
 export class Page {
   constructor(body) {
@@ -17,14 +10,14 @@ export class Page {
   }
 
   init() {
-    // otText(this);
-    // otClass(this);
-    // otImg(this);
-    // otAttr(this);
-    // otWhen(this);
-    // otDisplay(this);
-    // otInput(this);
-    // otStart(this);
+    let page = this;
+    registry.forEach((cls, sel) => {
+      this.body.querySelectorAll(sel).forEach((elem) => {
+        // console.debug(cls, sel, elem);
+        let inst = new cls(page, elem);
+        inst.setup();
+      });
+    });
   }
 
   /** adds event handler

@@ -2,6 +2,8 @@ import { expect, fixture, elementUpdated, aTimeout } from "@open-wc/testing";
 
 import { Page } from "../../src/page";
 
+import "../../src/directives/ot-display";
+
 describe("ot-display", () => {
   let body, elem, page;
 

@@ -2,6 +2,8 @@ import { expect, fixture, elementUpdated, oneEvent } from "@open-wc/testing";
 
 import { Page } from "../../src/page";
 
+import "../../src/directives/ot-start";
+
 const EVENT_DEFAULTS = {
     view: window,
     bubbles: true,
@@ -32,7 +34,7 @@ describe("ot-start", () => {
     expect(elem).not.to.be.displayed;
   });
 
-  it("triggers on touch", async () => {
+  it("triggers on click", async () => {
     elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
     await oneEvent(page.body, "otree.start");
     expect(elem).not.to.be.displayed;

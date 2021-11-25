@@ -1,122 +1,124 @@
 import { Ref } from "../utils/changes";
 import { toggleDisabled, isDisabled, isTextInput } from "../utils/dom";
 
-export function otInput(page) {
-  page.body.querySelectorAll("[data-ot-input]").forEach((elem) => {
-    const params = parse_params(elem);
-    page.on("otree.reset", handle_reset, { elem });
-    page.on("otree.phase", handle_phase, { elem, ...params });
-    if (params.trigger.change) page.on("change", handle_change, { elem, ...params }, elem);
-    if (isTextInput(elem)) page.on("keydown", handle_enter, { elem, ...params }, elem);
-    if (params.trigger.click) page.on("click", handle_click, { elem, ...params }, elem);
-    if (params.trigger.touch) page.on("touchend", handle_touch, { elem, ...params }, elem);
-    if (params.trigger.key) page.on("keydown", handle_key, { elem, ...params });
-  });
-}
+import { Directive, registerDirective } from "./base";
 
-function parse_trigger(elem) {
-  return {
-    click: "otClick" in elem.dataset || elem.tagName == "BUTTON",
-    touch: "otTouch" in elem.dataset,
-    key: "otKey" in elem.dataset ? elem.dataset.otKey : false,
-    change: elem.tagName == "INPUT" || elem.tagName == "SELECT" || elem.tagName == "TEXTAREA",
-  };
-}
-
-function parse_params(elem) {
-  const match = elem.dataset.otInput.match(/^([\w.]+)(=(.+))?$/);
-  if (!match) throw new Error(`Invalid expression for input: ${elem.dataset.otInput}`);
-
-  let ref = match[1];
-  Ref.validate(ref);
-
-  let val = match[3];
-  if (val === "true") val = true;
-  if (val === "false") val = false;
-
-  let trigger = parse_trigger(elem);
-
-  const tag = elem.tagName;
-
-  if (Object.values(trigger).every((v) => !v)) {
-    throw new Error(`Input requires trigger: ${elem.dataset.otInput}`);
+class otRealInput extends Directive {
+  get name() {
+    return "input";
   }
 
-  if (trigger.change) {
-    if (val !== undefined) throw new Error(`Built-in inputs don't override value: ${elem.dataset.otInput}`);
-  } else {
-    if (val === undefined) throw new Error(`Input requires value: ${elem.dataset.otInput}`);
+  init() {
+    this.ref = this.param();
+    Ref.validate(this.ref);
   }
 
-  return { ref, val, trigger };
-}
-
-function handle_phase(page, conf, event) {
-  const { elem } = conf;
-  const phase = event.detail;
-  toggleDisabled(elem, !phase.input);
-}
-
-function handle_reset(page, conf, event) {
-  const { elem } = conf;
-  toggleDisabled(elem, true);
-  elem.value = null;
-}
-
-function handle_change(page, conf, event) {
-  const { elem, ref } = conf;
-  if (elem.disabled) {
-    page.error("frozen");
-    return;
+  setup() {
+    this.on("otree.reset", this.onReset);
+    this.on("otree.phase", this.onPhase);
+    this.on("change", this.onChange, this.elem);
+    if (isTextInput(this.elem)) this.on("keydown", this.onKey, this.elem);
   }
-  let value = elem.value;
-  if (value === "true") value = true;
-  if (value === "false") value = false;
-  page.response({ [ref]: value });
-}
 
-function handle_click(page, conf, event) {
-  const { elem, ref, val } = conf;
-  if (isDisabled(elem)) {
-    page.error("frozen");
-    return;
+  onReset() {
+    toggleDisabled(this.elem, true);
+    this.elem.value = null;
   }
-  event.preventDefault();
-  page.response({ [ref]: val });
-}
 
-function handle_touch(page, conf, event) {
-  const { elem, ref, val } = conf;
-  if (isDisabled(elem)) {
-    page.error("frozen");
-    return;
+  onPhase(event) {
+    const phase = event.detail;
+    toggleDisabled(this.elem, !phase.input);
   }
-  event.preventDefault();
-  page.response({ [ref]: val });
-}
 
-function handle_enter(page, conf, event) {
-  const { elem } = conf;
-  if (event.code == "Enter") {
-    setTimeout(() =>
-      elem.dispatchEvent(
-        new Event("change", {
-          view: window,
-          bubbles: false,
-          cancelable: true,
-        })
-      )
-    );
+  onChange() {
+    let value = this.elem.value;
+    if (value === "true") value = true;
+    if (value === "false") value = false;
+    this.page.response({ [this.ref]: value });
+  }
+
+  onKey(event) {
+    if (event.code == "Enter") {
+      // enforce change event
+      setTimeout(() =>
+      this.elem.dispatchEvent(
+          new Event("change", {
+            view: window,
+            bubbles: false,
+            cancelable: true,
+          })
+        )
+      );
+    }
   }
 }
 
-function handle_key(page, conf, event) {
-  const { elem, ref, val, trigger } = conf;
-  if (event.code != trigger.key) return;
-  if (isDisabled(elem)) {
-    page.error("frozen");
-    return;
+registerDirective(
+  "input[data-ot-input], select[data-ot-input], textarea[data-ot-input]",
+  otRealInput
+);
+
+
+class otCustomInput extends Directive {
+  get name() {
+    return "input";
   }
-  event.preventDefault();
-  page.response({ [ref]: val });
+
+  init() {
+    const param = this.param();
+    const match = param.match(/^([\w.]+)(=(.+))$/);
+    if (!match) throw new Error(`Invalid expression for input: ${param}`);
+
+    this.ref = match[1];
+    Ref.validate(this.ref);
+    
+    this.val = match[3];
+    if (this.val === "true") this.val = true;
+    if (this.val === "false") this.val = false; 
+
+    const dataset = this.elem.dataset;
+    this.trigger = {
+      click: "otClick" in dataset,
+      touch: "otTouch" in dataset,
+      key: "otKey" in dataset ? dataset.otKey : false,
+    };
+
+    if (this.elem.tagName == "BUTTON") this.trigger.click = true; 
+  }
+
+  setup() {
+    this.on("otree.reset", this.onReset);
+    this.on("otree.phase", this.onPhase);
+    if (this.trigger.key) this.on("keydown", this.onKey, this.page);
+    if (this.trigger.touch) this.on("touchend", this.onClick, this.elem);
+    if (this.trigger.click) this.on("click", this.onClick, this.elem);
+  }
+
+  onReset() {
+    toggleDisabled(this.elem, true);
+    this.elem.value = null;
+  }
+
+  onPhase(event) {
+    const phase = event.detail;
+    toggleDisabled(this.elem, !phase.input);
+  }
+
+  onClick(event) {
+    if (isDisabled(this.elem)) return;
+    event.preventDefault();
+    this.page.response({ [this.ref]: this.val });  
+  }
+
+  onKey(event) {
+    if (isDisabled(this.elem)) return;
+    if (event.code != this.trigger.key) return;
+    event.preventDefault();
+    this.page.response({ [this.ref]: this.val });  
+  }
 }
+
+registerDirective(
+  "div[data-ot-input], span[data-ot-input], button[data-ot-input]",
+  otCustomInput
+);
