@@ -25,13 +25,13 @@ export class Page {
    * @param type {String} event type
    * @param handler {function(page, conf, event)} handler
    * @param target {?HTMLElement} an element to bind handler, instead of the page itself
-   * @returns {Function} handler wrapper bound to events, 
+   * @returns {Function} handler wrapper bound to events,
    *   the wrapper has method off() to unbind itself
    */
   on(type, handler, target) {
     target = target || this.body;
     const listener = (event) => handler(event, this, target);
-    listener.off = () => target.removeEventListener(type, listener); 
+    listener.off = () => target.removeEventListener(type, listener);
     target.addEventListener(type, listener);
     return listener;
   }
@@ -56,24 +56,28 @@ export class Page {
   wait(type, target) {
     let hnd;
     return new Promise((resolve) => {
-      hnd = this.on(type, (event) => {
-        hnd.off();
-        resolve(event);
-      }, target);
+      hnd = this.on(
+        type,
+        (event) => {
+          hnd.off();
+          resolve(event);
+        },
+        target
+      );
     });
   }
 
-  /** fire an event 
+  /** fire an event
    * @param type {String} event type
    * @param detail {Object} any data to pass to handler
    * @param target {?HTMLElement} an element to fire at, instead of the page itself
    */
   fire(type, detail, target) {
     // console.debug("firing", type, detail);
-    const event = new CustomEvent(type, {detail});
+    const event = new CustomEvent(type, { detail });
     target = target || this.body;
     // NB: queueing a task like a normal event, instead of dispatching synchronously
-    setTimeout(() => target.dispatchEvent(event));  
+    setTimeout(() => target.dispatchEvent(event));
   }
 
   /**** shortcuts */
@@ -90,7 +94,9 @@ export class Page {
   status(data) {
     this.fire("otree.status", data);
     // convert status object `{ foo: val }` to changes of form `{ 'status.foo': val }`
-    const changes = new Map([...Object.entries(data)].map(([k, v]) => ["status." + k, v]));
+    const changes = new Map(
+      [...Object.entries(data)].map(([k, v]) => ["status." + k, v])
+    );
     this.fire("otree.update", changes);
   }
 
@@ -126,10 +132,25 @@ export class Page {
   }
 }
 
-
 /** Live Page
  * handles live messages
  * converts incoming and outgoing messages to events like `otree.live.type`
  */
 export class LivePage extends Page {
+  init() {
+    super.init();
+    window.liveRecv = this.recv.bind(this);
+  }
+
+  recv(data) {
+    const type = data.type;
+    delete data.type;
+    this.fire(`otree.live.${type}`, data);
+  }
+
+  send(type, message) {
+    const data = Object.assign({ type }, message);
+    window.liveSend(data);
+    this.fire(`otree.live.${type}`, message);
+  }
 }
