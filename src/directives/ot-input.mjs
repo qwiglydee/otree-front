@@ -14,8 +14,8 @@ class otRealInput extends Directive {
   }
 
   setup() {
-    this.on("otree.reset", this.onReset);
-    this.on("otree.phase", this.onPhase);
+    this.on("otree.page.reset", this.onReset);
+    this.on("otree.page.phase", this.onPhase);
     this.on("change", this.onChange, this.elem);
     if (isTextInput(this.elem)) this.on("keydown", this.onKey, this.elem);
   }
@@ -87,8 +87,8 @@ class otCustomInput extends Directive {
   }
 
   setup() {
-    this.on("otree.reset", this.onReset);
-    this.on("otree.phase", this.onPhase);
+    this.on("otree.page.reset", this.onReset);
+    this.on("otree.page.phase", this.onPhase);
     if (this.trigger.key) this.on("keydown", this.onKey, this.page);
     if (this.trigger.touch) this.on("touchend", this.onClick, this.elem);
     if (this.trigger.click) this.on("click", this.onClick, this.elem);

@@ -29,7 +29,7 @@ export class Game {
    * Example:
    * 
    *  init() {}
-   *    this.on("otree.something", this.oNsomething)
+   *    this.on("otree.page.something", this.oNsomething)
    *  }
    *  
    *  onSomething(data) {
@@ -63,10 +63,10 @@ export class Game {
    */
   async setStatus(status) {
     this.status = status;
-    this.page.status(status);
+    this.page.fire("otree.game.status", status);
     if (status.completed) {
       if (status.wait) {
-        await this.page.wait("otree.timeout");
+        await this.page.wait("otree.page.timeout");
       }
       this.running.resolve(status);
     }
@@ -98,12 +98,13 @@ export class Game {
     this.status = {};
 
     this.page.status(this.status);
-    this.page.fire("otree.round");
+    this.page.fire("otree.game.start");
     await this.start();
 
     // all game play runs asynchronously
 
     return this.running.promise.then(async () => {
+      this.page.fire("otree.game.stop");
       await this.stop();
       return this.status;
     });
@@ -187,8 +188,8 @@ export class Game {
  */
 class Trials extends Game {
   async init() {
-    this.on("otree.response", this.onResponse);
-    this.on("otree.timeout", this.onTimeout);
+    this.on("otree.page.response", this.onResponse);
+    this.on("otree.page.timeout", this.onTimeout);
   }
 
   /** response hook
@@ -220,8 +221,8 @@ class LiveTrials extends Game {
   init() {
     this.on("otree.live.trial", this.onTrial);
     this.on("otree.live.feedback", this.onFeedback);
-    this.on("otree.response", this.onResponse);
-    this.on("otree.timeout", this.onTimeout);
+    this.on("otree.page.response", this.onResponse);
+    this.on("otree.page.timeout", this.onTimeout);
   }
 
   /** response hook

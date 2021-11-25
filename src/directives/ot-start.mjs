@@ -20,7 +20,7 @@ class otStart extends Directive {
     if (this.trigger.key) this.on("keydown", this.onKey, this.page);
     if (this.trigger.touch) this.on("touchend", this.onClick, this.elem);
     if (this.trigger.click) this.on("click", this.onClick, this.elem);
-    this.on('otree.start', this.onStart);
+    this.on('otree.page.start', this.onStart);
   }
 
   onKey(event) {

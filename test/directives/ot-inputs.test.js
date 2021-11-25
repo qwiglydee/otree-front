@@ -86,7 +86,7 @@ describe("ot-input", () => {
       elem.value = "Foo";
       elem.dispatchEvent(new InputEvent("change"));
 
-      detail = await pageEvent("otree.response");
+      detail = await pageEvent("otree.page.response");
       expect(detail).to.eql(new Changes({ "obj.fld": "Foo" }));
     });
 
@@ -126,7 +126,7 @@ describe("ot-input", () => {
       page.toggle({input: true});
       await elementUpdated(elem);
       elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
-      detail = await pageEvent("otree.response");
+      detail = await pageEvent("otree.page.response");
       expect(detail).to.eql(new Changes({ "obj.fld": "foo" }));
     });
   });
@@ -163,7 +163,7 @@ describe("ot-input", () => {
       page.toggle({input: true});
       await elementUpdated(elem);
       page.body.dispatchEvent(new KeyboardEvent("keydown", { ...EVENT_DEFAULTS, code: "Space" }));
-      detail = await pageEvent("otree.response");
+      detail = await pageEvent("otree.page.response");
       expect(detail).to.eql(new Changes({ "obj.fld": "foo" }));
     });
 
@@ -171,7 +171,7 @@ describe("ot-input", () => {
       page.toggle({input: true});
       await elementUpdated(elem);
       elem.dispatchEvent(new TouchEvent("touchend", EVENT_DEFAULTS));
-      detail = await pageEvent("otree.response");
+      detail = await pageEvent("otree.page.response");
       expect(detail).to.eql(new Changes({ "obj.fld": "foo" }));
     });
 
@@ -179,7 +179,7 @@ describe("ot-input", () => {
       page.toggle({input: true});
       await elementUpdated(elem);
       elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
-      detail = await pageEvent("otree.response");
+      detail = await pageEvent("otree.page.response");
       expect(detail).to.eql(new Changes({ "obj.fld": "foo" }));
     });
 

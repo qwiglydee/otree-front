@@ -82,8 +82,8 @@ export class Directive {
   /** sets events up 
    */
   setup() {
-    this.on('otree.reset', this.onReset);
-    this.on('otree.update', this.onUpdate);
+    this.on('otree.page.reset', this.onReset);
+    this.on('otree.page.update', this.onUpdate);
   }
 
   onReset() {

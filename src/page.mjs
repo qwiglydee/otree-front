@@ -42,11 +42,11 @@ export class Page {
    *
    * Example 1:
    *
-   *    await page.waitEvent('otree.timeout'); // suspend script until timeout fired
+   *    await page.waitEvent('otree.page.timeout'); // suspend script until timeout fired
    *
    * Example 2:
    *
-   *    const waiting = page.waitEvent('otree.timeout'); // start waiting without suspending
+   *    const waiting = page.waitEvent('otree.page.timeout'); // start waiting without suspending
    *    // do something
    *    await waiting; // suspend for an event happend since the 'waiting' created
    *
@@ -84,51 +84,51 @@ export class Page {
 
   reset() {
     this.phase = {};
-    this.fire("otree.reset");
+    this.fire("otree.page.reset");
   }
 
   start() {
-    this.fire("otree.start");
+    this.fire("otree.page.start");
   }
 
   status(data) {
-    this.fire("otree.status", data);
+    this.fire("otree.page.status", data);
     // convert status object `{ foo: val }` to changes of form `{ 'status.foo': val }`
     const changes = new Map(
       [...Object.entries(data)].map(([k, v]) => ["status." + k, v])
     );
-    this.fire("otree.update", changes);
+    this.fire("otree.page.update", changes);
   }
 
   update(changes) {
     if (!(changes instanceof Changes)) changes = new Changes(changes);
-    this.fire("otree.update", changes);
+    this.fire("otree.page.update", changes);
   }
 
   response(changes) {
     if (!(changes instanceof Changes)) changes = new Changes(changes);
-    this.fire("otree.response", changes);
+    this.fire("otree.page.response", changes);
   }
 
   error(code, message) {
     if (code == null) {
-      this.fire("otree.error");
-      this.fire("otree.update", { error: undefined });
+      this.fire("otree.page.error");
+      this.fire("otree.page.update", { error: undefined });
     } else {
       let error = { code, message };
       if (!message) delete error.message;
-      this.fire("otree.error", error);
-      this.fire("otree.update", { error });
+      this.fire("otree.page.error", error);
+      this.fire("otree.page.update", { error });
     }
   }
 
   toggle(phase) {
     this.phase = phase;
-    this.fire("otree.phase", phase);
+    this.fire("otree.page.phase", phase);
   }
 
   timeout() {
-    this.fire("otree.timeout");
+    this.fire("otree.page.timeout");
   }
 }
 

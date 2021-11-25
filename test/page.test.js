@@ -18,7 +18,7 @@ describe("Page", () => {
 
   it("resets", async () => {
     page.reset();
-    detail = await pageEvent('otree.reset');
+    detail = await pageEvent('otree.page.reset');
     expect(detail).to.be.null;
     expect(page.phase).to.eql({});
   });
@@ -31,78 +31,69 @@ describe("Page", () => {
 
   it("fires start", async () => {
     page.start();
-    detail = await pageEvent("otree.start");
+    detail = await pageEvent("otree.page.start");
     expect(detail).to.be.null;
   });
 
   it("fires update", async () => {
     page.update({ foo: "Foo" });
-    detail = await pageEvent("otree.update");
+    detail = await pageEvent("otree.page.update");
     expect(detail).to.eql(new Changes({ foo: "Foo"}));
   });
 
   it("fires response", async () => {
     page.response({ foo: "Foo" });
-    detail = await pageEvent("otree.response");
+    detail = await pageEvent("otree.page.response");
     expect(detail).to.eql(new Changes({ foo: "Foo"}));
   });
 
   it("fires error", async () => {
     page.error("foo");
-    detail = await pageEvent("otree.error");
+    detail = await pageEvent("otree.page.error");
     expect(detail).to.eql({ code: "foo"});
-    detail = await pageEvent("otree.update");
+    detail = await pageEvent("otree.page.update");
     expect(detail).to.deep.equal({ error: { code: "foo"} });
   });
 
   it("fires error with message", async () => {
     page.error("foo", "Foo");
-    detail = await pageEvent("otree.error");
+    detail = await pageEvent("otree.page.error");
     expect(detail).to.eql({ code: "foo", message: "Foo"});
-    detail = await pageEvent("otree.update");
+    detail = await pageEvent("otree.page.update");
     expect(detail).to.deep.equal({ error: { code: "foo", message: "Foo"} });
   });
 
   it("resets error", async () => {
     page.error("foo");
-    detail = await pageEvent("otree.error");
+    detail = await pageEvent("otree.page.error");
     expect(detail).to.eql({ code: "foo"});
-    detail = await pageEvent("otree.update");
+    detail = await pageEvent("otree.page.update");
     expect(detail).to.deep.equal({ error: { code: "foo"} });
 
     page.error(null);
-    detail = await pageEvent("otree.error");
+    detail = await pageEvent("otree.page.error");
     expect(detail).to.be.null;
-    detail = await pageEvent("otree.update");
+    detail = await pageEvent("otree.page.update");
     expect(detail).to.deep.equal({ error: undefined });
   });
 
   it("toggles phases", async () => {
     page.toggle({foo: "Foo"});
-    detail = await pageEvent("otree.phase");
+    detail = await pageEvent("otree.page.phase");
     expect(detail).to.eql({ foo: "Foo" });
     expect(page.phase).to.eql({ foo: "Foo" });
 
     page.toggle({bar: "Bar"});
-    detail = await pageEvent("otree.phase");
+    detail = await pageEvent("otree.page.phase");
     expect(detail).to.eql({ bar: "Bar" });
     expect(page.phase).to.eql({ bar: "Bar" });
   });
 
   it("fires timeout", async () => {
     page.timeout();
-    detail = await pageEvent("otree.timeout");
+    detail = await pageEvent("otree.page.timeout");
     expect(detail).to.be.null;
   });
-
-  it("fires status", async () => {
-    page.status({ foo: "Foo", bar: "Bar"});
-    detail = await pageEvent("otree.status");
-    expect(detail).to.eql({ foo: "Foo", bar: "Bar"});
-    detail = await pageEvent("otree.update");
-    expect(detail).to.eql(new Changes({ 'status.foo': "Foo", 'status.bar': "Bar"}));
-  });
-
 });
 
 describe("events", () => {

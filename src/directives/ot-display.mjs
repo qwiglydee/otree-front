@@ -13,8 +13,8 @@ class otDisplay extends Directive {
   }
 
   setup() {
-    this.on('otree.reset', this.onReset);
-    this.on('otree.phase', this.onPhase);
+    this.on('otree.page.reset', this.onReset);
+    this.on('otree.page.phase', this.onPhase);
   }
 
   onReset() {
