@@ -14,7 +14,7 @@ class otDisplay extends Directive {
 
   setup() {
     this.on('otree.page.reset', this.onReset);
-    this.on('otree.page.phase', this.onPhase);
+    this.on('otree.time.phase', this.onPhase);
   }
 
   onReset() {

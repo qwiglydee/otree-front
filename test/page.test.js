@@ -79,19 +79,19 @@ describe("Page", () => {
 
   it("toggles phases", async () => {
     page.toggle({foo: "Foo"});
-    detail = await pageEvent("otree.page.phase");
+    detail = await pageEvent("otree.time.phase");
     expect(detail).to.eql({ foo: "Foo" });
     expect(page.phase).to.eql({ foo: "Foo" });
 
     page.toggle({bar: "Bar"});
-    detail = await pageEvent("otree.page.phase");
+    detail = await pageEvent("otree.time.phase");
     expect(detail).to.eql({ bar: "Bar" });
     expect(page.phase).to.eql({ bar: "Bar" });
   });
 
   it("fires timeout", async () => {
     page.timeout();
-    detail = await pageEvent("otree.page.timeout");
+    detail = await pageEvent("otree.time.out");
     expect(detail).to.be.null;
   });
 });

@@ -47,8 +47,12 @@ export const Ref = {
 };
 
 export class Changes extends Map {
-  constructor(obj) {
-    super([...Object.entries(obj)]);
+  constructor(obj, prefix) {
+    let entries = [...Object.entries(obj)];
+    if (prefix) {
+      entries = entries.map(([v, k]) => [v, prefix + "." + k]);
+    } 
+    super(entries);
     this.forEach((v, k) => Ref.validate(k));
   }
 

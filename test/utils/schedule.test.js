@@ -25,15 +25,15 @@ describe("schedule", () => {
     const t0 = Date.now();
     schedule.run();
 
-    detail = await pageEvent("otree.page.phase");
+    detail = await pageEvent("otree.time.phase");
     expect(detail).to.eql({ time: 0, foo: "foo0" });
     expect(Date.now() - t0).to.be.within(0, 10);
 
-    detail = await pageEvent("otree.page.phase");
+    detail = await pageEvent("otree.time.phase");
     expect(detail).to.eql({ time: 100, foo: "foo1" });
     expect(Date.now() - t0).to.be.within(100, 110);
 
-    detail = await pageEvent("otree.page.phase");
+    detail = await pageEvent("otree.time.phase");
     expect(detail).to.eql({ time: 200, foo: "foo2" });
     expect(Date.now() - t0).to.be.within(200, 210);
   });
@@ -54,11 +54,11 @@ describe("schedule", () => {
     const t0 = Date.now();
     schedule.run();
 
-    detail = await pageEvent("otree.page.phase");
+    detail = await pageEvent("otree.time.phase");
     expect(detail).to.eql({ time: 100, foo: "foo1", timeout: 200 });
     expect(Date.now() - t0).to.be.within(100, 110);
 
-    detail = await pageEvent("otree.page.timeout");
+    detail = await pageEvent("otree.time.out");
     expect(detail).to.be.null;
     expect(Date.now() - t0).to.be.within(300, 310);
   });
@@ -66,7 +66,7 @@ describe("schedule", () => {
   it("cancels timers after timeout", async () => {
     let counter = 0;
 
-    page.body.addEventListener("otree.page.phase", (e) => {
+    page.body.addEventListener("otree.time.phase", (e) => {
       counter++;
     });
 
@@ -78,12 +78,12 @@ describe("schedule", () => {
     const t0 = Date.now();
     schedule.run();
 
-    detail = await pageEvent("otree.page.phase");
+    detail = await pageEvent("otree.time.phase");
     expect(counter).to.eq(1);
     expect(detail).to.eql({ time: 100, foo: "foo1", timeout: 200 });
     expect(Date.now() - t0).to.be.within(100, 110);
 
-    detail = await pageEvent("otree.page.timeout");
+    detail = await pageEvent("otree.time.out");
     expect(detail).to.be.null;
     expect(Date.now() - t0).to.be.within(300, 310);
 
@@ -105,7 +105,7 @@ describe("schedule", () => {
     schedule = new Schedule(page, [{ name: "foo", foo: "foo1" }]);
 
     schedule.trigger("foo");
-    detail = await pageEvent("otree.page.phase");
+    detail = await pageEvent("otree.time.phase");
     expect(detail).to.eql({ name: "foo", foo: "foo1" });
   });
 
@@ -114,7 +114,7 @@ describe("schedule", () => {
     
     schedule.run();
     
-    await pageEvent("otree.page.phase");
+    await pageEvent("otree.time.phase");
 
     await aTimeout(200);
     page.fire('otree.page.response');

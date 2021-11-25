@@ -42,11 +42,11 @@ export class Page {
    *
    * Example 1:
    *
-   *    await page.waitEvent('otree.page.timeout'); // suspend script until timeout fired
+   *    await page.waitEvent('otree.time.out'); // suspend script until timeout fired
    *
    * Example 2:
    *
-   *    const waiting = page.waitEvent('otree.page.timeout'); // start waiting without suspending
+   *    const waiting = page.waitEvent('otree.time.out'); // start waiting without suspending
    *    // do something
    *    await waiting; // suspend for an event happend since the 'waiting' created
    *
@@ -124,11 +124,11 @@ export class Page {
 
   toggle(phase) {
     this.phase = phase;
-    this.fire("otree.page.phase", phase);
+    this.fire("otree.time.phase", phase);
   }
 
   timeout() {
-    this.fire("otree.page.timeout");
+    this.fire("otree.time.out");
   }
 }
 
