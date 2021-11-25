@@ -120,28 +120,6 @@ describe("Game", () => {
       expect(result).to.eql(status);
     });
 
-    it("waits to complete", async () => {
-      let running = game.playRound({ foo: "Foo" });
-
-      detail = await pageEvent("otree.game.start");
-      expect(detail).to.eql({ foo: "Foo" });
-
-      let status = { bar: "Bar", completed: true, wait: true };
-      game.status(status);
-
-      detail = await pageEvent("otree.game.status");
-      expect(detail).to.eql(status);
-
-      page.fire("otree.time.out");
-      await pageEvent("otree.time.out");
-
-      detail = await pageEvent("otree.game.stop");
-      expect(detail).to.eql(status);
-
-      let result = await running;
-      expect(result).to.eql(status);
-    });
-
     it("iterates rounds", async () => {
       let counter = 0;
       page.on("otree.game.start", () => {

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>oTree demo apps</title>
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../assets/css/common.css" />
+    <link rel="stylesheet" href="../assets/css/trials.css" />
+  </head>
+
+  <body>
+    <div class="otree-body container d-flex flex-column justify-content-start align-items-center">
+      <div class="start" data-ot-start data-ot-key="Space" data-ot-touch data-ot-click>
+        <div class="d-flex flex-column justify-content-center align-items-center">
+          <p>The app shows stimuli. The target stimulus is emoji.</p>
+          <p></p>
+          <p>
+            Your task is to categorize each emoji and press
+            <kbd data-ot-input="response=negative" data-ot-key="KeyF">F</kbd> for <u>negative</u>
+            and
+            <kbd data-ot-input="response=positive" data-ot-key="KeyJ">J</kbd> for <u>positive</u>.
+          </p>
+          <p class="start-cta">Now press <kbd>Space</kbd> to start the game.</p>
+        </div>
+      </div>
+      <div class="stimulus d-flex justify-content-center align-items-center">
+        <div class="aim" data-ot-display="aim">⌖</div>
+        <div
+          class="prime"
+          data-ot-display="prime"
+          data-ot-class="game.prime_cls"
+          data-ot-text="game.prime"
+        ></div>
+        <div class="target" data-ot-display="target" data-ot-img="game.stimulus_img"></div>
+      </div>
+      <div class="flex-fill"></div>
+      <div class="response d-flex justify-content-center">
+        <span data-ot-when="game.response" data-ot-text="game.response"></span>
+        <span data-ot-when="game.feedback==true" class="feedback-char valid">✔</span>
+        <span data-ot-when="game.feedback==false" class="feedback-char invalid">✘</span>
+      </div>
+      <progress
+        data-ot-max="status.progress.total"
+        data-ot-value="status.progress.completed"
+      ></progress>
+    </div>
+
+    <script type="module" src="../src/directives/ot-start.mjs"></script>
+    <script type="module" src="../src/directives/ot-display.mjs"></script>
+    <script type="module" src="../src/directives/ot-input.mjs"></script>
+    <script type="module" src="../src/directives/ot-class.mjs"></script>
+    <script type="module" src="../src/directives/ot-text.mjs"></script>
+    <script type="module" src="../src/directives/ot-img.mjs"></script>
+    <script type="module" src="../src/directives/ot-attr.mjs"></script>
+    <script type="module" src="../src/directives/ot-when.mjs"></script>
+
+    <script type="module" src="./trials_mocklive.js"></script>
+    <script type="module" src="./trials_live.js"></script>
+  </body>
+</html>

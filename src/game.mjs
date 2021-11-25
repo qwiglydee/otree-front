@@ -106,10 +106,7 @@ export class Game {
     this.page.reset();
     this.page.fire("otree.game.start", gameconf);
 
-    return this.running.promise.then(async (status) => {
-      if (status.wait) {
-        await this.page.wait("otree.time.out");
-      }
+    return this.running.promise.then((status) => {
       this.page.fire("otree.game.stop", status);
       return status;
     });

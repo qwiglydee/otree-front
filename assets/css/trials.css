@@ -1,0 +1,15 @@
+.aim {
+  font-size: 100px;
+}
+
+.prime {
+  font-size: xx-large;
+}
+
+.prime.positive {
+  color: green;
+}
+
+.prime.negative {
+  color: blue;
+}

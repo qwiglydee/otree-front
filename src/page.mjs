@@ -109,6 +109,7 @@ export class LivePage extends Page {
   }
 
   recv(data) {
+    console.debug("recv", data);
     const type = data.type;
     delete data.type;
     this.fire(`otree.live.${type}`, data);
@@ -116,6 +117,7 @@ export class LivePage extends Page {
 
   send(type, message) {
     const data = Object.assign({ type }, message);
+    console.debug("send", data);
     window.liveSend(data);
     this.fire(`otree.live.${type}`, message);
   }
