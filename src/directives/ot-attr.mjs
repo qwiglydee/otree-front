@@ -5,7 +5,7 @@ import { Directive, registerDirective } from "./base";
 
 class otAttrBase extends Directive {
   reset() {
-    this.elem.removeAttribute(this.name);
+    // this.elem.removeAttribute(this.name);
   }
 
   update(changes) {

@@ -10,7 +10,7 @@ export class otImg extends Directive {
   }
 
   reset() {
-    setChild(this.elem, null);  
+    // setChild(this.elem, null);  
   }
 
   update(changes) {

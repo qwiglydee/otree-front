@@ -79,8 +79,9 @@ export class Page {
     setTimeout(() => target.dispatchEvent(event));
   }
 
-  reset() {
-    this.fire("otree.page.reset");
+  reset(obj="game") {
+    this.fire("otree.page.reset", obj);
+    this.fire("otree.page.update", new Changes({ [obj]: null }));
   }
 
   start() {

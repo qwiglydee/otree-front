@@ -86,8 +86,8 @@ export class Directive {
     this.on('otree.page.update', this.onUpdate);
   }
 
-  onReset() {
-    this.reset();
+  onReset(event) {
+    this.reset(event.detail);
   }
   
   onUpdate(event) {

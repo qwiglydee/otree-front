@@ -22,21 +22,7 @@ class otWhen extends Directive {
   }
 
   reset() {
-    toggleDisplay(this.elem, false);    
-  }
-
-  eval(changes) {
-    let value = changes.pick(this.ref);
-
-    if (this.cond === undefined) {
-      // when="fld"
-      // anything true-like
-      return !!value;
-    } else {
-      // when="fld==val"
-      // non-strict eq so that numbers work
-      return value == this.cond;
-    }  
+    // toggleDisplay(this.elem, false);    
   }
 
   update(changes) {

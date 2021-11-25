@@ -101,6 +101,7 @@ class otCustomInput extends Directive {
 
   onPhase(event) {
     const phase = event.detail;
+    if (!('input' in phase)) return;
     toggleDisabled(this.elem, !phase.input);
   }
 
@@ -119,6 +120,6 @@ class otCustomInput extends Directive {
 }
 
 registerDirective(
-  "div[data-ot-input], span[data-ot-input], button[data-ot-input]",
+  "div[data-ot-input], span[data-ot-input], button[data-ot-input], kbd[data-ot-input]",
   otCustomInput
 );

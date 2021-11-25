@@ -23,6 +23,7 @@ class otDisplay extends Directive {
   
   onPhase(event) {
     const phase = event.detail;
+    if (!('display' in phase)) return;
     toggleDisplay(this.elem, phase.display == this.phase);
   }
 }

@@ -14,7 +14,7 @@ class otClass extends Directive {
   }
 
   reset() {
-    setClasses(this.elem, this.defaults);
+    // setClasses(this.elem, this.defaults);
   }
 
   update(changes) {

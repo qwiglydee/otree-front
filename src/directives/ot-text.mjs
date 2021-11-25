@@ -7,7 +7,7 @@ class otText extends Directive {
   }
 
   reset() {
-    setText(this.elem, null);  
+    // setText(this.elem, null);  
   }
 
   update(changes) {
