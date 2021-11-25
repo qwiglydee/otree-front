@@ -5,7 +5,6 @@ import { registry } from "./directives/base";
 export class Page {
   constructor(body) {
     this.body = body || document.body;
-    this.phase = {};
     this.init();
   }
 
@@ -80,24 +79,12 @@ export class Page {
     setTimeout(() => target.dispatchEvent(event));
   }
 
-  /**** shortcuts */
-
   reset() {
-    this.phase = {};
     this.fire("otree.page.reset");
   }
 
   start() {
     this.fire("otree.page.start");
-  }
-
-  status(data) {
-    this.fire("otree.page.status", data);
-    // convert status object `{ foo: val }` to changes of form `{ 'status.foo': val }`
-    const changes = new Map(
-      [...Object.entries(data)].map(([k, v]) => ["status." + k, v])
-    );
-    this.fire("otree.page.update", changes);
   }
 
   update(changes) {
@@ -106,29 +93,7 @@ export class Page {
   }
 
   response(changes) {
-    if (!(changes instanceof Changes)) changes = new Changes(changes);
     this.fire("otree.page.response", changes);
-  }
-
-  error(code, message) {
-    if (code == null) {
-      this.fire("otree.page.error");
-      this.fire("otree.page.update", { error: undefined });
-    } else {
-      let error = { code, message };
-      if (!message) delete error.message;
-      this.fire("otree.page.error", error);
-      this.fire("otree.page.update", { error });
-    }
-  }
-
-  toggle(phase) {
-    this.phase = phase;
-    this.fire("otree.time.phase", phase);
-  }
-
-  timeout() {
-    this.fire("otree.time.out");
   }
 }
 

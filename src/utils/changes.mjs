@@ -50,7 +50,7 @@ export class Changes extends Map {
   constructor(obj, prefix) {
     let entries = [...Object.entries(obj)];
     if (prefix) {
-      entries = entries.map(([v, k]) => [v, prefix + "." + k]);
+      entries = entries.map(([k, v]) => [prefix + "." + k, v]);
     } 
     super(entries);
     this.forEach((v, k) => Ref.validate(k));

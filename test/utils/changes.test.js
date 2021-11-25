@@ -146,6 +146,18 @@ describe("refs", () => {
 describe("changes", () => {
   let data, changes, ref;
 
+  describe("creating", () => {
+    it("from object", () => {
+      changes = new Changes({ foo: "Foo" });
+      expect(changes).to.eql(new Map([['foo', "Foo"]]));
+    })
+
+    it("from object with prefix", () => {
+      changes = new Changes({ foo: "Foo" }, "prefix");
+      expect(changes).to.eql(new Map([['prefix.foo', "Foo"]]));
+    })
+  });
+
   describe("checking and extracting", () => {
     it("does fld/fld", () => {
       changes = new Changes({ fld: "Foo" });

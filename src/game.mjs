@@ -9,104 +9,109 @@ export class Game {
   constructor(page) {
     this.page = page;
     this.state = {};
-    this.status = {
-      completed: null,
-      success: null,
-      wait: null,
-      terminated: false,
-    };
-  }
-
-  async init() {
-    // override in derived classes
-    // use to bind event handlers
-    throw new Error("The method `stop` should be defined.");
   }
 
   /** install event handler
    * a shortcut for `page.on`
-   * 
-   * Example:
-   * 
-   *  init() {}
-   *    this.on("otree.page.something", this.oNsomething)
-   *  }
-   *  
-   *  onSomething(data) {
-   *  }
-   *  
+   *
+   * @param eventtype {String} event type
+   * @param handler {Function} a handler
+   *   the handler can be either standalone function or a method of derived class
+   *   in either case it runs binded so that `this` is available
    */
   on(eventtype, handler) {
-    return this.page.on(
-      eventtype,
-      async (page, params, event) => await handler.bind(this)(event.detail)
-    );
+    return this.page.on(eventtype, handler.bind(this));
   }
 
-
-  /** updates game state and page 
-   * 
+  /** updates game state
+   *
+   * Applies given changes to game state,
+   * Signals them to the page prefixed with 'game'
+   *
+   * i.e. `update({'foo': bar})`
+   * - updates field `foo` in the game state
+   * - updates page with changes of `game.foo`
+   *
    * @params changes {Object} of form `{ 'field.subfield': newvalue, ... }`
-  */
-  updateState(changes) {
-    changes = new Changes(changes);
-    changes.patch(this.state);
-    this.page.update(changes);
-  }
-
-  /** sets status
-   * sets current status and checks if the round is completed
-   * @param status {Object} 
-   *  - completed {bool}: if a game round is ended
-   *  - wait {bool}: if its completed but should wait for timeout
-   *  - terminate {bool}: terminate iterations loop (used by `iterateRounds`) 
    */
-  async setStatus(status) {
-    this.status = status;
+  update(changes) {
+    new Changes(changes).patch(this.state);
+    this.page.update(new Changes(changes, "game"));
+  }
+
+  /** handles status update
+   *
+   * Fires event `otree.game.status`.
+   * Aignals them to the page prefixed with 'status'.
+   * The status is not saved anywhere and only exists in events.
+   *
+   * i.e. `status({foo: "foo"})`
+   * - fires event `otree.game.status` with {foo: "foo"}
+   * - updates pagee with changes of `status.foo`
+   *
+   * Status fields:
+   * - completed {bool}: makes game round to end
+   * - wait {bool}: makes completed round to wait until `otree.time.out`
+   * - terminate {bool}: terminate iterations loop (used by `iterateRounds`)
+   * - success {bool}: indicates of round succedded/failed (used by `iterateRounds` to count progress)
+   *
+   * @param status {Object}
+   */
+  status(status) {
     this.page.fire("otree.game.status", status);
-    if (status.completed) {
-      if (status.wait) {
-        await this.page.wait("otree.page.timeout");
+    this.page.update(new Changes(status, "status"));
+
+    if (status.completed) this.running.resolve(status);
+  }
+  
+  error(code, message) {
+    let error;
+    if (!code) {
+      error = null;
+    } else {
+      error = { code };
+      if (message) {
+        error.message = message;
       }
-      this.running.resolve(status);
     }
+    this.status({ error });
   }
 
-  freezeInputs() {
-    this.page.toggle({ input: false });
+  freeze() {
+    // FIXME: this interferes with actual time phases
+    this.page.fire("otree.time.phase", { input: false });
   }
 
-  unfreezeInputs() {
-    // FIXME: may collide state defined by phases
-    this.page.toggle({ input: true });
-  }
-
-  fireError(code, message) {
-    this.page.error(code, message);
-    this.onError({ code, message });
+  unfreeze() {
+    // FIXME: this interferes with actual time phases
+    this.page.fire("otree.time.phase", { input: true });
   }
 
   /** plays single round
+   *
+   * Fires events `otree.game.start` and `otree.game.stop`.
+   *
+   * Waits for status to be signalled with flag `completed`
+   * Waits for timeout if the status has flag `wait`
+   *
    * @param gameconf {Object}
    *   any config params for the round
    *   when called from iterateRounds, the conf contains `iteration`
    * @returns {Promise} resolving with game status when the round is completed
    */
-   async playRound(gameconf) {
+  async playRound(gameconf) {
     this.running = new Deferred();
     this.state = {};
-    this.status = {};
 
-    this.page.status(this.status);
-    this.page.fire("otree.game.start");
-    await this.start();
+    this.page.reset();
+    this.page.fire("otree.game.start", gameconf);
 
-    // all game play runs asynchronously
-
-    return this.running.promise.then(async () => {
-      this.page.fire("otree.game.stop");
-      await this.stop();
-      return this.status;
+    return this.running.promise.then(async (status) => {
+      if (status.wait) {
+        await this.page.wait("otree.time.out");
+      }
+      this.page.fire("otree.game.stop", status);
+      return status;
     });
   }
 
@@ -115,9 +120,18 @@ export class Game {
     progress.solved += status.success === true;
     progress.failed += status.success === false;
     progress.skipped += status.success === undefined;
-   }
+  }
 
   /** plays multiple rounds
+   *
+   * Runs multiple rounds and updates `status.progress`:
+   * - total: total number of iterations or null if it's infinite
+   * - current: current iteration, counting from 1
+   * - completed: number of completed rounds,
+   * - solved: number of rounds with `success=true`,
+   * - failed: number of rounds with `success=false`,
+   * - skipped: number of rounds without `success` status,
+   *
    *
    * @param gameconf
    *   any config params for the round
@@ -127,7 +141,7 @@ export class Game {
    *   the loop is terminated when `status.terminate == true`
    * @param trial_pause
    *   delay between rounds
-   * @returns {Promise} resolving with game progress when all rounds are played
+   * @returns {Promise} resolving when loop terminates with final progress
    */
   async iterateRounds(gameconf, num_rounds, trial_pause) {
     const progress = {
@@ -138,139 +152,27 @@ export class Game {
       solved: 0,
       failed: 0,
     };
-    let status;
+    let status = {};
 
     let roundconf = { ...gameconf };
 
-    const cnt = (i) => (num_rounds ? i <= num_rounds : true) && !this.status.terminate;
-    for (let i=1; cnt(i); i++) {
+    const cnt = (i) =>
+      (num_rounds ? i <= num_rounds : true) && !status.terminate;
+    for (let i = 1; cnt(i); i++) {
       roundconf.iteration = i;
       progress.current = i;
 
-      this.page.status({ progress });
+      this.status({ progress });
 
       status = await this.playRound(roundconf);
 
       this.updateProgress(progress, status);
 
-      this.page.status({ progress });
+      this.status({ progress });
 
       await sleep(trial_pause);
     }
 
     return progress;
   }
-
-  /** starting hook
-   * runs before a game round is started.
-   *
-   * should load game state, start timing schedule or enable inputs
-   */
-  async start() {
-    throw new Error("The method `start` should be defined.");
-  }
-
-  /** stopping hook
-   * runs after a game round is completed.
-   */
-  async stop(status) {
-    throw new Error("The method `stop` should be defined.");
-  }
-
-  onError(error) {
-    throw new Error("The method `onError` should be defined.");
-  }
 }
-
-
-/** stub for trials game 
- * just a bunch of hooks
- */
-class Trials extends Game {
-  async init() {
-    this.on("otree.page.response", this.onResponse);
-    this.on("otree.page.timeout", this.onTimeout);
-  }
-
-  /** response hook
-   * runs when a response is given by user
-   */
-  async onResponse(data) {
-    throw new Error("The method `onResponse` should be defined.");
-  }
-
-  /** timeout hook
-   * runs when a trial timeouted by schedule
-   */
-  async onTimeout(data) {
-    throw new Error("The method `onTimeout` should be defined.");
-  }
-
-  /** error hook
-   * runs when error is explicitely triggered
-   */
-  async onError() {
-    throw new Error("The method `stop` should be defined.");
-  }
-}
-
-/** stub for trials game on live page
- * just a bunch of hooks
- */
-class LiveTrials extends Game {
-  init() {
-    this.on("otree.live.trial", this.onTrial);
-    this.on("otree.live.feedback", this.onFeedback);
-    this.on("otree.page.response", this.onResponse);
-    this.on("otree.page.timeout", this.onTimeout);
-  }
-
-  /** response hook
-   * runs when a response is given by user
-   */
-  async onResponse(data) {
-    throw new Error("The method `onResponse` should be defined.");
-  }
-
-  /** timeout hook
-   * runs when a trial timeouted by schedule
-   */
-  async onTimeout(data) {
-    throw new Error("The method `onTimeout` should be defined.");
-  }
-
-  /** trial hook
-   * runs when a trial received from server
-   */
-  async onTrial(data) {
-    throw new Error("The method `onTrial` should be defined.");
-  }
-
-  /** feedback hook
-   * runs when a feedback received from server
-   */
-  async onFeedback(data) {
-    throw new Error("The method `onFeedback` should be defined.");
-  }
-
-  /** error hook
-   * runs when error is explicitely triggered
-   */
-  async onError() {
-    throw new Error("The method `stop` should be defined.");
-  }
-}
-
-
-class Puzzle extends Game {
-}
-
-class LivePuzzle extends Game {
-}
-
-class MultiPlayer extends Game {
-}
-
-
-
-
