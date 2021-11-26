@@ -7,9 +7,11 @@ class otDisplay extends Directive {
   }
 
   init() {
-    this.phase = this.param();
-    const match = this.phase.match(/^\w+$/);
+    let param = this.param();
+    const match = param.match(/^\w+(\|\w+)?$/);
     if (!match) throw new Error(`Invalid display phase: ${this.phase}`);
+
+    this.phases = param.split('|');
   }
 
   setup() {
@@ -19,7 +21,7 @@ class otDisplay extends Directive {
   onPhase(event) {
     const phase = event.detail;
     if (!('display' in phase)) return;
-    toggleDisplay(this.elem, phase.display == this.phase);
+    toggleDisplay(this.elem, this.phases.includes(phase.display));
   }
 }
 
