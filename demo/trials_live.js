@@ -1,15 +1,18 @@
 import { loadImage } from "../src/utils/dom.mjs";
 
-import { LivePage } from "../src/page.mjs";
+import { Page } from "../src/page.mjs";
 import { Schedule } from "../src/utils/schedule.mjs";
 import { Game } from "../src/game.mjs";
+import { Live } from "../src/live.mjs";
 
 const CONF = {
+  num_rounds: undefined,
   nogo_response: "skipped",
   trial_pause: 1000,
 };
 
-const page = new LivePage();
+const page = new Page();
+const live = new Live(page);
 
 const schedule = new Schedule(page, [
   { time: 0, display: "aim" },
@@ -24,7 +27,7 @@ const game = new Game(page);
 game.on("otree.game.start", async function (event) {
   const conf = event.detail;
   console.debug("otree.game.start", conf);
-  page.send("load");
+  live.send("load");
 });
 
 game.on("otree.live.trial", async function (event) {
@@ -47,7 +50,7 @@ game.on("otree.page.response", function (event) {
   game.update({
     response: input.response,
   });
-  page.send("response", { response: input.response });
+  live.send("response", { response: input.response });
 });
 
 game.on("otree.time.out", function () {
@@ -78,15 +81,18 @@ game.on("otree.game.stop", async function (event) {
   schedule.cancel();
 });
 
-page.reset();
+game.reset();
+
+live.send("start");
+let initevent = await page.wait("otree.live.status");
+CONF.num_rounds = initevent.detail.progress.total;
+
+console.debug("playing:", CONF);
+
 await page.wait("otree.page.start"); // for user to press 'start'
-page.send("init");
-await page.wait("otree.live.status").then(event => {
-  const message = event.detail;
-  CONF.num_rounds = message.progress.total;
-});
 
-let proggress = await game.iterateRounds(CONF, CONF.num_rounds, CONF.trial_pause);
+let progress = await game.iterateRounds(CONF, CONF.num_rounds, CONF.trial_pause);
 
-page.reset();
+game.reset();
+
 console.debug("terminated:", progress);

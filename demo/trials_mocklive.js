@@ -11,12 +11,13 @@ window.liveSend = function (message) {
   const type = message.type;
 
   switch (type) {
-    case "init":
+    case "start":
+      iteration = 0;
       window.liveRecv({
         type: 'status',
+        iteration: 0,
         progress: {
           total: CONF.num_rounds,
-          current: 0,
           current: 0,
           completed: 0,
           skipped: 0,

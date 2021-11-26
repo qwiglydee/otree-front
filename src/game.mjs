@@ -23,6 +23,11 @@ export class Game {
     return this.page.on(eventtype, handler.bind(this));
   }
 
+  reset() {
+    this.state = {};
+    this.page.reset('game');
+  }
+
   /** updates game state
    *
    * Applies given changes to game state,
@@ -101,9 +106,8 @@ export class Game {
    */
   async playRound(gameconf) {
     this.running = new Deferred();
-    this.state = {};
 
-    this.page.reset('game');
+    this.reset();
     this.page.fire("otree.game.start", gameconf);
 
     return this.running.promise.then((status) => {

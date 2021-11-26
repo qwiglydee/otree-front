@@ -52,7 +52,7 @@ game.on("otree.page.response", function (event) {
     response: input.response,
     reaction: schedule.reaction_time(),
   });
-  validate();
+  decide();
 });
 
 game.on("otree.time.out", function () {
@@ -63,29 +63,18 @@ game.on("otree.time.out", function () {
       response: CONF.nogo_response,
     });
   }
-  validate();
+  decide();
 });
 
-function validate() {
+async function decide() {
   let valid = validateTrial(game.state);
-
-  if (valid !== undefined) {
-    game.update({
-      feedback: valid,
-    });
-  }
-
-  let completed = true; // unless more attempts allowed
-
-  if (completed) {
-    schedule.trigger("final"); 
-  } else {
-    this.unfreeze(); // when more attempts allowed
-  }
+  game.update({
+    feedback: valid,
+  });
 
   game.status({
     success: valid,
-    completed: completed,
+    completed: true,
   });
 }
 
@@ -93,17 +82,19 @@ game.on("otree.game.stop", async function (event) {
   const status = event.detail;
   console.debug("otree.game.stop", status);
   console.debug("completed:", status, game.state);
-  if (status.wait) {
-    await page.wait('otree.time.out');
-  }
   schedule.cancel();
 });
 
 
-page.reset();
+game.reset();
+
+console.debug("playing:", CONF);
+
 await page.wait("otree.page.start"); // for user to press 'start'
 
 // let status = await game.playRound(CONF); // single round
 let progress = await game.iterateRounds(CONF, CONF.num_rounds, CONF.trial_pause);
-page.reset();
+
+game.reset();
+
 console.debug("terminated:", progress);
