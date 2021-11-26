@@ -1,81 +1,66 @@
-> experimental work in progress
-> 
-> not intended for use in production
-> 
-
 # oTree WebComponents
 
-A micro-framework of webcomponents to facilitate creating interactive pages for oTree apps.
+A micro-framework for interactive pages for oTree apps.
 
 - not dependent on any sophisticated frameworks and libraries
-- easy to use, customize and extend without javascript toolchains
+- easy to use and extend without javascript toolchains
 
-# Objectives
-- decoupled components and utils, suitable for plain pages and live pages 
-- aiming generic scheme: display stimulus/puzzle/task, receive response/solution/answer
-- front-side iteration management (plain pages)
-- back-side iteration management (live pages)
-- simple state management based on events only
-- simple scripting of main iteration logic
-- customizable content of existing components
-- styling of existing components
-- creating user-defined components or pseudo-components (custom elems w/out classes)
+# Architecture
 
-# Intended architecture
+The app consists of several components that communicate via global events.
 
-- DataSource: a module for retrieving trials and handle user responses
-- GameLogic: main game or iteration logic
-- Page: WebComponents to hold page state, render it and handle user interactions
+## Page
 
-## DataSource
-Provides methods to retrieve trial data and handle user responses.
+The `Page` object is a central point of synchronization. It provides tools to fire and handle events.
 
-Main API would be:
-- `newTrial()`
-- `handleResponse(trial, response)`
+The synchronization goes via global events fired on document body element. They have namespased type like `otree.page.start` or `otree.live.feedback` indicating corresponding layer.
 
-Expecting at least two varieties:
-- LiveData: using websocket and server-side data
-- FormData: using forms and client-side data
 
-Asynchronous data loading such as retrieving images should be handled here.
+## Directives
 
-## Game
-Implements main iteration sequence or game logic.
+Directives are pieces of functionality attached to HTML code via custom attributes of form `data-ot-something="param"`.
+The parameter can reference to a variable in game state. When the referenced variable is changed, directives react to that and update their content. 
 
-The basic logic to be:
-- get trial
-- receive user response
-- validate response
-- (optionally, allow more response attempts)
-- goto next trial
+Other kind of directives catch user input and convert it to events that can be handled by other components.
 
-Some other puzzles or games would need to rewrite this component.
+New custom directives can be created following simple scheme.
 
-Could be stateless and implemented as function.
+## Schedule
 
-## WebComponents
-Render page content and handle user inputs.
+A `Schedule` describes some phases that should happen at particular moment of time since a game round started. 
 
-- `otree-page`: main component holding global current state and synchronizing it with other components
-- `otree-something`: other components or pseudo-components (just bare custom element without class)
+The phases are described as set of flags and a time in ms. The set of flags can contain `display` and `input` to switch corresponding directives. It can be extended with arbitrary other flags.
 
-The global state is modified via global function or page component method.
-Synchronization is performed by broadcasting `update` events to all `otree-*` components, without any explicit subscriptions or dependency tracking.
+Some phases can be defined with a name and triggered manually instead of happening at some time.
 
-## Dynamic content
+The schedule also measures reaction time for games that need it.
 
-Elements should allow to take data from page state (a trial, a puzzle, user response, feedback, etc) and render it.
+## Game logic 
 
-- restrict to only access global page state properties (no expressions evaluations or function calls)
-- interpolating plain text
-  - `<span>Your answer: ${response}, correct answer was: ${solution}</span>`
-- interpolating (at least) class attributes
-  - `<div class="stimulus-${stimulus.category}">...</div>`
-- inserting images (which should be already loaded at data source level to avoid render delays), just src won't work
-- conditional rendering using `if` or `switch` logic
-  - `<div if="${feedback}">...render feedback...</div>` 
-  - `<div switch="${feedback}"><span case="true" class="valid">✅</span><span case="false" class="invalid">❌</span></div>`
-- maybe, transparent structural elements to avoid DOM cluttering
-  - like `<ng-container>` 
-  - or just generic `<otree-div>`, `<otree-span>`
+An object of class `Game` holds arbitrary data as game state and provides generic utils to play rounds, iterations, and synchronize changes with the rest of the app.
+
+Some particular game logic should be implemented via handlers attached to game events or live messages.
+
+## Game state
+
+The game state is any data needed for a game. It is an arbitrary object with any number of nested levels. 
+Directives can reference to a variable in the state in the form `game.field.subfield` in their parameters.
+
+Changes to the sate are propagated in form of an object of form like `{ 'game.field.subfield': newvalue, ... }`. Directives can detect if a referenced variable is affected by changes, either directly or via upper-level object.  
+
+## Game status
+
+The status is a set of fields that indicate meta-state of the game such as if the game is completed, if a trial is successful, or what player should move.
+The status is not stored anywhere and only exists in events to indicate what happens.
+
+It is propagated to directives in form of `{ 'status.field': somevalue }` so that they can also indicate some meta-state values. In particular, for multiple iterations it is used to indicate progress.
+
+## Live communication
+
+An object of class `Live` catches all live messages and converts them to global events. Both received and sent messages are indicated, so that other components can react to them in an arbitrary way.
+
+The communication protocol requires all messages be of form `{ type: "sometype", ... }` so that type of a message can be determined. No other restrictions implied. 
+
+# API documentation
+
+Detailed documentation will eventually be generated and published somewhere.
