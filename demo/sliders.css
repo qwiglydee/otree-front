@@ -1,8 +1,12 @@
 .grid {
   display: grid;
-  grid: 1fr 1fr 1fr / 1fr 1fr 1fr;
+  grid: auto-flow / 1fr 1fr;
 }
 
 canvas {
   margin: 8px;
+}
+
+.gameover {
+  background: rgba(255, 255, 255, 0.5);
 }

@@ -4,8 +4,8 @@ const SLIDER_WIDTH = SLIDER_SNAP * 100 + SLIDER_EXTRA + 16;
 const SLIDER_HEIGHT = 32;
 const SLIDER_TICKS = 10;
 const TICKS_HEIGHT = 8;
-const TICKS_WIDTH = 4;
-const TRACK_HEIGHT = 4;
+const TICKS_WIDTH = 2;
+const TRACK_HEIGHT = 8;
 
 const BACK_COLOR = "#E0E0E0";
 const TRACK_COLOR = "#BB86FC60";
@@ -19,8 +19,8 @@ canvas.height = SLIDER_HEIGHT;
 const ctx = canvas.getContext("2d");
 
 function generateSlider() {
-  const target = Math.random() * SLIDER_EXTRA - SLIDER_EXTRA / 2;
-  const initial = (Math.random() * 100 - 50) * SLIDER_SNAP + target;
+  const target = Math.round(Math.random() * SLIDER_EXTRA - SLIDER_EXTRA / 2);
+  const initial = Math.round((Math.random() * 100 - 50) * SLIDER_SNAP + target);
 
   ctx.fillStyle = BACK_COLOR;
   ctx.fillRect(0, 0, SLIDER_WIDTH, SLIDER_HEIGHT);
@@ -60,25 +60,28 @@ function generateSlider() {
   return { target, initial, background };
 }
 
-export function generatePuzzle() {
+export function generatePuzzle(num_sliders) {
   const sliders = [];
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < num_sliders; i++) {
     sliders[i] = generateSlider();
     sliders[i].value = sliders[i].initial;
-    sliders[i].valid = false;
+    sliders[i].correct = false;
   }
 
   return { sliders };
 }
 
-export function validateSlider(slider) {
-  let snapped = Math.round((slider.value - slider.target) / SLIDER_SNAP) * SLIDER_SNAP + slider.target; // snapped value 
+export function validateSlider(slider, input) {
+  let snapped = Math.round((input - slider.target) / SLIDER_SNAP);
+  let valid = -50 <= snapped && snapped <= 50;
+  let mapped = slider.target + snapped * SLIDER_SNAP;  
   return {
-    value: snapped,
-    valid: snapped == s.target,
+    valid: valid,
+    value: mapped,
+    correct: snapped == 0,
   };
 }
 
 export function validatePuzzle(puzzle) {
-  return !puzzle.sliders.some(slider => !slider.valid);
+  return puzzle.sliders.filter(slider => slider.correct).length;
 }
