@@ -1,6 +1,6 @@
 import { expect, fixture, oneEvent, aTimeout, nextFrame } from "@open-wc/testing";
 
-import { Page, LivePage } from "../src/page";
+import { Page } from "../src/page";
 import { Changes } from "../src/utils/changes";
 
 describe("Page", () => {
@@ -216,39 +216,4 @@ describe("events", () => {
     });
   });
 
-});
-
-describe("LivePage", () => {
-  let body, page, elem, detail;
-
-  async function pageEvent(type) {
-    return (await oneEvent(body, type)).detail;
-  }
-
-  beforeEach(async () => {
-    body = document.createElement("body");
-    elem = await fixture(`<div></div>`, { parentNode: body });
-    page = new LivePage(body);
-  });
-
-  it("sends", async () => {
-    let called;
-    
-    window.liveSend = function() {
-      called = arguments;
-    }
-
-    page.send('foo', {bar: "Bar"});
-    detail = await pageEvent('otree.live.foo');
-    expect(detail).to.eql({ bar: "Bar" });
-    expect(called).not.to.be.undefined;
-    expect(called[0]).to.eql({ type: "foo", bar: "Bar" });
-
-  });
-
-  it("receives", async () => {
-    window.liveRecv({ type: "foo", bar: "Bar"});
-    detail = await pageEvent('otree.live.foo');
-    expect(detail).to.eql({ bar: "Bar" });
-  });
 });

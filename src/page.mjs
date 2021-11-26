@@ -97,28 +97,3 @@ export class Page {
     this.fire("otree.page.response", changes);
   }
 }
-
-/** Live Page
- * handles live messages
- * converts incoming and outgoing messages to events like `otree.live.type`
- */
-export class LivePage extends Page {
-  init() {
-    super.init();
-    window.liveRecv = this.recv.bind(this);
-  }
-
-  recv(data) {
-    console.debug("recv", data);
-    const type = data.type;
-    delete data.type;
-    this.fire(`otree.live.${type}`, data);
-  }
-
-  send(type, message) {
-    const data = Object.assign({ type }, message);
-    console.debug("send", data);
-    window.liveSend(data);
-    this.fire(`otree.live.${type}`, message);
-  }
-}
