@@ -19,7 +19,7 @@ progress {
   margin: 1em;
 }
 
-.start {
+.overlay {
   position: absolute;
   top:0;
   bottom:0;
@@ -27,7 +27,7 @@ progress {
   right:0;
 }
 
-.start .d-flex {
+.overlay > .d-flex {
   height: 100%;
   width: 100%;
 }
