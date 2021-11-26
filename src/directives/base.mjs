@@ -12,8 +12,8 @@ export function registerDirective(selector, cls) {
 /** directive base class 
  * implement basic and stub methods
  * 
- * default implementation initializes `this.ref` from data attribute,
- * and reacts on rset/update events calling `this.reset()` and `this.update()`  
+ * default implementation initializes `this.ref` from data attribute, 
+ * and sets up update handler  
  */
 export class Directive {
   /** directive name
@@ -82,7 +82,6 @@ export class Directive {
   /** sets events up 
    */
   setup() {
-    this.on('otree.page.reset', this.onReset);
     this.on('otree.page.update', this.onUpdate);
   }
 
@@ -97,17 +96,11 @@ export class Directive {
     }
   }
 
-  reset() {
-    // do something
-    throw new Error("Method not implemented");
-  }
-
   update(changes) {
     // do something
     throw new Error("Method not implemented");
   }
 }
-
 
 
 

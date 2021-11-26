@@ -13,12 +13,7 @@ class otDisplay extends Directive {
   }
 
   setup() {
-    this.on('otree.page.reset', this.onReset);
     this.on('otree.time.phase', this.onPhase);
-  }
-
-  onReset() {
-    toggleDisplay(this.elem, false);
   }
   
   onPhase(event) {

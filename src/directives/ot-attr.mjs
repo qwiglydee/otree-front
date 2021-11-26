@@ -4,10 +4,6 @@ import { setAttr } from "../utils/dom";
 import { Directive, registerDirective } from "./base";
 
 class otAttrBase extends Directive {
-  reset() {
-    // this.elem.removeAttribute(this.name);
-  }
-
   update(changes) {
     setAttr(this.elem, this.name, changes.pick(this.ref));
   }

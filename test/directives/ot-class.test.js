@@ -1,7 +1,6 @@
 import { expect, fixture, elementUpdated } from "@open-wc/testing";
 
 import { Page } from "../../src/page";
-import { Changes } from "../../src/utils/changes";
 import "../../src/directives/ot-class";
 
 
@@ -28,98 +27,98 @@ describe("ot-class", () => {
     });
 
     it("resets", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2"]);
     });
 
     it("changes by fld", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
 
-      page.update(new Changes({ "obj.fld": "foo" }));
+      page.update({ "obj.fld": "foo" });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
 
-      page.update(new Changes({ "obj.fld": "bar" }));
+      page.update({ "obj.fld": "bar" });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "bar"]);
     });
 
     it("changes by obj", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
 
-      page.update(new Changes({ obj: { fld: "foo" } }));
+      page.update({ obj: { fld: "foo" } });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
 
-      page.update(new Changes({ obj: { fld: "bar" } }));
+      page.update({ obj: { fld: "bar" } });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "bar"]);
     });
 
     it("ignores unrelated fld", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
 
-      page.update(new Changes({ "obj.fld": "foo" }));
+      page.update({ "obj.fld": "foo" });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
 
-      page.update(new Changes({ "obj.fld2": "bar" }));
+      page.update({ "obj.fld2": "bar" });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
     });
 
     it("ignores unrelated obj", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
 
-      page.update(new Changes({ obj: { fld: "foo" } }));
+      page.update({ obj: { fld: "foo" } });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
 
-      page.update(new Changes({ obj2: { fld: "bar" } }));
+      page.update({ obj2: { fld: "bar" } });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
     });
 
     it("clears by fld deletion", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
 
-      page.update(new Changes({ "obj.fld": "foo" }));
+      page.update({ "obj.fld": "foo" });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
 
-      page.update(new Changes({ "obj.fld": undefined }));
+      page.update({ "obj.fld": undefined });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2"]);
     });
 
     it("clears by empty obj", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
 
-      page.update(new Changes({ obj: { fld: "foo" } }));
+      page.update({ obj: { fld: "foo" } });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
 
-      page.update(new Changes({ obj: {} }));
+      page.update({ obj: {} });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2"]);
     });
 
     it("clears by obj deletion", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
 
-      page.update(new Changes({ obj: { fld: "foo" } }));
+      page.update({ obj: { fld: "foo" } });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
 
-      page.update(new Changes({ obj: undefined }));
+      page.update({ obj: undefined });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2"]);
     });

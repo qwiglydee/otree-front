@@ -19,9 +19,19 @@ describe("Page", () => {
   it("resets", async () => {
     page.reset();
     detail = await pageEvent('otree.page.reset');
-    expect(detail).to.be.null;
-    expect(page.phase).to.eql({});
+    expect(detail).to.eq('game');
+    detail = await pageEvent('otree.page.update');
+    expect(detail).to.eql(new Changes({ game: undefined }));
   });
+
+  it("resets custom obj", async () => {
+    page.reset('status.progress');
+    detail = await pageEvent('otree.page.reset');
+    expect(detail).to.eq('status.progress');
+    detail = await pageEvent('otree.page.update');
+    expect(detail).to.eql(new Changes({ 'status.progress': undefined }));
+  });
+
 
   it("fires random event", async () => {
     page.fire("foo", { bar: "Bar" });
@@ -44,55 +54,7 @@ describe("Page", () => {
   it("fires response", async () => {
     page.response({ foo: "Foo" });
     detail = await pageEvent("otree.page.response");
-    expect(detail).to.eql(new Changes({ foo: "Foo"}));
-  });
-
-  it("fires error", async () => {
-    page.error("foo");
-    detail = await pageEvent("otree.page.error");
-    expect(detail).to.eql({ code: "foo"});
-    detail = await pageEvent("otree.page.update");
-    expect(detail).to.deep.equal({ error: { code: "foo"} });
-  });
-
-  it("fires error with message", async () => {
-    page.error("foo", "Foo");
-    detail = await pageEvent("otree.page.error");
-    expect(detail).to.eql({ code: "foo", message: "Foo"});
-    detail = await pageEvent("otree.page.update");
-    expect(detail).to.deep.equal({ error: { code: "foo", message: "Foo"} });
-  });
-
-  it("resets error", async () => {
-    page.error("foo");
-    detail = await pageEvent("otree.page.error");
-    expect(detail).to.eql({ code: "foo"});
-    detail = await pageEvent("otree.page.update");
-    expect(detail).to.deep.equal({ error: { code: "foo"} });
-
-    page.error(null);
-    detail = await pageEvent("otree.page.error");
-    expect(detail).to.be.null;
-    detail = await pageEvent("otree.page.update");
-    expect(detail).to.deep.equal({ error: undefined });
-  });
-
-  it("toggles phases", async () => {
-    page.toggle({foo: "Foo"});
-    detail = await pageEvent("otree.time.phase");
-    expect(detail).to.eql({ foo: "Foo" });
-    expect(page.phase).to.eql({ foo: "Foo" });
-
-    page.toggle({bar: "Bar"});
-    detail = await pageEvent("otree.time.phase");
-    expect(detail).to.eql({ bar: "Bar" });
-    expect(page.phase).to.eql({ bar: "Bar" });
-  });
-
-  it("fires timeout", async () => {
-    page.timeout();
-    detail = await pageEvent("otree.time.out");
-    expect(detail).to.be.null;
+    expect(detail).to.eql({ foo: "Foo"});
   });
 });
 

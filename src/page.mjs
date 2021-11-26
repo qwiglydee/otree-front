@@ -81,7 +81,7 @@ export class Page {
 
   reset(obj="game") {
     this.fire("otree.page.reset", obj);
-    this.fire("otree.page.update", new Changes({ [obj]: null }));
+    this.fire("otree.page.update", new Changes({ [obj]: undefined }));
   }
 
   start() {

@@ -21,10 +21,6 @@ class otWhen extends Directive {
     if (this.cond === "false") this.cond = false; 
   }
 
-  reset() {
-    // toggleDisplay(this.elem, false);    
-  }
-
   update(changes) {
     let value = changes.pick(this.ref);
 

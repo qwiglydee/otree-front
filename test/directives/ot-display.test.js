@@ -23,21 +23,12 @@ describe("ot-display", () => {
       page = new Page(body);
     });
 
-    it("resets", async () => {
-      page.reset();
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
-
     it("switches", async () => {
-      page.reset();
-      await elementUpdated(elem);
-
-      page.toggle({ display: "foo" });
+      page.fire('otree.time.phase', { display: "foo" });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
 
-      page.toggle({ display: "bar" });
+      page.fire('otree.time.phase', { display: "bar" });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });

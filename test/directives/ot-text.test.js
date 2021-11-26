@@ -27,13 +27,13 @@ describe("ot-text", () => {
     });
 
     it("resets", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
       expect(elem).to.have.text("");
     });
 
     it("changes by fld", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
 
       page.update(new Changes({ "obj.fld": "foo" }));
@@ -46,7 +46,7 @@ describe("ot-text", () => {
     });
 
     it("changes by obj", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
 
       page.update(new Changes({ obj: { fld: "foo" } }));
@@ -59,7 +59,7 @@ describe("ot-text", () => {
     });
 
     it("ignores unrelated fld", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
 
       page.update(new Changes({ "obj.fld": "foo" }));
@@ -72,7 +72,7 @@ describe("ot-text", () => {
     });
 
     it("ignores unrelated obj", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
 
       page.update(new Changes({ obj: { fld: "foo" } }));
@@ -85,7 +85,7 @@ describe("ot-text", () => {
     });
 
     it("clears by fld deletion", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
 
       page.update(new Changes({ "obj.fld": "foo" }));
@@ -98,7 +98,7 @@ describe("ot-text", () => {
     });
 
     it("clears by empty obj", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
 
       page.update(new Changes({ obj: { fld: "foo" } }));
@@ -111,7 +111,7 @@ describe("ot-text", () => {
     });
 
     it("clears by obj deletion", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
 
       page.update(new Changes({ obj: { fld: "foo" } }));

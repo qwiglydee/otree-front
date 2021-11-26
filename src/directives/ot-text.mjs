@@ -6,10 +6,6 @@ class otText extends Directive {
     return "text";
   }
 
-  reset() {
-    // setText(this.elem, null);  
-  }
-
   update(changes) {
     setText(this.elem, changes.pick(this.ref)); 
   }

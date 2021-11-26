@@ -103,7 +103,7 @@ export class Game {
     this.running = new Deferred();
     this.state = {};
 
-    this.page.reset();
+    this.page.reset('game');
     this.page.fire("otree.game.start", gameconf);
 
     return this.running.promise.then((status) => {

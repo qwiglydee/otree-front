@@ -1,7 +1,6 @@
 import { expect, fixture, elementUpdated } from "@open-wc/testing";
 
 import { Page } from "../../src/page";
-import { Changes } from "../../src/utils/changes";
 
 import "../../src/directives/ot-attr";
 
@@ -32,109 +31,109 @@ describe("ot-attr", () => {
     });
 
     it("resets", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
       expect(elem).not.to.have.attr("max");
       expect(elem).not.to.have.attr("value");
     });
 
     it("changes by fld", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
 
-      page.update(new Changes({ "obj.val": 50, 'obj.max': 100 }));
+      page.update({ "obj.val": 50, 'obj.max': 100 });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).to.have.attr("value", "50");
 
-      page.update(new Changes({ "obj.val": 75 }));
+      page.update({ "obj.val": 75 });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).to.have.attr("value", "75");
     });
 
     it("changes by obj", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
 
-      page.update(new Changes({ obj: { val: 50, max: 100 } }));
+      page.update({ obj: { val: 50, max: 100 } });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).to.have.attr("value", "50");
 
-      page.update(new Changes({ obj: { val: 75, max: 100 } }));
+      page.update({ obj: { val: 75, max: 100 } });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).to.have.attr("value", "75");
     });
 
     it("ignores unrelated fld", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
 
-      page.update(new Changes({ obj: { val: 50, max: 100 } }));
+      page.update({ obj: { val: 50, max: 100 } });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).to.have.attr("value", "50");
 
-      page.update(new Changes({ "obj.xxx": 150 }));
+      page.update({ "obj.xxx": 150 });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).to.have.attr("value", "50");
     });
 
     it("ignores unrelated obj", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
 
-      page.update(new Changes({ obj: { val: 50, max: 100 } }));
+      page.update({ obj: { val: 50, max: 100 } });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).to.have.attr("value", "50");
 
-      page.update(new Changes({ objX: { val: 75, max: 100 } }));
+      page.update({ objX: { val: 75, max: 100 } });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).to.have.attr("value", "50");
     });
 
     it("clears by fld deletion", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
 
-      page.update(new Changes({ obj: { val: 50, max: 100 } }));
+      page.update({ obj: { val: 50, max: 100 } });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).to.have.attr("value", "50");
 
-      page.update(new Changes({ "obj.val": undefined }));
+      page.update({ "obj.val": undefined });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).not.to.have.attr("value");
     });
 
     it("clears by empty obj", async () => {
-      page.reset();
+      page.reset('obj');
       await elementUpdated(elem);
 
-      page.update(new Changes({ obj: { val: 50, max: 100 } }));
+      page.update({ obj: { val: 50, max: 100 } });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).to.have.attr("value", "50");
 
-      page.update(new Changes({ obj: {} }));
+      page.update({ obj: {} });
       await elementUpdated(elem);
       expect(elem).not.to.have.attr("max");
       expect(elem).not.to.have.attr("value");
     });
 
     it("clears by obj deletion", async () => {
-      page.update(new Changes({ obj: { val: 50, max: 100 } }));
+      page.update({ obj: { val: 50, max: 100 } });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).to.have.attr("value", "50");
 
-      page.update(new Changes({ obj: undefined }));
+      page.update({ obj: undefined });
       await elementUpdated(elem);
       expect(elem).not.to.have.attr("max");
       expect(elem).not.to.have.attr("value");
