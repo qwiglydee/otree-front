@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>oTree demo apps</title>
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../assets/css/common.css" />
+    <link rel="stylesheet" href="sliders.css" />
+  </head>
+
+  <body>
+    <div class="otree-body container d-flex justify-content-center align-items-center">
+      <div class="overlay" data-ot-start data-ot-key="Space" data-ot-touch data-ot-click>
+        <div class="d-flex flex-column justify-content-center align-items-center">
+          <h3>Instructions</h3>
+          <p>Move all sliders to target position.</p>
+          <p class="start-cta">Now press <kbd>Space</kbd> to start the game.</p>
+        </div>
+      </div>
+
+      <div data-ot-when="game.sliders" class="grid">
+        <canvas width="128" height="16" data-slider="game.sliders.0"></canvas>
+        <canvas width="128" height="16" data-slider="game.sliders.1"></canvas>
+        <canvas width="128" height="16" data-slider="game.sliders.2"></canvas>
+        <canvas width="128" height="16" data-slider="game.sliders.3"></canvas>
+        <canvas width="128" height="16" data-slider="game.sliders.4"></canvas>
+        <canvas width="128" height="16" data-slider="game.sliders.5"></canvas>
+        <canvas width="128" height="16" data-slider="game.sliders.6"></canvas>
+        <canvas width="128" height="16" data-slider="game.sliders.7"></canvas>
+      </div>
+    </div>
+
+    <script type="module" src="../src/directives/ot-start.mjs"></script>
+    <script type="module" src="../src/directives/ot-attr.mjs"></script>
+    <script type="module" src="../src/directives/ot-when.mjs"></script>
+
+    <script type="module" src="./sliders_data.js"></script>
+    <script type="module" src="./sliders.js"></script>
+  </body>
+</html>

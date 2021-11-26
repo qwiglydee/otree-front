@@ -1,0 +1,8 @@
+.grid {
+  display: grid;
+  grid: 1fr 1fr 1fr / 1fr 1fr 1fr;
+}
+
+canvas {
+  margin: 8px;
+}
