@@ -3,17 +3,16 @@
   "description": "Webcomponent x-app following open-wc recommendations",
   "license": "MIT",
   "author": "x-app",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "scripts": {
     "test": "web-test-runner",
     "test:coverage": "web-test-runner --coverage",
     "test:watch": "web-test-runner --watch",
-    "build": "rimraf dist && rollup -c rollup.config.js",
+    "build": "rimraf dist && rollup -c rollup.conf.js",
     "start:build": "web-dev-server --root-dir dist --app-index index.html --open",
     "analyze": "cem analyze --litelement",
     "start": "web-dev-server --hmr"
   },
-  "dependencies": {},
   "devDependencies": {
     "@babel/preset-env": "^7.15.4",
     "@custom-elements-manifest/analyzer": "^0.4.17",

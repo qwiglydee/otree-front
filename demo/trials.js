@@ -1,8 +1,5 @@
-import { loadImage } from "../src/utils/dom.mjs";
-
-import { Page } from "../src/page.mjs";
-import { Schedule } from "../src/utils/schedule.mjs";
-import { Game } from "../src/game.mjs";
+import { utils } from "../src";
+import { Page, Schedule, Game  } from "../src";
 
 import { generateTrial, validateTrial } from "./trials_data.js";
 
@@ -29,7 +26,7 @@ const game = new Game(page);
 page.on("otree.game.start", async function (event, conf) {
   console.debug("otree.game.start", conf);
   const trial = generateTrial(conf.iteration);
-  trial.stimulus_img = await loadImage(trial.stimulus_img);
+  trial.stimulus_img = await utils.dom.loadImage(trial.stimulus_img);
   game.update({ ...trial, retries: 0 });
 
   game.status({

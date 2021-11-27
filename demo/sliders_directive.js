@@ -1,4 +1,4 @@
-import { Directive, registerDirective } from "../src/directives/base.mjs";
+import { Directive, registerDirective } from "../src/";
 
 const HANDLE_R = 8;
 const HOVER_R = 16;

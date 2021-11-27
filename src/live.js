@@ -1,4 +1,5 @@
 /** Live Page
+ * 
  * handles live messages
  * converts incoming and outgoing messages to events like `otree.live.type`
  */
@@ -19,6 +20,11 @@
     this.page.fire(`otree.live.${type}`, data);
   }
 
+  /** send a message
+   * 
+   * @param type {String} message type
+   * @param message {Object} message payload
+   */
   send(type, message) {
     const data = Object.assign({ type }, message);
     // console.debug("send", data);

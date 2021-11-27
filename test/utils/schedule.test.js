@@ -1,7 +1,7 @@
 import { expect, oneEvent, aTimeout, nextFrame } from "@open-wc/testing";
 
 import { Page } from "../../src/page";
-import { Schedule } from "../../src/utils/schedule";
+import { Schedule } from "../../src/schedule";
 
 describe("schedule", () => {
   let body, page, schedule, detail;

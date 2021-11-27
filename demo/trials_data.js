@@ -1,4 +1,5 @@
-import { random_choice } from "../src/utils/random.mjs";
+import { utils } from "../src";
+const random_choice = utils.random.random_choice;
 
 const MOODS = ["positive", "negative"];
 

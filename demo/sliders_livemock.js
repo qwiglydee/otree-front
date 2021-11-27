@@ -1,4 +1,7 @@
-import { delay, cancel } from "../src/utils/timers";
+import { utils } from "../src/";
+
+const { delay, cancel } = utils.timers;
+
 import { generatePuzzle, validateSlider, validatePuzzle } from "./sliders_data";
 
 function mockrecv(message) {

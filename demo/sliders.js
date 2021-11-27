@@ -1,9 +1,6 @@
-import { loadImage } from "../src/utils/dom.mjs";
-
-import { Page } from "../src/page.mjs";
-import { Live } from "../src/live.mjs";
-import { Game } from "../src/game.mjs";
-import { Ref, Changes } from "../src/utils/changes.mjs";
+import { utils } from "../src/";
+import { Page, Live, Game } from "../src/";
+const Ref = utils.changes.Ref;
 
 
 let conf = null;
@@ -22,7 +19,7 @@ page.on("otree.live.game", async function(event, puzzle) {
   // need to load all images into Image objects
 
   for (let i = 0; i < conf.num_sliders; i++) {
-    puzzle.sliders[i].background = await loadImage(puzzle.sliders[i].background);
+    puzzle.sliders[i].background = await utils.dom.loadImage(puzzle.sliders[i].background);
     puzzle.sliders[i].idx = i; // for backref
     puzzle.sliders[i].valid = true; // not part of the server state
   }

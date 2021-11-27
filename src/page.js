@@ -2,7 +2,13 @@ import { Changes } from "./utils/changes";
 
 import { registry } from "./directives/base";
 
+
+/** Main page
+ * 
+ * Centeral point of synchronization.
+ */
 export class Page {
+  
   constructor(body) {
     this.body = body || document.body;
     this.init();
@@ -19,7 +25,7 @@ export class Page {
     });
   }
 
-  /** binds event handler
+  /** binds an event handler
    *
    * @param type {String} event type
    * @param handler {function(event, detail)} a handler

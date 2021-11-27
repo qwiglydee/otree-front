@@ -1,6 +1,6 @@
-import { sleep } from "../src/utils/timers.mjs";
-import { Deferred } from "../src/utils/deferred.mjs";
-import { Changes } from "../src/utils/changes.mjs";
+import { sleep } from "../src/utils/timers";
+import { Deferred } from "../src/utils/deferred";
+import { Changes } from "../src/utils/changes";
 
 /** Base game
  * Base utilities to construct game logic

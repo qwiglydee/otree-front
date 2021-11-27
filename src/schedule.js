@@ -1,4 +1,4 @@
-import { Timers } from "./timers";
+import { Timers } from "./utils/timers";
 
 /** Schedule of timing phases.
  * Fires events according to timing table.
