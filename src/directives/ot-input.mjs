@@ -19,12 +19,11 @@ class otRealInput extends Directive {
     if (isTextInput(this.elem)) this.on("keydown", this.onKey, this.elem);
   }
 
-  onPhase(event) {
-    const phase = event.detail;
+  onPhase(event, phase) {
     toggleDisabled(this.elem, !phase.input);
   }
 
-  onChange() {
+  onChange(event) {
     let value = this.elem.value;
     if (value === "true") value = true;
     if (value === "false") value = false;
@@ -87,8 +86,7 @@ class otCustomInput extends Directive {
     if (this.trigger.click) this.on("click", this.onClick, this.elem);
   }
 
-  onPhase(event) {
-    const phase = event.detail;
+  onPhase(event, phase) {
     if (!('input' in phase)) return;
     toggleDisabled(this.elem, !phase.input);
   }

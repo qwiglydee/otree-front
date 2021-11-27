@@ -26,8 +26,7 @@ const schedule = new Schedule(page, [
 
 const game = new Game(page);
 
-game.on("otree.game.start", async function (event) {
-  const conf = event.detail;
+page.on("otree.game.start", async function (event, conf) {
   console.debug("otree.game.start", conf);
   const trial = generateTrial(conf.iteration);
   trial.stimulus_img = await loadImage(trial.stimulus_img);
@@ -40,18 +39,15 @@ game.on("otree.game.start", async function (event) {
   schedule.run();
 });
 
-// game.on("otree.time.phase", function (event) {
-//   const phase = event.detail;
+// page.on("otree.time.phase", function (event, phase) {
 //   console.debug("otree.time.phase", phase);
 // });
 
-game.on("otree.page.update", function (event) {
-  const changes = event.detail;
-  console.debug("otree.page.update", changes);
-});
+// page.on("otree.page.update", function (event, changes) {
+//   console.debug("otree.page.update", changes);
+// });
 
-game.on("otree.page.response", function (event) {
-  const input = event.detail;
+page.on("otree.page.response", function (event, input) {
   console.debug("otree.page.response", input);
   game.freeze();
   game.update({
@@ -63,7 +59,7 @@ game.on("otree.page.response", function (event) {
   decide();
 });
 
-game.on("otree.time.out", function () {
+page.on("otree.time.out", function () {
   console.debug("otree.time.out");
   game.freeze();
 
@@ -114,8 +110,7 @@ async function decide() {
   }
 }
 
-game.on("otree.game.stop", async function (event) {
-  const status = event.detail;
+page.on("otree.game.stop", async function (event, status) {
   console.debug("otree.game.stop", status);
   console.debug("completed:", status, game.state);
   schedule.cancel();

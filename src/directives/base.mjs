@@ -38,37 +38,19 @@ export class Directive {
     this.init();
   }
 
-  /** bind a method to an event 
+  /** binds an event handler
+   * 
+   * Shorcut for page.on, with the handler autobound to `this` directive
    * 
    * @param eventype {String} event type
-   * @param method {Function} a pure method reference, it'll be automatically called bound to `this`
+   * @param handler {Function(event, detail)} handler
    * @param target page or elem, by default - page 
   */
-  on(eventype, method, target) {
+  on(eventype, handler, target) {
     if (target === undefined || target === this.page) {
       target = this.page.body;
     }
-
-    const handler = method.bind(this);
-    const listener = this.page.on(eventype, handler, target);
-    if (this.handlers.has(eventype)) this.handlers.get(eventype).off(); 
-    this.handlers.set(eventype, listener);
-  }
-
-  /** unbind method from event 
-   * disabled event handler previously bound by `this.on`.
-   * without args unbinds all handlers
-   */
-  off(eventype) {
-    if (eventype === undefined) {
-      this.handlers.forEach((hnd, evt) => {
-        hnd.off();
-      })
-      this.handlers.clear();
-    } else {
-      this.handlers.get(eventype).off();
-      this.handlers.delete(eventype);
-    }
+    return this.page.on(eventype, handler.bind(this), target);
   }
 
   /** initializes directive 
@@ -84,13 +66,8 @@ export class Directive {
   setup() {
     this.on('otree.page.update', this.onUpdate);
   }
-
-  onReset(event) {
-    this.reset(event.detail);
-  }
   
-  onUpdate(event) {
-    const changes = event.detail;
+  onUpdate(event, changes) {
     if (changes.affects(this.ref)) {
       this.update(changes);
     }
@@ -101,6 +78,3 @@ export class Directive {
     throw new Error("Method not implemented");
   }
 }
-
-
-

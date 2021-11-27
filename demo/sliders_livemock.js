@@ -2,7 +2,7 @@ import { delay, cancel } from "../src/utils/timers";
 import { generatePuzzle, validateSlider, validatePuzzle } from "./sliders_data";
 
 function mockrecv(message) {
-  console.debug("mock live recv", message);
+  // console.debug("mock live recv", message);
   window.liveRecv(message);
 } 
 window.liveSend = mocksend;
@@ -18,16 +18,16 @@ let stats;
 
 
 function mocksend(message) {
-  console.debug("live", message);
+  // console.debug("live", message);
   switch (message.type) {
     case "start":
-      mockrecv({ type: "status", conf: CONF });
+      mockrecv({ type: "setup", ...CONF });
       break;
 
     case "load":
       puzzle = generatePuzzle(CONF.num_sliders);
       stats = { moves: 0, errors: 0, solved: 0 };
-      mockrecv({ type: "game", puzzle });
+      mockrecv({ type: "game", ...puzzle });
       mockrecv({ type: "status", stats });
       delay(otherplayer, Math.random() * 5000 + 5000);
       break;
@@ -42,7 +42,7 @@ function mocksend(message) {
         [`sliders.${idx}.valid`]: valid,
       };
 
-      mockrecv({ type: "update", update });
+      mockrecv({ type: "update", ...update });
 
       stats.moves ++;
 

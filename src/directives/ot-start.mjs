@@ -14,6 +14,7 @@ class otStart extends Directive {
       touch: "otTouch" in dataset,
       key: "otKey" in dataset ? dataset.otKey : false,
     }
+    this.disabled = false;
   }
 
   setup() {
@@ -24,19 +25,21 @@ class otStart extends Directive {
   }
 
   onKey(event) {
+    if (this.disabled) return;
     if (event.code != this.trigger.key) return;
     event.preventDefault();
     this.page.start(); 
   }
 
   onClick(event) {
+    if (this.disabled) return;
     event.preventDefault();
     this.page.start();
   }
 
   onStart() {
     toggleDisplay(this.elem, false);
-    this.off();
+    this.disabled = true;
   }
 }
 

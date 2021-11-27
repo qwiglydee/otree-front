@@ -36,8 +36,7 @@ class Slider extends Directive {
     this.on("mouseup", this.onMouseUp, this.elem);
   }
 
-  onUpdate(event) {
-    const changes = event.detail;
+  onUpdate(event, changes) {
     let changed = false;
     if (changes.affects(this.imgref)) {
       changed = true;
@@ -68,8 +67,6 @@ class Slider extends Directive {
       changed = true;
       this.status.correct = changes.pick(this.crcref);
     }
-  
-    console.debug("slider upd", changes, changed);
   
     if (changed) {
       this.redraw();

@@ -11,14 +11,13 @@ const page = new Page();
 const live = new Live(page);
 const game = new Game(page);
 
-game.on("otree.game.start", async function (event) {
-  console.debug("otree.game.start", event.detail);
+page.on("otree.game.start", async function (event, conf) {
+  console.debug("otree.game.start", conf);
   live.send('load');
 });
 
-game.on("otree.live.game", async function(event) {
-  console.debug("otree.live.game", event.detail);
-  const { puzzle } = event.detail;
+page.on("otree.live.game", async function(event, puzzle) {
+  console.debug("otree.live.game", puzzle);
 
   // need to load all images into Image objects
 
@@ -31,9 +30,9 @@ game.on("otree.live.game", async function(event) {
   game.update({sliders: puzzle.sliders});
 });
 
-game.on("otree.page.response", function (event) {
-  console.debug("otree.page.response", event.detail);
-  let { slider: ref, value } = event.detail;
+page.on("otree.page.response", function (event, input) {
+  console.debug("otree.page.response", input);
+  let { slider: ref, value } = input;
 
   ref = ref.slice(5); // strip 'game.' prefix
 
@@ -46,22 +45,13 @@ game.on("otree.page.response", function (event) {
   live.send('response', { slider: idx, input: value });
 });
 
-game.on('otree.live.update', function(event) { 
-  console.debug("otree.live.update", event.detail);
-  const { update } = event.detail;
+page.on('otree.live.update', function(event, update) { 
+  console.debug("otree.live.update", update);
   game.update(update);
 });
 
-game.on('otree.live.status', function(event) { 
-  console.debug("otree.live.status", event.detail);
-  const status = event.detail;
-
-  if ('conf' in status) {
-    conf = status.conf; 
-    this.page.update(new Changes(conf, "conf"));
-    return;
-  }
-
+page.on('otree.live.status', function(event, status) { 
+  console.debug("otree.live.status", status);
   game.status(status);
 });
 
@@ -70,6 +60,11 @@ page.reset("status");
 game.reset();
 
 live.send('start');
+await page.wait("otree.live.setup").then(event => { 
+  console.debug("otree.live.setup", event.detail);
+  conf = event.detail;
+  page.update({ conf }); 
+});
 
 page.fire('otree.time.phase', {display: null});
 // page.fire("otree.page.start");

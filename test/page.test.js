@@ -18,43 +18,42 @@ describe("Page", () => {
 
   it("resets", async () => {
     page.reset();
-    detail = await pageEvent('otree.page.reset');
-    expect(detail).to.eq('game');
-    detail = await pageEvent('otree.page.update');
+    detail = await pageEvent("otree.page.reset");
+    expect(detail).to.eq("game");
+    detail = await pageEvent("otree.page.update");
     expect(detail).to.eql(new Changes({ game: undefined }));
   });
 
   it("resets custom obj", async () => {
-    page.reset('status.progress');
-    detail = await pageEvent('otree.page.reset');
-    expect(detail).to.eq('status.progress');
-    detail = await pageEvent('otree.page.update');
-    expect(detail).to.eql(new Changes({ 'status.progress': undefined }));
+    page.reset("status.progress");
+    detail = await pageEvent("otree.page.reset");
+    expect(detail).to.eq("status.progress");
+    detail = await pageEvent("otree.page.update");
+    expect(detail).to.eql(new Changes({ "status.progress": undefined }));
   });
 
+  // it("random on target", async () => {
+  //   page.fire("foo", { bar: "Bar" }, elem);
+  //   detail = await elemEvent("foo");
+  //   expect(detail).to.eql({ bar: "Bar" });
+  // });
 
-  it("fires random event", async () => {
-    page.fire("foo", { bar: "Bar" });
-    detail = await pageEvent('foo');
-    expect(detail).to.eql({ bar: "Bar" });
-  });
-
-  it("fires start", async () => {
+  it("start", async () => {
     page.start();
     detail = await pageEvent("otree.page.start");
     expect(detail).to.be.null;
   });
 
-  it("fires update", async () => {
+  it("update", async () => {
     page.update({ foo: "Foo" });
     detail = await pageEvent("otree.page.update");
-    expect(detail).to.eql(new Changes({ foo: "Foo"}));
+    expect(detail).to.eql(new Changes({ foo: "Foo" }));
   });
 
-  it("fires response", async () => {
+  it("response", async () => {
     page.response({ foo: "Foo" });
     detail = await pageEvent("otree.page.response");
-    expect(detail).to.eql({ foo: "Foo"});
+    expect(detail).to.eql({ foo: "Foo" });
   });
 });
 
@@ -75,30 +74,18 @@ describe("events", () => {
     return (await oneEvent(elem, type)).detail;
   }
 
-  describe("on page", () => {
-    it("binds", async () => {
-      let wrapper, called;
-
-      function handler(event, page) {
-        called = arguments;
-      }
-
-      wrapper = page.on("foo", handler);
-
+  describe("page", () => {
+    
+    it("fires", async () => {
       page.fire("foo", { bar: "Bar" });
       detail = await pageEvent("foo");
       expect(detail).to.eql({ bar: "Bar" });
-    
-      await nextFrame();
-      expect(called).not.to.be.undefined;
-      expect(called[0]).to.be.instanceof(CustomEvent);
-      expect(called[1]).to.eq(page);
     });
 
-    it("unbinds", async () => {
+    it("binds", async () => {
       let wrapper, called;
 
-      function handler(event, page) {
+      function handler() {
         called = arguments;
       }
 
@@ -106,7 +93,23 @@ describe("events", () => {
 
       page.fire("foo", { bar: "Bar" });
       await pageEvent("foo");
-      await nextFrame();
+
+      expect(called).not.to.be.undefined;
+      expect(called[0]).to.be.instanceof(CustomEvent);
+      expect(called[1]).to.eql({ bar: "Bar" });
+    });
+
+    it("unbinds", async () => {
+      let wrapper, called;
+
+      function handler() {
+        called = arguments;
+      }
+
+      wrapper = page.on("foo", handler);
+
+      page.fire("foo", { bar: "Bar" });
+      await pageEvent("foo");
       expect(called).not.to.be.undefined;
 
       called = undefined;
@@ -114,43 +117,48 @@ describe("events", () => {
 
       page.fire("foo", { bar: "Bar" });
       await pageEvent("foo");
-      await nextFrame();
       expect(called).to.be.undefined;
     });
 
     it("waits", async () => {
-      let waiting = page.wait('foo');
-      page.fire('foo');
+      let waiting, result;
+      waiting = page.wait("foo");
+      page.fire("foo", { bar: "Bar" });
       await pageEvent("foo");
-      await waiting;
+      result = await waiting;
+      expect(result).to.be.instanceof(CustomEvent);
     });
   });
 
-  describe("on elem", () => {
+  describe("elem", () => {
+    
+    it("fires", async () => {
+      page.fire("foo", { bar: "Bar" }, elem);
+      detail = await elemEvent("foo");
+      expect(detail).to.eql({ bar: "Bar" });
+    });
+
     it("binds", async () => {
       let wrapper, called;
 
-      function handler(event, page) {
+      function handler() {
         called = arguments;
       }
 
       wrapper = page.on("foo", handler, elem);
-
+ 
       page.fire("foo", { bar: "Bar" }, elem);
-      detail = await elemEvent("foo");
-      expect(detail).to.eql({ bar: "Bar" });
-    
-      await nextFrame();
+      await elemEvent("foo");
+
       expect(called).not.to.be.undefined;
       expect(called[0]).to.be.instanceof(CustomEvent);
-      expect(called[1]).to.eq(page);
-      expect(called[2]).to.eq(elem);
+      expect(called[1]).to.eql({ bar: "Bar" });
     });
 
     it("unbinds", async () => {
       let wrapper, called;
 
-      function handler(event, page) {
+      function handler() {
         called = arguments;
       }
 
@@ -158,7 +166,6 @@ describe("events", () => {
 
       page.fire("foo", { bar: "Bar" }, elem);
       await elemEvent("foo");
-      await nextFrame();
       expect(called).not.to.be.undefined;
 
       called = undefined;
@@ -166,16 +173,19 @@ describe("events", () => {
 
       page.fire("foo", { bar: "Bar" }, elem);
       await elemEvent("foo");
-      await nextFrame();
       expect(called).to.be.undefined;
     });
 
     it("waits", async () => {
-      let waiting = page.wait('foo', elem);
-      page.fire('foo', {}, elem);
-      await elemEvent("foo", elem);
-      await waiting;
+      let waiting, result;
+      waiting = page.wait("foo", elem);
+      page.fire("foo", { bar: "Bar" }, elem);
+      await elemEvent("foo");
+      result = await waiting;
+      expect(result).to.be.instanceof(CustomEvent);
     });
   });
+
+
 
 });

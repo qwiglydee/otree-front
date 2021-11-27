@@ -11,18 +11,6 @@ export class Game {
     this.state = {};
   }
 
-  /** install event handler
-   * a shortcut for `page.on`
-   *
-   * @param eventtype {String} event type
-   * @param handler {Function} a handler
-   *   the handler can be either standalone function or a method of derived class
-   *   in either case it runs binded so that `this` is available
-   */
-  on(eventtype, handler) {
-    return this.page.on(eventtype, handler.bind(this));
-  }
-
   reset() {
     this.state = {};
     this.page.reset('game');

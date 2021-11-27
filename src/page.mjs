@@ -19,17 +19,17 @@ export class Page {
     });
   }
 
-  /** adds event handler
+  /** binds event handler
    *
    * @param type {String} event type
-   * @param handler {function(page, conf, event)} handler
+   * @param handler {function(event, detail)} a handler
    * @param target {?HTMLElement} an element to bind handler, instead of the page itself
    * @returns {Function} handler wrapper bound to events,
    *   the wrapper has method off() to unbind itself
    */
   on(type, handler, target) {
     target = target || this.body;
-    const listener = (event) => handler(event, this, target);
+    const listener = (event) => handler(event, event.detail);
     listener.off = () => target.removeEventListener(type, listener);
     target.addEventListener(type, listener);
     return listener;
@@ -53,16 +53,13 @@ export class Page {
    * @returns {Promise} resolved when event fired
    */
   wait(type, target) {
-    let hnd;
+    target = target || this.body;
     return new Promise((resolve) => {
-      hnd = this.on(
-        type,
-        (event) => {
-          hnd.off();
-          resolve(event);
-        },
-        target
-      );
+      function listener(event) {
+        resolve(event);
+        target.removeEventListener(type, listener); 
+      } 
+      target.addEventListener(type, listener);
     });
   }
 

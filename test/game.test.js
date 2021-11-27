@@ -19,22 +19,6 @@ describe("Game", () => {
   });
 
   describe("events", () => {
-    it("binds handler", async () => {
-      let called, that;
-
-      game.on("test.foo", function () {
-        called = arguments;
-        that = this;
-      });
-
-      page.fire("test.foo", { foo: "Foo" });
-      await pageEvent("test.foo");
-
-      expect(called).not.to.be.undefined;
-      expect(called[0]).to.be.instanceof(CustomEvent);
-      expect(that).to.eq(game);
-    });
-
     it("freezes", async () => {
       game.freeze();
       detail = await pageEvent("otree.time.phase");

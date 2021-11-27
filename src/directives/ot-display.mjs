@@ -18,8 +18,7 @@ class otDisplay extends Directive {
     this.on('otree.time.phase', this.onPhase);
   }
   
-  onPhase(event) {
-    const phase = event.detail;
+  onPhase(event, phase) {
     if (!('display' in phase)) return;
     toggleDisplay(this.elem, this.phases.includes(phase.display));
   }
