@@ -66,12 +66,12 @@ await page.wait("otree.live.setup").then(event => {
   page.update({ conf }); 
 });
 
-page.fire('otree.time.phase', {display: null});
+page.toggle({display: null});
 // page.fire("otree.page.start");
 await page.wait("otree.page.start"); // for user to press 'start'
 
 let status = await game.playRound({});
 
-page.fire('otree.time.phase', {display: "final"});
+page.toggle({display: "final"});
 
 console.debug("completed:", status);

@@ -93,4 +93,12 @@ export class Page {
   response(changes) {
     this.fire("otree.page.response", changes);
   }
+
+  toggle(phase) {
+    this.fire("otree.time.phase", phase);
+  }
+
+  timeout() {
+    this.fire("otree.time.out");
+  }
 }

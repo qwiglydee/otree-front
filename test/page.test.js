@@ -55,6 +55,20 @@ describe("Page", () => {
     detail = await pageEvent("otree.page.response");
     expect(detail).to.eql({ foo: "Foo" });
   });
+
+
+  it("toggle", async () => {
+    page.toggle({ foo: "Foo" });
+    detail = await pageEvent("otree.time.phase");
+    expect(detail).to.eql({ foo: "Foo" });
+  });
+
+  it("ttimeout", async () => {
+    page.timeout();
+    await pageEvent("otree.time.out");
+  });
+
+
 });
 
 describe("events", () => {
