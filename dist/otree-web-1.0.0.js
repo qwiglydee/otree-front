@@ -63,53 +63,66 @@ var dom = /*#__PURE__*/Object.freeze({
   isTextInput: isTextInput
 });
 
+/** 
+ * Utils to handle references to game state vars and manage their updates.
+ * 
+ * The references are just strings in form `obj.field.subfield`
+ */
+
+const jspath_re = new RegExp(/^[a-zA-Z]\w+(\.\w+)*$/);
+
+function validate(ref) {
+  if (!ref || !jspath_re.exec(ref)) throw new Error(`Invalid ref: ${ref}`);
+}
+
+function includes(parentref, nestedref) {
+  return parentref == nestedref || nestedref.startsWith(parentref + ".");
+}
+
+function strip(parentref, nestedref) {
+  if (parentref == nestedref) {
+    return "";
+  } else if (nestedref.startsWith(parentref + ".")) {
+    return nestedref.slice(parentref.length + 1);
+  } else {
+    throw new Error(`Incompatible refs: ${parentref} / ${nestedref}`);
+  }
+}
+
+function extract(data, ref) {
+  return ref.split(".").reduce((o, k) => (o && k in o ? o[k] : undefined), data);
+}
+
+function update(data, ref, value) {
+  function ins(obj, key) {
+    return (obj[key] = {});
+  }
+
+  const path = ref.split("."),
+    objpath = path.slice(0, -1),
+    fld = path[path.length - 1];
+
+  let obj = objpath.reduce((o, k) => (k in o ? o[k] : ins(o, k)), data);
+  if (obj === undefined) throw new Error(`Incompatible ref ${ref}`);
+  if (value === undefined) {
+    delete obj[fld];
+  } else {
+    obj[fld] = value;
+  }
+}
+
+var ref = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  validate: validate,
+  includes: includes,
+  strip: strip,
+  extract: extract,
+  update: update
+});
+
 /** Reference/Change utils
  * Utils to handle references to game state vars and manage their updates
  */
-
-const Ref = {
-  jspath_re: new RegExp(/^[a-zA-Z]\w+(\.\w+)*$/),
-
-  validate(ref) {
-    if (!ref || !Ref.jspath_re.exec(ref)) throw new Error(`Invalid ref: ${ref}`);
-  },
-
-  includes(parentref, nestedref) {
-    return parentref == nestedref || nestedref.startsWith(parentref + ".");
-  },
-
-  strip(parentref, nestedref) {
-    if (parentref == nestedref) {
-      return "";
-    } else if (nestedref.startsWith(parentref + ".")) {
-      return nestedref.slice(parentref.length + 1);
-    } else {
-      throw new Error(`Incompatible refs: ${parentref} / ${nestedref}`);
-    }
-  },
-
-  extract(data, ref) {
-    return ref.split(".").reduce((o, k) => (o && k in o ? o[k] : undefined), data);
-  },
-
-  update(data, ref, value) {
-    function ins(obj, key) {
-      return (obj[key] = {});
-    }
-
-    const path = ref.split("."),
-      objpath = path.slice(0, -1),
-      fld = path[path.length - 1];
-
-    let obj = objpath.reduce((o, k) => (k in o ? o[k] : ins(o, k)), data);
-    if (obj === undefined) throw new Error(`Incompatible ref ${ref}`);
-    if (value === undefined) {
-      delete obj[fld];
-    } else {
-      obj[fld] = value;
-    }
-  },
-};
 
 class Changes extends Map {
   constructor(obj, prefix) {
@@ -118,27 +131,27 @@ class Changes extends Map {
       entries = entries.map(([k, v]) => [prefix + "." + k, v]);
     } 
     super(entries);
-    this.forEach((v, k) => Ref.validate(k));
+    this.forEach((v, k) => validate(k));
   }
 
   /** Checks if the changeset affects referenced var */
-  affects(ref) {
-    return [...this.keys()].some((key) => Ref.includes(key, ref));
+  affects(ref$1) {
+    return [...this.keys()].some((key) => includes(key, ref$1));
   }
 
   /** Picks single value from changeset */
-  pick(ref) {
-    let affecting = [...this.keys()].filter((key) => Ref.includes(key, ref));
+  pick(ref$1) {
+    let affecting = [...this.keys()].filter((key) => includes(key, ref$1));
     if (affecting.length == 0) return undefined;
-    if (affecting.length != 1) throw new Error(`Incompatible changeset for ${ref}`);
+    if (affecting.length != 1) throw new Error(`Incompatible changeset for ${ref$1}`);
     affecting = affecting[0];
 
     let value = this.get(affecting);
 
-    if (affecting == ref) {
+    if (affecting == ref$1) {
       return value;
     } else {
-      return Ref.extract(value, Ref.strip(affecting, ref));
+      return extract(value, strip(affecting, ref$1));
     }
   }
 
@@ -147,14 +160,14 @@ class Changes extends Map {
    */
   patch(obj) {
     this.forEach((v, k) => {
-      Ref.update(obj, k, v);
+      update(obj, k, v);
     });
   }
 }
 
 var changes = /*#__PURE__*/Object.freeze({
   __proto__: null,
-  Ref: Ref,
+  Ref: ref,
   Changes: Changes
 });
 
@@ -216,7 +229,7 @@ class Directive {
    */
   init() {
     this.ref = this.param(this.name);
-    Ref.validate(this.ref); 
+    validate(this.ref); 
   } 
 
   /** sets events up 
@@ -312,7 +325,7 @@ class otRealInput extends Directive {
 
   init() {
     this.ref = this.param();
-    Ref.validate(this.ref);
+    validate(this.ref);
   }
 
   setup() {
@@ -365,7 +378,7 @@ class otCustomInput extends Directive {
     if (!match) throw new Error(`Invalid expression for input: ${param}`);
 
     this.ref = match[1];
-    Ref.validate(this.ref);
+    validate(this.ref);
     
     this.val = match[3];
     if (this.val === "true") this.val = true;
@@ -491,7 +504,7 @@ class otWhen extends Directive {
     if (!match) throw new Error(`Invalid expression for when: ${when}`);
     
     this.ref = match[1];
-    Ref.validate(this.ref);
+    validate(this.ref);
     
     this.cond = match[3];
     if (this.cond === "true") this.cond = true;

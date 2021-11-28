@@ -4,6 +4,7 @@
   "license": "MIT",
   "author": "x-app",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "test": "web-test-runner",
     "test:coverage": "web-test-runner --coverage",
