@@ -1,0 +1,34 @@
+{
+  "plugins": [
+      "plugins/markdown"
+  ],
+
+  "opts": {
+    "encoding": "utf8",
+    "readme": "./README.md",
+    "destination": "docs/",
+    "recurse": true,
+    "verbose": true,
+    "template": "./node_modules/clean-jsdoc-theme",
+    "theme_opts": {
+        "theme": "light"
+    }
+  },
+
+  "recurseDepth": 10,
+  
+  "source": {
+    "include": [
+      "src/page.js", "src/schedule.js", "src/game.js", "src/live.js",
+      "src/utils/", "src/directives/"
+    ],
+    "includePattern": ".+\\.js(doc|x)?$",
+    "excludePattern": "(^|\\/|\\\\)_"
+  },
+  "sourceType": "module",
+  
+  "tags": {
+    "allowUnknownTags": true,
+    "dictionaries": ["jsdoc"]
+  }
+}
