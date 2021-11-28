@@ -1,22 +1,30 @@
 import { Ref } from "../utils/changes";
 
-/** map of selector => class */
+/* map of selector => class */
 export const registry = new Map();
 
-/** registers a directive class */
+/** 
+ * Registers a directive class.
+ * 
+ * The {@link Page} sets up all registered directives on all found elements in html.
+ * The elements a searched by provided selector, which is something like `[data-ot-something]` but actually can be anything.
+ * 
+ * @param {string} selector a css selector for elements
+ * @param {class} cls a class derived from {@link Directive}  
+ */
 export function registerDirective(selector, cls) {
   registry.set(selector, cls);
 }
 
-
-/** directive base class 
- * implement basic and stub methods
+/** 
+ * Base class for directives.
  * 
- * default implementation initializes `this.ref` from data attribute, 
- * and sets up update handler  
+ * Used by all built-in directives and can be used to create custom directives.
  */
 export class Directive {
-  /** directive name
+  /** 
+   * directive name
+   * 
    * like "foo" for `data-ot-foo`
    * 
    * should be redefined in derived classes 
@@ -25,12 +33,22 @@ export class Directive {
     return "foo";
   }
 
-  /** returns a value from dataset */
+  /** 
+   * Returns a value from dataset, corresponding to the name.
+   * 
+   * i.e. value of `data-ot-foo` attribute. 
+   */
   param(name) {
     if (name === undefined) name = this.name; 
     return this.elem.dataset["ot" + name[0].toUpperCase() + name.slice(1).toLowerCase()];
   }
 
+  /**
+   * A directive instance is created for each matching element.
+   * 
+   * @param {Page} page 
+   * @param {HTMLElement} elem 
+   */
   constructor(page, elem) {
     this.page = page;
     this.elem = elem;
@@ -38,13 +56,14 @@ export class Directive {
     this.init();
   }
 
-  /** binds an event handler
+  /** 
+   * Binds an event handler.
    * 
-   * Shorcut for page.on, with the handler autobound to `this` directive
+   * Shorcut for page.on, with the handler bound to `this` directive.
    * 
-   * @param eventype {String} event type
-   * @param handler {Function(event, detail)} handler
-   * @param target page or elem, by default - page 
+   * @param {String} eventype
+   * @param {Function} handler either `this.something` or a standalone function
+   * @param {HTMLElement} [target=page] either the element itself or the page 
   */
   on(eventype, handler, target) {
     if (target === undefined || target === this.page) {
@@ -53,15 +72,22 @@ export class Directive {
     return this.page.on(eventype, handler.bind(this), target);
   }
 
-  /** initializes directive 
-   * use to parse parameters from the element 
+  /** 
+   * Initializes directive.
+   *  
+   * Use it to parse parameters from the element, and to init all the state.
+   * 
+   * Default implementation takes reference from corresponding attr and puts it into `this.ref`   
    */
   init() {
     this.ref = this.param(this.name);
     Ref.validate(this.ref); 
   } 
 
-  /** sets events up 
+  /**
+   * Sets up event handlers
+   * 
+   * Default implementation sets up `update` handler to check if `this.ref` is affected and to call `this.update`
    */
   setup() {
     this.on('otree.page.update', this.onUpdate);

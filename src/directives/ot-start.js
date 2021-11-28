@@ -2,6 +2,13 @@ import { toggleDisplay, toggleDisabled, isDisabled } from "../utils/dom";
 
 import { Directive, registerDirective } from "./base";
 
+/**
+ * Directive `data-ot-start`
+ * 
+ * It is activated by any configured trigger `data-ot-key="keycode"`, `data-ot-touch`, `data-ot-click`, and triggers {@link Page.event:start}. 
+ * 
+ * @hideconstructor
+ */
 class otStart extends Directive {
   get name() {
     return "start";
@@ -39,7 +46,7 @@ class otStart extends Directive {
 
   onStart() {
     toggleDisplay(this.elem, false);
-    this.disabled = true;
+    toggleDisabled(this.elem, true);
   }
 }
 

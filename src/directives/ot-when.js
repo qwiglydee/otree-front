@@ -3,6 +3,13 @@ import { toggleDisplay } from "../utils/dom";
 
 import { Directive, registerDirective } from "./base";
 
+/**
+ * Directive `data-ot-when="reference"` and `data-ot-when="reference==value"`.
+ * 
+ * It shows host element by {@link Page.event:update}, when referenced field is defined, true-like or matches specified value.
+ * 
+ * @hideconstructor
+ */
 class otWhen extends Directive {
   get name() {
     return "when";

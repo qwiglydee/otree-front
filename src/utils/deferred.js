@@ -1,4 +1,4 @@
-/** Deferred
+/* Deferred
  *
  * A wrapper for a promise that you can resolve and check later, outside of closure.
  * ```

@@ -3,6 +3,16 @@ import { toggleDisabled, isDisabled, isTextInput } from "../utils/dom";
 
 import { Directive, registerDirective } from "./base";
 
+/**
+ * Directive `data-ot-input="field"` for real inputs: `<input>`, `<select>`, `<textarea>`.
+ * 
+ * It triggers {@link Page.event:response} when value of the input changes.
+ * For text inputs it triggers when `Enter` pressed.
+ * 
+ * The input gets disabled according to {@link Phase} flag `input` 
+ * 
+ * @hideconstructor
+ */
 class otRealInput extends Directive {
   get name() {
     return "input";
@@ -52,6 +62,23 @@ registerDirective(
 );
 
 
+/**
+ * Directive `data-ot-input="field"` for custom inputs: any `<div>`, `<span>`, `<button>`, `<kbd>`.
+ * 
+ * The directive should be accompanied with method of triggering `data-ot-
+ * 
+ * It triggers {@link Page.event:response} by a configred trigger:
+ * - `data-ot-click` to trigger on click
+ * - `data-ot-touch` to trigger on touch
+ * - `data-ot-key="keycode" to trigger on keypress
+ * 
+ * The list of available is at MDN: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code/code_values  
+ * Basically, it is something like 'Enter', 'Space', 'Escape', or 'KeyQ' for "q" key.
+ * 
+ * The input gets disabled according to {@link Phase} flag `input` 
+ * 
+ * @hideconstructor
+ */
 class otCustomInput extends Directive {
   get name() {
     return "input";

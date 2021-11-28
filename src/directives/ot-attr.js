@@ -1,8 +1,26 @@
-import { Ref } from "../utils/changes";
 import { setAttr } from "../utils/dom";
 
 import { Directive, registerDirective } from "./base";
 
+/**
+ * Directives `data-ot-attr-something="reference"`
+ * 
+ * The allowed attributes are: 
+ * - `disabled` 
+ * - `hidden` 
+ * - `height` 
+ * - `width` 
+ * - `min` 
+ * - `max` 
+ * - `low` 
+ * - `high` 
+ * - `optimum` 
+ * - `value` 
+ * 
+ * It deletes or sets value of the attribute to a value from {@link Page.event:update}.
+ * 
+ * @hideconstructor
+ */
 class otAttrBase extends Directive {
   update(changes) {
     setAttr(this.elem, this.name, changes.pick(this.ref));
