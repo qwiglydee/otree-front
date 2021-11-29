@@ -63,4 +63,4 @@ The communication protocol requires all messages be of form `{ type: "sometype",
 
 # API documentation
 
-Detailed documentation will eventually be generated and published somewhere.
+See https://qwiglydee.github.io/otree-webcomponents/
