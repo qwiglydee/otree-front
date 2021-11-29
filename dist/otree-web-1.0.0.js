@@ -1,84 +1,45 @@
-function loadImage(url) {
-  const img = new Image();
-  return new Promise((resolve, reject) => {
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = url;
-  });
-}
-
-function toggleDisplay(elem, display) {
-  elem.style.display = display ? null : "none";
-}
-
-function toggleDisabled(elem, disabled) {
-  elem.disabled = disabled;
-  elem.classList.toggle("ot-disabled", disabled);
-}
-
-function isDisabled(elem) {
-  return elem.classList.contains("ot-disabled");
-}
-
-function setText(elem, text) {
-  // NB: using `innerText` to render line breaks
-  elem.innerText = text == null ? "" : text;
-}
-
-function setClasses(elem, classes) {
-  elem.classList.remove(...elem.classList);
-  elem.classList.add(...classes);
-}
-
-function setAttr(elem, attr, val) {
-  if (val == null) {
-    elem.removeAttribute(attr);
-  } else {
-    elem.setAttribute(attr, val);
-  }
-}
-
-function setChild(elem, child) {
-  if (child == null) {
-    elem.replaceChildren();
-  } else {
-    elem.replaceChildren(child);
-  }
-}
-
-function isTextInput(elem) {
-  return (elem.tagName == "INPUT" && elem.type == "text") || elem.tagName == "TEXTAREA";
-}
-
-var dom = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  loadImage: loadImage,
-  toggleDisplay: toggleDisplay,
-  toggleDisabled: toggleDisabled,
-  isDisabled: isDisabled,
-  setText: setText,
-  setClasses: setClasses,
-  setAttr: setAttr,
-  setChild: setChild,
-  isTextInput: isTextInput
-});
-
 /** 
  * Utils to handle references to game state vars and manage their updates.
  * 
  * The references are just strings in form `obj.field.subfield`
+ * 
+ * @module utils/changes/Ref 
  */
 
 const jspath_re = new RegExp(/^[a-zA-Z]\w+(\.\w+)*$/);
 
+/**
+ * Validates syntax of a reference 
+ * 
+ * @param {string} ref
+ * @throws {Error}
+ */
 function validate(ref) {
   if (!ref || !jspath_re.exec(ref)) throw new Error(`Invalid ref: ${ref}`);
 }
 
+/**
+ * Checks if references overlap 
+ * 
+ * Example: `Ref.includes("foo.bar", "foo.bar.baz")`
+ * 
+ * @param {string} parentref reference to parent object
+ * @param {string} nestedref reference to nested field
+ * @returns {boolean}
+ */
 function includes(parentref, nestedref) {
   return parentref == nestedref || nestedref.startsWith(parentref + ".");
 }
 
+/**
+ * Strips common part of nested ref, making it local to parent
+ *
+ * Example: `Ref.strip("foo.bar", "foo.bar.baz") == "baz"`
+ * 
+ * @param {string} parentref reference to parent object
+ * @param {string} nestedref reference to nested field
+ * @returns {boolean}
+ */
 function strip(parentref, nestedref) {
   if (parentref == nestedref) {
     return "";
@@ -89,10 +50,29 @@ function strip(parentref, nestedref) {
   }
 }
 
+/**
+ * Extract a value from object by a ref
+ * 
+ * Example: `Ref.extract({ foo: { bar: "Bar" } }, "foo.bar") == "Bar"`
+ * 
+ * @param {object} data 
+ * @param {string} ref 
+ * @returns {boolean}
+ */
 function extract(data, ref) {
   return ref.split(".").reduce((o, k) => (o && k in o ? o[k] : undefined), data);
 }
 
+/**
+ * Sets a value in object by ref.
+ * The original object is modified in place
+ * 
+ * Example: `Ref.update({foo: {bar: "Bar0" } }, "foo.bar", "Bar1") → {foo: {bar: "Bar1" } }`
+ * 
+ * @param {object} data 
+ * @param {ref} ref 
+ * @param {*} value 
+ */
 function update(data, ref, value) {
   function ins(obj, key) {
     return (obj[key] = {});
@@ -120,11 +100,23 @@ var ref = /*#__PURE__*/Object.freeze({
   update: update
 });
 
-/** Reference/Change utils
- * Utils to handle references to game state vars and manage their updates
+/** 
+ * Utils to handle changes of game state data
+ * 
+ * @module utils/changes
  */
 
+/**
+ * A set of references to vars and their new values.
+ * 
+ * The references are in form `obj.field.subfield` and correspond to a game state.  
+ */
 class Changes extends Map {
+  /**
+   * @param {object} obj plain object describing changes 
+   * @param {string} [prefix] a prefix to add to all the top-level fields, as if there was an above-top object  
+   */
+  
   constructor(obj, prefix) {
     let entries = [...Object.entries(obj)];
     if (prefix) {
@@ -134,12 +126,29 @@ class Changes extends Map {
     this.forEach((v, k) => validate(k));
   }
 
-  /** Checks if the changeset affects referenced var */
+  /** 
+   * Checks if the changeset contains referenced var 
+   * 
+   * Example:
+   *   ```
+   *   changes = new Changes({ 'obj.foo': { ... } })
+   *   changes.afects("obj.foo.bar") == true // becasue the `bar` is contained in `obj.foo` 
+   *   ```
+   * @param {string} ref
+   */
   affects(ref$1) {
     return [...this.keys()].some((key) => includes(key, ref$1));
   }
 
-  /** Picks single value from changeset */
+  /** 
+   * Picks single value from changeset.
+   * 
+   * Example:  
+   *   ```
+   *   changes = new Changes({ 'obj.foo': { bar: "Bar" } })
+   *   changes.pick("obj.foo.bar") == "Bar"
+   *   ```
+   */
   pick(ref$1) {
     let affecting = [...this.keys()].filter((key) => includes(key, ref$1));
     if (affecting.length == 0) return undefined;
@@ -155,8 +164,22 @@ class Changes extends Map {
     }
   }
 
-  /** Apply changes
-   * Modify an obj by changes
+  /** 
+   * Apply changes
+   * 
+   * Modify an obj by all the changes.
+   * 
+   * Example:
+   *    ```
+   *    obj = { obj: { foo: { bar: "xxx" } } } 
+   *    changes = new Changes({ 'obj.foo': { bar: "Bar" } })
+   *    changes.patch(obj)
+   * 
+   *    obj == { obj: { foo: { bar: "Bar" } } }
+   *    ```
+   * 
+   * It works with arrays as well, when using indexes as subfields.
+   * 
    */
   patch(obj) {
     this.forEach((v, k) => {
@@ -171,23 +194,31 @@ var changes = /*#__PURE__*/Object.freeze({
   Changes: Changes
 });
 
-/** map of selector => class */
+/* map of selector => class */
 const registry = new Map();
 
-/** registers a directive class */
+/** 
+ * Registers a directive class.
+ * 
+ * The {@link Page} sets up all registered directives on all found elements in html.
+ * The elements a searched by provided selector, which is something like `[data-ot-something]` but actually can be anything.
+ * 
+ * @param {string} selector a css selector for elements
+ * @param {class} cls a class derived from {@link Directive}  
+ */
 function registerDirective(selector, cls) {
   registry.set(selector, cls);
 }
 
-
-/** directive base class 
- * implement basic and stub methods
+/** 
+ * Base class for directives.
  * 
- * default implementation initializes `this.ref` from data attribute, 
- * and sets up update handler  
+ * Used by all built-in directives and can be used to create custom directives.
  */
 class Directive {
-  /** directive name
+  /** 
+   * directive name
+   * 
    * like "foo" for `data-ot-foo`
    * 
    * should be redefined in derived classes 
@@ -196,12 +227,22 @@ class Directive {
     return "foo";
   }
 
-  /** returns a value from dataset */
+  /** 
+   * Returns a value from dataset, corresponding to the name.
+   * 
+   * i.e. value of `data-ot-foo` attribute. 
+   */
   param(name) {
     if (name === undefined) name = this.name; 
     return this.elem.dataset["ot" + name[0].toUpperCase() + name.slice(1).toLowerCase()];
   }
 
+  /**
+   * A directive instance is created for each matching element.
+   * 
+   * @param {Page} page 
+   * @param {HTMLElement} elem 
+   */
   constructor(page, elem) {
     this.page = page;
     this.elem = elem;
@@ -209,13 +250,14 @@ class Directive {
     this.init();
   }
 
-  /** binds an event handler
+  /** 
+   * Binds an event handler.
    * 
-   * Shorcut for page.on, with the handler autobound to `this` directive
+   * Shorcut for page.on, with the handler bound to `this` directive.
    * 
-   * @param eventype {String} event type
-   * @param handler {Function(event, detail)} handler
-   * @param target page or elem, by default - page 
+   * @param {String} eventype
+   * @param {Function} handler either `this.something` or a standalone function
+   * @param {HTMLElement} [target=page] either the element itself or the page 
   */
   on(eventype, handler, target) {
     if (target === undefined || target === this.page) {
@@ -224,15 +266,22 @@ class Directive {
     return this.page.on(eventype, handler.bind(this), target);
   }
 
-  /** initializes directive 
-   * use to parse parameters from the element 
+  /** 
+   * Initializes directive.
+   *  
+   * Use it to parse parameters from the element, and to init all the state.
+   * 
+   * Default implementation takes reference from corresponding attr and puts it into `this.ref`   
    */
   init() {
     this.ref = this.param(this.name);
     validate(this.ref); 
   } 
 
-  /** sets events up 
+  /**
+   * Sets up event handlers
+   * 
+   * Default implementation sets up `update` handler to check if `this.ref` is affected and to call `this.update`
    */
   setup() {
     this.on('otree.page.update', this.onUpdate);
@@ -250,6 +299,897 @@ class Directive {
   }
 }
 
+var base = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  registry: registry,
+  registerDirective: registerDirective,
+  Directive: Directive
+});
+
+/** Main page.
+ * 
+ * Centeral point of synchronization.
+ * 
+ * Provides utils to fire and handle events.
+ * 
+ * Installs all registered directives, found in html. 
+ * 
+ * *NB*: The installation happens only once, directives won't work in dynamically added html code.
+ * 
+ */
+class Page {
+  /**
+   * @param {HTMLElement} [body=document.body] the element to attach all the events 
+   */ 
+  constructor(body) {
+    this.body = body || document.body;
+    this.init();
+  }
+
+  init() {
+    let page = this;
+    registry.forEach((cls, sel) => {
+      this.body.querySelectorAll(sel).forEach((elem) => {
+        // console.debug(cls, sel, elem);
+        let inst = new cls(page, elem);
+        inst.setup();
+      });
+    });
+  }
+
+  /** 
+   * Binds an event handler
+   *
+   * @param {String} type of an event
+   * @param {function(event, detail)} handler
+   * @param {HTMLElement} [target=page.body] an element to bind handler, instead of the page itself
+   * @returns {Function} handler wrapper bound to events, the wrapper has method off() to unbind itself
+   */
+  on(type, handler, target) {
+    target = target || this.body;
+    const listener = (event) => handler(event, event.detail);
+    listener.off = () => target.removeEventListener(type, listener);
+    target.addEventListener(type, listener);
+    return listener;
+  }
+
+  /** 
+   * Waits for an event
+   *
+   * Returns a promise that resolves when an event happen.
+   * 
+   * *NB*: this doesb't catch events happened before the waiting started. For such cases you need to save the promise and await for it later.
+   *
+   * Example:
+   *
+   *    await page.wait('otree.time.out'); // suspend script until timeout fired
+   *
+   *    let waiting = page.wait('otree.time.out'); // start waiting without suspending
+   *    // do some work during which a timeout might happen
+   *    await waiting; // suspend for an event happend since the 'waiting' created
+   *
+   * @param {String} type of the event
+   * @returns {Promise} resolved when event fired
+   */
+  wait(type, target) {
+    target = target || this.body;
+    return new Promise((resolve) => {
+      function listener(event) {
+        resolve(event);
+        target.removeEventListener(type, listener); 
+      } 
+      target.addEventListener(type, listener);
+    });
+  }
+
+  /** 
+   * Fires an event
+   * 
+   * @param {String} type type of the event
+   * @param {Object} detail any data to attach to the event
+   * @param {HTMLElement} [target=page.body] an alternate element to fire at
+   */
+  fire(type, detail, target) {
+    // console.debug("firing", type, detail);
+    const event = new CustomEvent(type, { detail });
+    target = target || this.body;
+    // NB: queueing a task like a normal event, instead of dispatching synchronously
+    setTimeout(() => target.dispatchEvent(event));
+  }
+
+  /** 
+   * A shortcut to fire reset and update, indicating some data is deleted.
+   * 
+   * @param {string} [obj] alternate obj to reset (e.g. 'progress') 
+   * @fires Page.reset
+   * @fires Page.update
+   */
+  reset(obj="game") {
+    this.fire("otree.page.reset", obj);
+    this.fire("otree.page.update", new Changes({ [obj]: undefined }));
+  }
+
+  /** 
+   * A shortcut to fire start
+   *  
+   * @fires Page.start
+   */
+  start() {
+    this.fire("otree.page.start");
+  }
+
+  /** 
+   * A shortcut to fire update.
+   *  
+   * @fires Page.update
+   * @param {object|Canges} changes a plain object is autoconverted to {@link Changes} 
+   */
+   update(changes) {
+    if (!(changes instanceof Changes)) changes = new Changes(changes);
+    this.fire("otree.page.update", changes);
+  }
+
+  /** 
+   * A shortcut to fire update.
+   * To use in input directives.
+   * 
+   * @fires Page.response
+   * @param {object} changes a plain object indicating any fields and values  
+   */
+   response(changes) {
+    this.fire("otree.page.response", changes);
+  }
+
+  /** 
+   * A shortcut to fire phase change.
+   * To use to switch phases manually without {@link Schedule} 
+   * 
+   * @fires Schedule.phase
+   * @param {Phase} phase all the flags of the phase  
+   */
+   toggle(phase) {
+    this.fire("otree.time.phase", phase);
+  }
+
+  /** 
+   * A shortcut to fire timeout.
+   * To use to enforce the timeout.
+   * 
+   * @fires Schedule.timeout
+   */
+  timeout() {
+    this.fire("otree.time.out");
+  }
+}
+
+/**
+ * Indicates that a user started a game pressing 'Space' or something.
+ *  
+ * @event Page.start
+ * @property {string} type `otree.page.start` 
+ */
+
+/** 
+ * Indicates that a game (or something else) has been reset.
+ * 
+ * @event Page.reset
+ * @property {string} type `otree.page.reset` 
+ * @property {string} detail an object being reset, i.e. 'game' or 'progress'
+ */
+
+/** 
+ * Indicates that game state is updated and directives should refresh content. 
+ * 
+ * @event Page.update
+ * @property {string} type `otree.page.update`
+ * @property {Changes} detail changes
+ */
+
+/**
+ * Indicates that a user provided some input.
+ * 
+ * The input is a plain object indicating some fields and values, it doesn't have to match game state structure  
+ * 
+ * @event Page.response
+ * @property {string} type `otree.page.response`
+ * @property {object} detail some set of fields and values
+ */
+
+/** @module utils/timers */
+
+
+/**
+ * Async sleeping
+ * 
+ * @param {number} time in ms 
+ * @returns {Promise}
+ */
+async function sleep(time) {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => resolve(), time);
+    });
+}
+
+/**
+ * Delays function call
+ * 
+ * @param {Function} fn 
+ * @param {number} delay in ms 
+ * @returns {*} timer_id 
+ */
+function delay(fn, delay=0) {
+    return window.setTimeout(fn, delay);
+}
+
+/**
+ * Cancels delayed call
+ * 
+ * @param {*} id timer_id 
+ */
+function cancel(id) {
+    window.clearTimeout(id);
+}
+
+/** 
+ * Timers.
+ * 
+ * A set of timers with names
+ */
+class Timers {
+    constructor() {
+        this.timers = new Map();
+    }
+
+    /**
+     * Delays function call
+     * 
+     * @param {sting} name 
+     * @param {Function} fn 
+     * @param {number} timeout in ms
+     */
+    delay(name, fn, timeout=0) {
+        if (this.timers.has(name)) {
+            cancel(this.timers.get(name));
+        }
+        this.timers.set(name, delay(fn, timeout));
+    }
+
+    /**
+     * Cancels delayed calls by names.
+     * 
+     * @param  {...string} names one or more named calls to cancel, empty to cancel all 
+     */
+    cancel(...names) {
+        if (names.length != 0) {
+            names.forEach((n) => {
+                cancel(this.timers.get(n));
+                this.timers.delete(n);
+            });
+        } else {
+            this.timers.forEach((v, k) => cancel(v));
+            this.timers.clear();
+        }
+    }
+}
+
+var timers = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  sleep: sleep,
+  delay: delay,
+  cancel: cancel,
+  Timers: Timers
+});
+
+/**
+ * Game logic
+ *
+ * Keeps game state and provides some utils to play.
+ *
+ * The game state is an arbitraty object holding all the data needed to play and display the game.
+ * It is initially empty and updated via `update` method, that keeps it in sync with html directives.
+ * 
+ * @property {object} conf some constant config vars for the game (or a round)
+ * @property {object} state the game state
+ */
+class Game {
+  /**
+   * @param {Page} page
+   */
+  constructor(page) {
+    this.page = page;
+    this.conf = {};
+    this.state = {};
+  }
+
+  /**
+   * Resets game to initial state:
+   * - sets up config vars
+   * - sets state data to empty object
+   * - updates page with new 'conf'
+   * - updates page with empty 'game' object
+   *
+   * @param {*} conf
+   * @fires Page.update
+   * @fires Page.reset
+   */
+  reset(conf) {
+    this.conf = conf;
+    this.page.update({ conf });
+    this.state = {};
+    this.page.reset("game");
+  }
+
+  /**
+   * Updates game state.
+   *
+   * Applies given changes to game state, using {@link Changes}
+   *
+   * Signals them to the page, with all the field prefixed with 'game'.
+   *
+   * Example:
+   *
+   *   game.update({'foo': "Foo", 'bar': "Bar"})
+   *   // is equiv:
+   *   game.state.foo = "Foo";
+   *   game.state.bar = "Bar";
+   *   page.update({ 'game.foo': "Foo", 'game.bar': "Bar" });
+   *
+   * @param {Object} changes the changes to apply
+   * @fires Page.update
+   */
+  update(changes) {
+    new Changes(changes).patch(this.state);
+    this.page.update(new Changes(changes, "game"));
+  }
+
+  /**
+   * Signals game started.
+   *
+   * @param {object} status flags
+   * @fires Game.start
+   */
+  start(status) {
+    this.page.fire("otree.game.start", status);
+  }
+
+  /**
+   * Signals game status change.
+   *
+   * @param {object} status flags and fields
+   * @fires Game.status
+   */
+  status(status) {
+    this.page.fire("otree.game.status", status);
+  }
+
+  /**
+   * Signals game stopped.
+   *
+   * @param {object} status flags
+   * @fires Game.stop
+   */
+  stop(status) {
+    this.page.fire("otree.game.stop", status);
+  }
+
+  /**
+   * Indicate some error, relevant to user.
+   *
+   * Triggers status event with `{ error: { code, message } }`
+   *
+   * @param {string} code
+   * @param {string} message
+   * @fires Game.status
+   */
+  error(code, message) {
+    let error = { code, message };
+    if (!code) {
+      error = null;
+    }
+
+    this.page.fire("otree.game.error", error);
+    this.page.update({ error });
+  }
+
+  /**
+   * Disables inputs.
+   *
+   * Used to prevent sending input when it's not allowed.
+   *
+   * This overrides input flag from recent phase.
+   *
+   * @fires Schedule.phase
+   */
+  freeze() {
+    // FIXME: this interferes with actual time phases
+    this.page.fire("otree.time.phase", { input: false });
+  }
+
+  /**
+   * Enables inputs.
+   *
+   * Used to restore input, when game round is continuing.
+   *
+   * This overrides input flag from recent phase.
+   *
+   * @fires Schedule.phase
+   */
+  unfreeze() {
+    // FIXME: this interferes with actual time phases
+    this.page.fire("otree.time.phase", { input: true });
+  }
+}
+
+/**
+ * Runs single round:
+ * - resets game with the conf
+ * - starts game
+ * - waits for game stop
+ *
+ * @param {Game} game
+ * @param {object} conf game config
+ * @return {Promise} resolved with final status when game ends
+ */
+async function playRound(game, conf) {
+  game.reset(conf);
+  game.start();
+  // everything goes in event handlers, eventually game.stop() is called
+  let e = await game.page.wait("otree.game.stop");
+  return e.detail; // final status
+}
+
+/**
+ * Runs multiple game rounds, or an infinite loop.
+ * Uses {@link playRound} function
+ *
+ * Updates page with progress = {@link Progress}
+ *
+ * The iterator expects final status (reported by `game.stop`) to contain:
+ * - {bool} `success`: indicating if the round is successful/won
+ * - {bool} `terminate`: indicateing that the loop should be terminated
+ *
+ * The provided config vars are passed to the `playRound` with additional field `iteration`
+ *
+ * @param {Game} game
+ * @param {conf} conf config vars
+ * @param {number|null} num_rounds number of rounds to play or null for infinite
+ * @param {number} trial_pause pause between rounds in ms
+ */
+async function iterateRounds(game, conf, num_rounds, trial_pause) {
+  let status = {};
+  const progress = {
+    total: num_rounds,
+    current: 0,
+    completed: 0,
+    solved: 0,
+    failed: 0,
+  };
+
+  const cont = num_rounds ? (i) => i <= num_rounds && !status.terminate : (i) => !status.terminate;
+
+  for (let i = 1; cont(i); i++) {
+    progress.current = i;
+
+    game.page.update({ progress });
+
+    status = await playRound(game, { iteration: i, ...conf });
+
+    progress.completed += 1;
+    progress.solved += status.success === true;
+    progress.failed += status.success === false;
+
+    game.page.update({ progress });
+
+    await sleep(trial_pause);
+  }
+
+  return progress;
+}
+
+/**
+ * An arbitrary set of flags and fields indicating state of a game process.
+ * 
+ * The status is ephemeral data and only exists in events. It does not reflect to page. 
+ *
+ * @typedef {object} Status
+ * @property {bool} [success] indicates that game was sucessful (won)
+ * @property {bool} [terminate] indicates termination of iterations loop
+ */
+
+/**
+ * A progress during iterations loop.
+ *
+ * @typedef {object} Progress
+ * @property {number|null} total total number of itterations, or null if it's infinite
+ * @property {number} current current iteration, counting from 1
+ * @property {number} completed number of completed rounds
+ * @property {number} solved number of rounds with `success=true`
+ * @property {number} failed number of rounds with `success=false`
+ */
+
+/**
+ * Indicates a game has started.
+ *
+ * @event Game.start
+ * @property {string} type `otree.game.start`
+ * @property {Status} detail status flags
+ */
+
+/**
+ * Indicates that gameplay process state changed.
+ *
+ * @event Game.status
+ * @property {string} type `otree.game.status`
+ * @property {Status} detail status flags
+ */
+
+/**
+ * Indicates an error (relvant to user) happend.
+ *
+ * @event Game.error
+ * @property {string} type `otree.game.error`
+ * @property {object|null} detail contains `code` and `message`, or null for reseting error 
+ */
+
+
+/**
+ * Indicates a game has stopped.
+ *
+ * @event Game.stop
+ * @property {string} type `otree.game.stop`
+ * @property {Status} detail final status flags
+ */
+
+/** Live Page
+ * 
+ * Convertings incoming and outgoing messages into events with type `otree.live.sometype`
+ *   
+ */
+ class Live {
+  constructor(page) {
+    this.page = page;
+    this.init();
+  }
+    
+  init() {
+    window.liveRecv = this.recv.bind(this);
+  }
+
+  recv(data) {
+    // console.debug("recv", data);
+    const type = data.type;
+    delete data.type;
+    this.page.fire(`otree.live.${type}`, data);
+  }
+
+  /** 
+   * Sends a message
+   * 
+   * @param type {String} message type
+   * @param message {Object} message payload
+   * @fires Live.message
+   */
+  send(type, message) {
+    const data = Object.assign({ type }, message);
+    // console.debug("send", data);
+    window.liveSend(data);
+    this.page.fire(`otree.live.${type}`, message);
+  }
+}
+
+/**
+ * Live message.
+ * 
+ * Either received or sent.
+ * 
+ * @event Live.message
+ * @property type {string} `otree.live.*` -- corresponding to message type  
+ * @property detail {object} any message payload 
+ */
+
+/** 
+ * Scheduling of timing phases.
+ * 
+ * Fires events according to timing table.
+ * 
+ * Measures reaction time from a moment when a phases had `input: true` to a `page.response` event, using browser `performance` utility.  
+ * 
+ * The phases are objects of type {@link Phase}. 
+ * A phase without `time` and `name` is default, which is toggled at start or `schedule.reset` 
+ */
+class Schedule {
+
+  /**
+   * @param {Page} page 
+   * @param {Phase[]} phases 
+   */
+  constructor(page, phases) {
+    this.page = page;
+    this._timers = new Timers();
+
+    this.timed = null;
+    this.named = null;
+    this.default = null;
+    this.current = null;
+
+    this.init(phases);
+    this.setup();
+    this.reset();
+  }
+
+  init(phases) {
+    let defaults = phases.filter((it) => !("name" in it) && !("time" in it));
+    if (defaults.length > 1) throw new Error("Duplicated default phases");
+    if (defaults.length == 1) this.default = defaults[0];
+
+    let named = phases.filter((it) => "name" in it),
+      names = new Set(named.map((it) => it.name));
+    if (named.length != names.size) throw new Error("Duplicated named phases");
+
+    this.named = new Map(named.map((it) => [it.name, it]));
+
+    this.timed = phases.filter((it) => "time" in it);
+
+    if (phases.filter((it) => "timeout" in it).length > 1)
+      throw new Error("Multiple timeouts in phases");
+    if (phases.filter((it) => it.input === true).length > 1)
+      throw new Error("Multiple input phases not supported");
+  }
+
+  setup() {
+    this.page.on("otree.time.phase", (event) => {
+      if (event.detail.input) {
+        performance.mark("input");
+      }
+    });
+
+    this.page.on("otree.page.response", () => {
+      performance.mark("response");
+    });
+  }
+
+  /**
+   * Starts all the timers.
+   * 
+   * @fires Schedule.phase
+   * @fires Schedule.timeout
+   */
+  run() {
+    performance.clearMeasures();
+    performance.clearMarks();
+
+    this.timed.forEach((phase, i) => {
+      this._timers.delay(`phase-${i}`, () => this.toggle(phase), phase.time);
+      if ("timeout" in phase) {
+        this._timers.delay(`timeout`, () => this.timeout(), phase.time + phase.timeout);
+      }
+    });
+  }
+
+  /**
+   * @param {Phase} phase the phase flags
+   * @fires Schedule.phase
+   */
+  toggle(phase) {
+    this.current = phase;
+    this.page.fire("otree.time.phase", phase);
+  }
+
+  /**
+   * @fires Schedule.timeout
+   */
+  timeout() {
+    this.current = null;
+    this.page.fire("otree.time.out");
+    this.cancel();
+  }
+
+  /**
+   * Switches to a named phase.
+   * 
+   * @param {string} name
+   * @fires Schedule.phase 
+   */
+  switch(name) {
+    this.toggle(this.named.get(name));
+  }
+
+  /**
+   * Resets to a default phase (the one defined without `time` or `name)
+   * 
+   * @fires Schedule.phase
+   */
+  reset() {
+    if (this.default) {
+      this.toggle(this.default);
+    }
+  }
+
+  /**
+   * Cancels all scheduled timers.
+   */
+  cancel() {
+    this._timers.cancel();
+  }
+
+  /**
+   * Retrieves reaction time. 
+   * 
+   * In case of multiple responses the time is measured for the last response
+   * 
+   * @returns {number} reaction time in ms
+   */
+  reaction_time() {
+    performance.measure("reaction_time", "input", "response");
+    let m = performance.getEntriesByName("reaction_time").slice(-1);
+    if (m.length == 0) return undefined;
+    return m[0].duration;
+  }
+}
+
+/**
+ * A phase to schedule or switch manually.
+ * 
+ * Defines set of flags and fields indicating page state.
+ * 
+ * The set of fields can be extended by anything else needed for custom directives or anything. 
+ * 
+ * @typedef {Object} Phase
+ * @property {number} [time] time in ms since start to toggle the phase
+ * @property {string} [name] name of the phase to toggle it manually
+ * @property {number} [timeout] number of ms since start of the phase to trigger timeout
+ * @property {string} [display] display toggle for `ot-display` directives
+ * @property {bool} [input] input toggle for `ot-input` directives   
+ */
+
+/**
+ * Indicates that a phase has come.
+ *  
+ * @event Schedule.phase
+ * @property {string} type `otree.time.phase` 
+ * @property {Phase} detail phase
+ */
+
+/**
+ * Indicates that timeout has happened.
+ * 
+ * @event Schedule.timeout
+ * @property {string} type `otree.time.out` 
+ */
+
+/** 
+ * Set of simple utils to manipulate DOM
+ * @module utils/dom
+ */
+
+/** 
+ * Loads an image asynchronously
+ * 
+ * Example:
+ *   ```
+ *   img = await loadImage("http://example.org/image.png");
+ *   ```
+ *  
+ * @param {string} url url or dataurl to load
+ * @returns {Promise} resolving to Image object
+ */
+function loadImage(url) {
+  const img = new Image();
+  return new Promise((resolve, reject) => {
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+/** 
+ * Toggles visibility by setting 'display' css property.
+ * 
+ * @param {HTMLElement} elem
+ * @param {boolean} display
+ */
+function toggleDisplay(elem, display) {
+  elem.style.display = display ? null : "none";
+}
+
+/** 
+ * Toggles disabled state by `.disabled` property (for inputs), and also `ot-disabled` class.
+ * 
+ * @param {HTMLElement} elem
+ * @param {boolean} disabled
+ */
+ function toggleDisabled(elem, disabled) {
+  elem.disabled = disabled;
+  elem.classList.toggle("ot-disabled", disabled);
+}
+
+/** 
+ * Checks if elem is disabled 
+ * @param {HTMLElement} elem
+ */
+function isDisabled(elem) {
+  return elem.classList.contains("ot-disabled");
+}
+
+/** 
+ * Sets or deletes text content 
+ * @param {HTMLElement} elem
+ * @param {string|null} text 
+ */
+function setText(elem, text) {
+  // NB: using `innerText` to render line breaks
+  elem.innerText = text == null ? "" : text;
+}
+
+/** 
+ * Sets element classes 
+ * @param {HTMLElement} elem
+ * @param {string[]} classes
+ */
+function setClasses(elem, classes) {
+  elem.classList.remove(...elem.classList);
+  elem.classList.add(...classes);
+}
+
+/** 
+ * Sets or deletes an attribute 
+ * 
+ * @param {HTMLElement} elem
+ * @param {string} attr
+ * @param {string|null} val
+ */
+function setAttr(elem, attr, val) {
+  if (val == null) {
+    elem.removeAttribute(attr);
+  } else {
+    elem.setAttribute(attr, val);
+  }
+}
+
+/** 
+ * Inserts single child element or empties elem.
+ *  
+ * @param {HTMLElement} elem
+ * @param {HTMLElement|null} child
+ */
+function setChild(elem, child) {
+  if (child == null) {
+    elem.replaceChildren();
+  } else {
+    elem.replaceChildren(child);
+  }
+}
+
+/** 
+ * Checks if an elem is a text input or textarea
+ *  
+ * @param {HTMLElement} elem
+ * @returns {boolean}
+ */
+function isTextInput(elem) {
+  return (elem.tagName == "INPUT" && elem.type == "text") || elem.tagName == "TEXTAREA";
+}
+
+var dom = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  loadImage: loadImage,
+  toggleDisplay: toggleDisplay,
+  toggleDisabled: toggleDisabled,
+  isDisabled: isDisabled,
+  setText: setText,
+  setClasses: setClasses,
+  setAttr: setAttr,
+  setChild: setChild,
+  isTextInput: isTextInput
+});
+
+/**
+ * Directive `data-ot-start`
+ * 
+ * It is activated by any configured trigger `data-ot-key="keycode"`, `data-ot-touch`, `data-ot-click`, and triggers {@link Page.event:start}. 
+ * 
+ * @hideconstructor
+ */
 class otStart extends Directive {
   get name() {
     return "start";
@@ -287,12 +1227,20 @@ class otStart extends Directive {
 
   onStart() {
     toggleDisplay(this.elem, false);
-    this.disabled = true;
+    toggleDisabled(this.elem, true);
   }
 }
 
 registerDirective("[data-ot-start]", otStart);
 
+/**
+ * Directive `data-ot-display="phaseflag"`
+ * 
+ * It shows/hides an element when {@link Phase} contains matching `display` field.
+ * If the phase doesn't contain the field, it is ignored (i.e. phases toggling just `input` do not affect the display). 
+ * 
+ * @hideconstructor
+ */
 class otDisplay extends Directive {
   get name() {
     return "display";
@@ -318,6 +1266,16 @@ class otDisplay extends Directive {
 
 registerDirective("[data-ot-display]", otDisplay);
 
+/**
+ * Directive `data-ot-input="field"` for real inputs: `<input>`, `<select>`, `<textarea>`.
+ * 
+ * It triggers {@link Page.event:response} when value of the input changes.
+ * For text inputs it triggers when `Enter` pressed.
+ * 
+ * The input gets disabled according to {@link Phase} flag `input` 
+ * 
+ * @hideconstructor
+ */
 class otRealInput extends Directive {
   get name() {
     return "input";
@@ -367,6 +1325,23 @@ registerDirective(
 );
 
 
+/**
+ * Directive `data-ot-input="field"` for custom inputs: any `<div>`, `<span>`, `<button>`, `<kbd>`.
+ * 
+ * The directive should be accompanied with method of triggering `data-ot-
+ * 
+ * It triggers {@link Page.event:response} by a configred trigger:
+ * - `data-ot-click` to trigger on click
+ * - `data-ot-touch` to trigger on touch
+ * - `data-ot-key="keycode" to trigger on keypress
+ * 
+ * The list of available is at MDN: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code/code_values  
+ * Basically, it is something like 'Enter', 'Space', 'Escape', or 'KeyQ' for "q" key.
+ * 
+ * The input gets disabled according to {@link Phase} flag `input` 
+ * 
+ * @hideconstructor
+ */
 class otCustomInput extends Directive {
   get name() {
     return "input";
@@ -425,6 +1400,12 @@ registerDirective(
   otCustomInput
 );
 
+/**
+ * Directive `data-ot-class="reference"`
+ * 
+ * It adds a class with a value from `{@link Page.event:update}`.
+ * All other existing lasses are preserved. 
+ */
 class otClass extends Directive {
   get name() {
     return "class";
@@ -447,6 +1428,13 @@ class otClass extends Directive {
 
 registerDirective("[data-ot-class]", otClass);
 
+/**
+ * Directive `data-ot-text="reference"`
+ * 
+ * It inserts text content from {@link Page.event:update}.
+ * 
+ * @hideconstructor
+ */
 class otText extends Directive {
   get name() {
     return "text";
@@ -459,6 +1447,14 @@ class otText extends Directive {
 
 registerDirective("[data-ot-text]", otText);
 
+/**
+ * Directive `data-ot-img="reference"`
+ * 
+ * It inserts image element from {@link Page.event:update} inside its host.
+ * The value in the Changes should be an instance of created and pre-loaded Image element. 
+ * 
+ * @hideconstructor
+ */
 class otImg extends Directive {
   get name() {
     return "img";
@@ -469,12 +1465,32 @@ class otImg extends Directive {
     if (!!img && !(img instanceof Image)) {
       throw new Error(`Invalid value for image: ${img}`);
     }
+    console.debug("ot-img", this.elem, img);
     setChild(this.elem, img);
   }
 }
 
 registerDirective("[data-ot-img]", otImg);
 
+/**
+ * Directives `data-ot-attr-something="reference"`
+ * 
+ * The allowed attributes are: 
+ * - `disabled` 
+ * - `hidden` 
+ * - `height` 
+ * - `width` 
+ * - `min` 
+ * - `max` 
+ * - `low` 
+ * - `high` 
+ * - `optimum` 
+ * - `value` 
+ * 
+ * It deletes or sets value of the attribute to a value from {@link Page.event:update}.
+ * 
+ * @hideconstructor
+ */
 class otAttrBase extends Directive {
   update(changes) {
     setAttr(this.elem, this.name, changes.pick(this.ref));
@@ -493,6 +1509,13 @@ ALLOWED_ATTRIBS.forEach(attrname => {
   }  registerDirective(`[data-ot-${attrname}]`, otAttr);
 });
 
+/**
+ * Directive `data-ot-when="reference"` and `data-ot-when="reference==value"`.
+ * 
+ * It shows host element by {@link Page.event:update}, when referenced field is defined, true-like or matches specified value.
+ * 
+ * @hideconstructor
+ */
 class otWhen extends Directive {
   get name() {
     return "when";
@@ -524,488 +1547,13 @@ class otWhen extends Directive {
 
 registerDirective("[data-ot-when]", otWhen);
 
-/** Main page
+/** @module utils/random */
+
+/**
+ * Makes random choice from an array
  * 
- * Centeral point of synchronization.
+ * @param {Array} choices
  */
-class Page {
-  
-  constructor(body) {
-    this.body = body || document.body;
-    this.init();
-  }
-
-  init() {
-    let page = this;
-    registry.forEach((cls, sel) => {
-      this.body.querySelectorAll(sel).forEach((elem) => {
-        // console.debug(cls, sel, elem);
-        let inst = new cls(page, elem);
-        inst.setup();
-      });
-    });
-  }
-
-  /** binds an event handler
-   *
-   * @param type {String} event type
-   * @param handler {function(event, detail)} a handler
-   * @param target {?HTMLElement} an element to bind handler, instead of the page itself
-   * @returns {Function} handler wrapper bound to events,
-   *   the wrapper has method off() to unbind itself
-   */
-  on(type, handler, target) {
-    target = target || this.body;
-    const listener = (event) => handler(event, event.detail);
-    listener.off = () => target.removeEventListener(type, listener);
-    target.addEventListener(type, listener);
-    return listener;
-  }
-
-  /** waits for an event
-   *
-   * Note: this doesb't catch events happened before the waiting started.
-   *
-   * Example 1:
-   *
-   *    await page.waitEvent('otree.time.out'); // suspend script until timeout fired
-   *
-   * Example 2:
-   *
-   *    const waiting = page.waitEvent('otree.time.out'); // start waiting without suspending
-   *    // do something
-   *    await waiting; // suspend for an event happend since the 'waiting' created
-   *
-   * @param type {String} event type
-   * @returns {Promise} resolved when event fired
-   */
-  wait(type, target) {
-    target = target || this.body;
-    return new Promise((resolve) => {
-      function listener(event) {
-        resolve(event);
-        target.removeEventListener(type, listener); 
-      } 
-      target.addEventListener(type, listener);
-    });
-  }
-
-  /** fire an event
-   * @param type {String} event type
-   * @param detail {Object} any data to pass to handler
-   * @param target {?HTMLElement} an element to fire at, instead of the page itself
-   */
-  fire(type, detail, target) {
-    // console.debug("firing", type, detail);
-    const event = new CustomEvent(type, { detail });
-    target = target || this.body;
-    // NB: queueing a task like a normal event, instead of dispatching synchronously
-    setTimeout(() => target.dispatchEvent(event));
-  }
-
-  reset(obj="game") {
-    this.fire("otree.page.reset", obj);
-    this.fire("otree.page.update", new Changes({ [obj]: undefined }));
-  }
-
-  start() {
-    this.fire("otree.page.start");
-  }
-
-  update(changes) {
-    if (!(changes instanceof Changes)) changes = new Changes(changes);
-    this.fire("otree.page.update", changes);
-  }
-
-  response(changes) {
-    this.fire("otree.page.response", changes);
-  }
-
-  toggle(phase) {
-    this.fire("otree.time.phase", phase);
-  }
-
-  timeout() {
-    this.fire("otree.time.out");
-  }
-}
-
-async function sleep(time) {
-    return new Promise((resolve, reject) => {
-        setTimeout(() => resolve(), time);
-    });
-}
-
-function delay(fn, delay=0) {
-    return window.setTimeout(fn, delay);
-}
-
-function cancel(id) {
-    window.clearTimeout(id);
-    return null;
-}
-
-/** Timers
- * A set of timers with names
- */
-class Timers {
-    constructor() {
-        this.timers = new Map();
-    }
-
-    delay(name, fn, timeout=0) {
-        if (this.timers.has(name)) {
-            cancel(this.timers.get(name));
-        }
-        this.timers.set(name, delay(fn, timeout));
-    }
-
-    cancel(...names) {
-        if (names.length != 0) {
-            names.forEach((n) => {
-                cancel(this.timers.get(n));
-                this.timers.delete(n);
-            });
-        } else {
-            this.timers.forEach((v, k) => cancel(v));
-            this.timers.clear();
-        }
-    }
-}
-
-var timers = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  sleep: sleep,
-  delay: delay,
-  cancel: cancel,
-  Timers: Timers
-});
-
-/** Deferred
- *
- * A wrapper for a promise that you can resolve and check later, outside of closure.
- * ```
- * let dfd = new Deferred()
- * setTimeout(() => dfd.resolve(), 10000);
- * await dfd.promise; // waiting for the timeout
- * assert dfd.state === true;
- */
-
-class Deferred {
-  constructor() {
-    this.state = null;
-    this.promise = new Promise((resolve, reject) => {
-      this.reject = (reason) => {
-        reject(reason);
-        this.state = false;
-      };
-      this.resolve = (reason) => {
-        resolve(reason);
-        this.state = true;
-      };
-    });
-  }
-}
-
-/** Base game
- * Base utilities to construct game logic
- */
-class Game {
-  constructor(page) {
-    this.page = page;
-    this.state = {};
-  }
-
-  reset() {
-    this.state = {};
-    this.page.reset('game');
-  }
-
-  /** updates game state
-   *
-   * Applies given changes to game state,
-   * Signals them to the page prefixed with 'game'
-   *
-   * i.e. `update({'foo': bar})`
-   * - updates field `foo` in the game state
-   * - updates page with changes of `game.foo`
-   *
-   * @params changes {Object} of form `{ 'field.subfield': newvalue, ... }`
-   */
-  update(changes) {
-    new Changes(changes).patch(this.state);
-    this.page.update(new Changes(changes, "game"));
-  }
-
-  /** handles status update
-   *
-   * Fires event `otree.game.status`.
-   * Aignals them to the page prefixed with 'status'.
-   * The status is not saved anywhere and only exists in events.
-   *
-   * i.e. `status({foo: "foo"})`
-   * - fires event `otree.game.status` with {foo: "foo"}
-   * - updates pagee with changes of `status.foo`
-   *
-   * Status fields:
-   * - completed {bool}: makes game round to end
-   * - wait {bool}: makes completed round to wait until `otree.time.out`
-   * - terminate {bool}: terminate iterations loop (used by `iterateRounds`)
-   * - success {bool}: indicates of round succedded/failed (used by `iterateRounds` to count progress)
-   *
-   * @param status {Object}
-   */
-  status(status) {
-    this.page.fire("otree.game.status", status);
-    this.page.update(new Changes(status, "status"));
-
-    if (status.completed) this.running.resolve(status);
-  }
-  
-  error(code, message) {
-    let error;
-    if (!code) {
-      error = null;
-    } else {
-      error = { code };
-      if (message) {
-        error.message = message;
-      }
-    }
-    this.status({ error });
-  }
-
-  freeze() {
-    // FIXME: this interferes with actual time phases
-    this.page.fire("otree.time.phase", { input: false });
-  }
-
-  unfreeze() {
-    // FIXME: this interferes with actual time phases
-    this.page.fire("otree.time.phase", { input: true });
-  }
-
-  /** plays single round
-   *
-   * Fires events `otree.game.start` and `otree.game.stop`.
-   *
-   * Waits for status to be signalled with flag `completed`
-   * Waits for timeout if the status has flag `wait`
-   *
-   * @param gameconf {Object}
-   *   any config params for the round
-   *   when called from iterateRounds, the conf contains `iteration`
-   * @returns {Promise} resolving with game status when the round is completed
-   */
-  async playRound(gameconf) {
-    this.running = new Deferred();
-
-    this.reset();
-    this.page.fire("otree.game.start", gameconf);
-
-    return this.running.promise.then((status) => {
-      this.page.fire("otree.game.stop", status);
-      return status;
-    });
-  }
-
-  updateProgress(progress, status) {
-    progress.completed += 1;
-    progress.solved += status.success === true;
-    progress.failed += status.success === false;
-    progress.skipped += status.success === undefined;
-  }
-
-  /** plays multiple rounds
-   *
-   * Runs multiple rounds and updates `status.progress`:
-   * - total: total number of iterations or null if it's infinite
-   * - current: current iteration, counting from 1
-   * - completed: number of completed rounds,
-   * - solved: number of rounds with `success=true`,
-   * - failed: number of rounds with `success=false`,
-   * - skipped: number of rounds without `success` status,
-   *
-   *
-   * @param gameconf
-   *   any config params for the round
-   *   it is extended with `iteration` when passed to `playRound`
-   * @param num_rounds
-   *   number of rounds to play, null for infinite loop
-   *   the loop is terminated when `status.terminate == true`
-   * @param trial_pause
-   *   delay between rounds
-   * @returns {Promise} resolving when loop terminates with final progress
-   */
-  async iterateRounds(gameconf, num_rounds, trial_pause) {
-    const progress = {
-      total: num_rounds,
-      current: 0,
-      completed: 0,
-      skipped: 0,
-      solved: 0,
-      failed: 0,
-    };
-    let status = {};
-
-    let roundconf = { ...gameconf };
-
-    const cnt = (i) =>
-      (num_rounds ? i <= num_rounds : true) && !status.terminate;
-    for (let i = 1; cnt(i); i++) {
-      roundconf.iteration = i;
-      progress.current = i;
-
-      this.status({ progress });
-
-      status = await this.playRound(roundconf);
-
-      this.updateProgress(progress, status);
-
-      this.status({ progress });
-
-      await sleep(trial_pause);
-    }
-
-    return progress;
-  }
-}
-
-/** Live Page
- * 
- * handles live messages
- * converts incoming and outgoing messages to events like `otree.live.type`
- */
- class Live {
-  constructor(page) {
-    this.page = page;
-    this.init();
-  }
-    
-  init() {
-    window.liveRecv = this.recv.bind(this);
-  }
-
-  recv(data) {
-    // console.debug("recv", data);
-    const type = data.type;
-    delete data.type;
-    this.page.fire(`otree.live.${type}`, data);
-  }
-
-  /** send a message
-   * 
-   * @param type {String} message type
-   * @param message {Object} message payload
-   */
-  send(type, message) {
-    const data = Object.assign({ type }, message);
-    // console.debug("send", data);
-    window.liveSend(data);
-    this.page.fire(`otree.live.${type}`, message);
-  }
-}
-
-/** Schedule of timing phases.
- * Fires events according to timing table.
- * Events: 'otree.time.phase' for every phase defined, 'otree.time.out' for timeout
- * Each phase:
- * - { time: number, display: string, input: bool, ...} -- a phase to happen at specified time in ms, and with given parameters
- * - { time, ..., timeout: number} -- fires timeout after defined phase
- * - { name: "name", ... } -- defines custom phase to trigger manually with .trigger("name")
- * - a phase without time -- is a default phase to reset
- */
-class Schedule {
-  constructor(page, phases) {
-    this.page = page;
-    this._timers = new Timers();
-
-    this.timed = null;
-    this.named = null;
-    this.default = null;
-    this.current = null;
-
-    this.init(phases);
-    this.setup();
-    this.reset();
-  }
-
-  init(phases) {
-    let defaults = phases.filter((it) => !("name" in it) && !("time" in it));
-    if (defaults.length > 1) throw new Error("Duplicated default phases");
-    if (defaults.length == 1) this.default = defaults[0];
-
-    let named = phases.filter((it) => "name" in it),
-      names = new Set(named.map((it) => it.name));
-    if (named.length != names.size) throw new Error("Duplicated named phases");
-
-    this.named = new Map(named.map((it) => [it.name, it]));
-
-    this.timed = phases.filter((it) => "time" in it);
-
-    if (phases.filter((it) => "timeout" in it).length > 1)
-      throw new Error("Multiple timeouts in phases");
-    if (phases.filter((it) => it.input === true).length > 1)
-      throw new Error("Multiple input phases not supported");
-  }
-
-  setup() {
-    this.page.on("otree.time.phase", (event) => {
-      if (event.detail.input) {
-        performance.mark("input");
-      }
-    });
-
-    this.page.on("otree.page.response", () => {
-      performance.mark("response");
-      performance.measure("reaction_time", "input", "response");
-    });
-  }
-
-  run() {
-    performance.clearMeasures();
-    performance.clearMarks();
-
-    this.timed.forEach((phase, i) => {
-      this._timers.delay(`phase-${i}`, () => this.toggle(phase), phase.time);
-      if ("timeout" in phase) {
-        this._timers.delay(`timeout`, () => this.timeout(), phase.time + phase.timeout);
-      }
-    });
-  }
-
-  toggle(phase) {
-    this.current = phase;
-    this.page.fire("otree.time.phase", phase);
-  }
-
-  timeout() {
-    this.current = null;
-    this.page.fire("otree.time.out");
-    this.cancel();
-  }
-
-  switch(name) {
-    this.toggle(this.named.get(name));
-  }
-
-  reset() {
-    if (this.default) {
-      this.toggle(this.default);
-    }
-  }
-
-  cancel() {
-    this._timers.cancel();
-  }
-
-  reaction_time() {
-    let m = performance.getEntriesByName("reaction_time").slice(-1);
-    if (m.length == 0) return undefined;
-    return m[0].duration;
-  }
-}
-
 function random_choice(choices) {
   return choices[Math.floor(Math.random() * choices.length)];
 }
@@ -1015,10 +1563,8 @@ var random = /*#__PURE__*/Object.freeze({
   random_choice: random_choice
 });
 
-// directives register themselves
-
 const utils = {
   dom, random, changes, timers
 };
 
-export { Directive, Game, Live, Page, Schedule, registerDirective, utils };
+export { Game, Live, Page, Schedule, base as directives, iterateRounds, playRound, utils };
