@@ -3,7 +3,7 @@ import { expect, oneEvent, aTimeout, nextFrame } from "@open-wc/testing";
 import { Changes } from "../src/utils/changes";
 
 import { Page } from "../src/page";
-import { Game } from "../src/game";
+import { Game, iterateRounds, playRound } from "../src/game";
 
 describe("Game", () => {
   let body, page, game, detail;
@@ -18,244 +18,254 @@ describe("Game", () => {
     game = new Game(page);
   });
 
-  describe("events", () => {
-    it("freezes", async () => {
-      game.freeze();
-      detail = await pageEvent("otree.time.phase");
-      expect(detail).to.eql({ input: false });
-    });
+  it("resets", async () => {
+    game.reset({ foo: "Bar" });
 
-    it("unfreezes", async () => {
-      game.unfreeze();
-      detail = await pageEvent("otree.time.phase");
-      expect(detail).to.eql({ input: true });
-    });
+    expect(game.conf).to.eql({ foo: "Bar" });
+    expect(game.state).to.eql({});
+
+    detail = await pageEvent("otree.page.update");
+    expect(detail).to.eql(new Changes({ conf: { foo: "Bar" } }));
+
+    detail = await pageEvent("otree.page.reset");
+    expect(detail).to.eq("game");
+
+    detail = await pageEvent("otree.page.update");
+    expect(detail).to.eql(new Changes({ game: undefined }));
   });
 
-  describe("status", () => {
-    it("fires", async () => {
-      game.status({ bar: "Bar" });
+  it("starts", async () => {
+    game.start({ foo: "Bar" });
 
-      detail = await pageEvent("otree.game.status");
-      expect(detail).to.eql({ bar: "Bar" });
-
-      detail = await pageEvent("otree.page.update");
-      expect(detail).to.eql(new Changes({ "status.bar": "Bar" }));
-    });
-
-    it("fires error", async () => {
-      game.error("code", "message");
-      detail = await pageEvent("otree.game.status");
-      expect(detail).to.eql({ error: { code: "code", message: "message" } });
-
-      detail = await pageEvent("otree.page.update");
-      expect(detail).to.eql(
-        new Changes({ "status.error": { code: "code", message: "message" } })
-      );
-    });
-
-    it("fires error code only", async () => {
-      game.error("code");
-      detail = await pageEvent("otree.game.status");
-      expect(detail).to.eql({ error: { code: "code" } });
-
-      detail = await pageEvent("otree.page.update");
-      expect(detail).to.eql(new Changes({ "status.error": { code: "code" } }));
-    });
-
-    it("fires error none", async () => {
-      game.error(null);
-      detail = await pageEvent("otree.game.status");
-      expect(detail).to.eql({ error: null });
-
-      detail = await pageEvent("otree.page.update");
-      expect(detail).to.eql(new Changes({ "status.error": null }));
-    });
+    detail = await pageEvent("otree.game.start");
+    expect(detail).to.eql({ foo: "Bar" });
   });
 
-  describe("state", () => {
-    it("updates", async () => {
-      game.state = { foo: "Foo" };
-      game.update({ bar: "Bar" });
+  it("status", async () => {
+    game.status({ foo: "Bar" });
 
-      detail = await pageEvent("otree.page.update");
-      expect(detail).to.eql(new Changes({ "game.bar": "Bar" }));
-      expect(game.state).to.eql({ foo: "Foo", bar: "Bar" });
-    });
+    detail = await pageEvent("otree.game.status");
+    expect(detail).to.eql({ foo: "Bar" });
   });
 
-  describe("playing", () => {
-    it("plays a round", async () => {
-      let running = game.playRound({ foo: "Foo" });
+  it("updates", async () => {
+    game.state = { foo: "Foo" };
+    game.update({ bar: "Bar" });
 
-      detail = await pageEvent("otree.game.start");
-      expect(detail).to.eql({ foo: "Foo" });
+    detail = await pageEvent("otree.page.update");
+    expect(detail).to.eql(new Changes({ "game.bar": "Bar" }));
+    expect(game.state).to.eql({ foo: "Foo", bar: "Bar" });
+  });
 
-      let status = { bar: "Bar", completed: true };
-      game.status(status);
+  it("stops", async () => {
+    game.stop({ foo: "Bar" });
 
-      detail = await pageEvent("otree.game.status");
-      expect(detail).to.eql(status);
+    detail = await pageEvent("otree.game.stop");
+    expect(detail).to.eql({ foo: "Bar" });
+  });
 
-      detail = await pageEvent("otree.game.stop");
-      expect(detail).to.eql(status);
+  it("errors", async () => {
+    game.error("code", "message");
+    detail = await pageEvent("otree.game.error");
+    expect(detail).to.eql({ code: "code", message: "message" });
 
-      let result = await running;
-      expect(result).to.eql(status);
+    detail = await pageEvent("otree.page.update");
+    expect(detail).to.eql(new Changes({ error: { code: "code", message: "message" } }));
+  });
+
+  it("freezes", async () => {
+    game.freeze();
+    detail = await pageEvent("otree.time.phase");
+    expect(detail).to.eql({ input: false });
+  });
+
+  it("unfreezes", async () => {
+    game.unfreeze();
+    detail = await pageEvent("otree.time.phase");
+    expect(detail).to.eql({ input: true });
+  });
+});
+
+describe.only("playing", () => {
+  let body, page, game, detail;
+
+  async function pageEvent(type) {
+    return (await oneEvent(body, type)).detail;
+  }
+
+  beforeEach(() => {
+    body = document.createElement("body");
+    page = new Page(body);
+    game = new Game(page);
+  });
+
+  it("plays a round", async () => {
+    let running = playRound(game, { foo: "Bar" });
+
+    // it resets game
+    expect(game.conf).to.eql({ foo: "Bar" });
+    expect(game.state).to.eql({});
+
+    // it starts game
+    await pageEvent("otree.game.start");
+
+    game.stop({ success: true });
+
+    // it waits for game stop
+    let result = await running;
+
+    expect(result).to.eql({ success: true });
+  });
+
+  it("sets up iteration", async () => {
+    let running = iterateRounds(game, { foo: "Bar" }, 2, 0);
+
+    await pageEvent("otree.game.start");
+    expect(game.conf).to.eql({ foo: "Bar", iteration: 1 });
+    game.stop({});
+
+    await pageEvent("otree.game.start");
+    expect(game.conf).to.eql({ foo: "Bar", iteration: 2 });
+    game.stop({});
+
+    await running;
+  });
+
+  it("iterates loop", async () => {
+    let counter = 0;
+    page.on("otree.game.start", () => {
+      counter++;
+      game.stop({});
     });
 
-    it("iterates rounds", async () => {
-      let counter = 0;
-      page.on("otree.game.start", () => {
-        counter++;
-        game.status({ completed: true });
-      });
-      await game.iterateRounds({}, 10, 0);
-      expect(counter).to.eql(10);
-    });
+    await iterateRounds(game, {}, 10, 0);
 
-    it("makes pauses", async () => {
-      let running = game.iterateRounds({}, 2, 200);
+    expect(counter).to.eql(10);
+  });
 
-      // iter 1
-      await pageEvent("otree.game.start");
-      game.status({ completed: true });
-      let t0 = Date.now();
-
-      // iter 2
-      await pageEvent("otree.game.start");
-      expect(Date.now() - t0).to.be.within(200, 210);
-      game.status({ completed: true });
-
-      await running;
-    });
-
-    it("terminates iteration", async () => {
-      let counter = 0;
-      page.on("otree.game.start", () => {
-        counter++;
-        game.status({ completed: true, terminate: counter >= 4 });
-      });
-      await game.iterateRounds({}, 10, 0);
-      expect(counter).to.eql(4);
-    });
-
-    it("terminates infinite iteration", async () => {
-      let counter = 0;
-      page.on("otree.game.start", () => {
-        counter++;
-        game.status({ completed: true, terminate: counter >= 4 });
-      });
-      await game.iterateRounds({}, null, 0);
-      expect(counter).to.eql(4);
-    });
-
-    it("updates progress", async () => {
-      let running = game.iterateRounds({}, 3, 0);
-
-      // iter1
-
-      detail = await pageEvent("otree.game.status");
-      expect(detail).to.eql({
-        progress: {
-          total: 3,
-          current: 1,
-          completed: 0,
-          skipped: 0,
-          solved: 0,
-          failed: 0,
-        },
-      });
-
-      await pageEvent("otree.game.start");
-      game.status({ completed: true, success: true });
-      await pageEvent("otree.game.status");
-      await pageEvent("otree.game.stop");
-
-      detail = await pageEvent("otree.game.status");
-      expect(detail).to.eql({
-        progress: {
-          total: 3,
-          current: 1,
-          completed: 1,
-          skipped: 0,
-          solved: 1,
-          failed: 0,
-        },
-      });
-
-      // iter2
-
-      detail = await pageEvent("otree.game.status"); // from iterator
-      expect(detail).to.eql({
-        progress: {
-          total: 3,
-          current: 2,
-          completed: 1,
-          skipped: 0,
-          solved: 1,
-          failed: 0,
-        },
-      });
-
-      await pageEvent("otree.game.start");
-      game.status({ completed: true, success: false });
-      await pageEvent("otree.game.status");
-      await pageEvent("otree.game.stop");
-
-      detail = await pageEvent("otree.game.status"); // from iterator
-      expect(detail).to.eql({
-        progress: {
-          total: 3,
-          current: 2,
-          completed: 2,
-          skipped: 0,
-          solved: 1,
-          failed: 1,
-        },
-      });
-
-      // iter3
-
-      detail = await pageEvent("otree.game.status"); // from iterator
-      expect(detail).to.eql({
-        progress: {
-          total: 3,
-          current: 3,
-          completed: 2,
-          skipped: 0,
-          solved: 1,
-          failed: 1,
-        },
-      });
-
-      await pageEvent("otree.game.start");
-      game.status({ completed: true });
-      await pageEvent("otree.game.status");
-      await pageEvent("otree.game.stop");
-
-      detail = await pageEvent("otree.game.status"); // from iterator
-      expect(detail).to.eql({
-        progress: {
-          total: 3,
-          current: 3,
-          completed: 3,
-          skipped: 1,
-          solved: 1,
-          failed: 1,
-        },
-      });
-
-      let progress = await running;
-      expect(progress).to.eql({
-        total: 3,
-        current: 3,
-        completed: 3,
-        skipped: 1,
-        solved: 1,
-        failed: 1,
+  it("terminates loop", async () => {
+    let counter = 0;
+    page.on("otree.game.start", () => {
+      counter++;
+      game.stop({
+        terminate: counter == 5,
       });
     });
+
+    await iterateRounds(game, {}, 10, 0);
+
+    expect(counter).to.eql(5);
+  });
+
+  it("iterates infinite loop", async () => {
+    let counter = 0;
+    page.on("otree.game.start", () => {
+      counter++;
+      game.stop({
+        terminate: counter == 5,
+      });
+    });
+
+    await iterateRounds(game, {}, null, 0);
+
+    expect(counter).to.eql(5);
+  });
+
+  it("makes pauses", async () => {
+    let running = iterateRounds(game, {}, 2, 200);
+
+    await pageEvent("otree.game.start");
+    game.stop({});
+
+    let t0 = Date.now();
+    await pageEvent("otree.game.start");
+    expect(Date.now() - t0).to.be.within(200, 210);
+  });
+
+  it("updates progress", async () => {
+    let running = iterateRounds(game, {}, 3, 0);
+
+    let progress;
+
+    page.on("otree.page.update", (ev, data) => {
+      if (data.has('progress')) progress = data.get('progress');
+    });
+
+    // iter 1
+
+    await pageEvent("otree.page.reset");
+
+    expect(progress).to.eql({
+      total: 3,
+      current: 1,
+      completed: 0,
+      solved: 0,
+      failed: 0,
+    });
+
+    await pageEvent("otree.game.start");
+    game.stop({ success: true });
+    await pageEvent("otree.game.stop");
+    
+    expect(progress).to.eql({
+      total: 3,
+      current: 1,
+      completed: 1,
+      solved: 1,
+      failed: 0,
+    });
+
+    // iter 2
+    
+    await pageEvent("otree.page.reset");
+
+    expect(progress).to.eql({
+      total: 3,
+      current: 2,
+      completed: 1,
+      solved: 1,
+      failed: 0,
+    });
+
+    await pageEvent("otree.game.start");
+    game.stop({ success: false });
+    await pageEvent("otree.game.stop");
+    
+    expect(progress).to.eql({
+      total: 3,
+      current: 2,
+      completed: 2,
+      solved: 1,
+      failed: 1,
+    });
+
+    // iter 3
+    
+    await pageEvent("otree.page.reset");
+
+    expect(progress).to.eql({
+      total: 3,
+      current: 3,
+      completed: 2,
+      solved: 1,
+      failed: 1,
+    });
+
+    await pageEvent("otree.game.start");
+    game.stop({});
+    await pageEvent("otree.game.stop");
+    
+    expect(progress).to.eql({
+      total: 3,
+      current: 3,
+      completed: 3,
+      solved: 1,
+      failed: 1,
+    });
+
+    let result = await running;
+
+    expect(result).to.eql(progress);
 
   });
 });
