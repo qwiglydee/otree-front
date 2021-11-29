@@ -26,16 +26,12 @@ page.on("otree.live.game", async function(event, puzzle) {
 
 page.on("otree.page.response", function (event, input) {
   console.debug("otree.page.response", input);
-  let { slider: ref, value } = input;
-
-  ref = Ref.strip("game", ref); // FIXME: ugly hack
+  let { idx, value } = input;
 
   game.update({
-    [ref + ".value"]: value,
-    [ref + ".valid"]: false,
+    [`sliders.${idx}.value`]: value,
+    [`sliders.${idx}.valid`]: null,
   });
-
-  let idx = Ref.extract(game.state, ref + ".idx");
 
   live.send('response', { slider: idx, input: value }); // → live.update, live.status
 });

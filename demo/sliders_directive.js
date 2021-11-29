@@ -8,6 +8,8 @@ class Slider extends Directive {
 
   init() {
     this.ref = this.elem.dataset.slider;
+    this.idx = this.ref.split('.').slice(-1)[0];
+
     this.imgref = this.ref + ".background";
     this.img = null;
     this.valref = this.ref + ".value";
@@ -137,8 +139,7 @@ class Slider extends Directive {
 
   onMouseOut(event) {
     if (this.state.drag) {
-      // dropping
-      this.page.response({ slider: this.ref, value: this.value });
+      this.drop();
     }
     this.state = {
       hover: false,
@@ -160,11 +161,14 @@ class Slider extends Directive {
 
   onMouseUp(event) {
     if (this.state.drag) {
-      // dropping
-      this.page.response({ slider: this.ref, value: this.value });
+      this.drop();
     }
     this.state.drag = false;
     this.redraw();
+  }
+
+  drop() {
+    this.page.response({ idx: this.idx, value: this.value });
   }
 }
 
