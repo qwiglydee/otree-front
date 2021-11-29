@@ -85,14 +85,11 @@ export class Game {
 
   /**
    * Signals game stopped.
-   * Updates page with the provided status.
    *
    * @param {object} status flags
-   * @fires Game.start
-   * @fires Game.update
+   * @fires Game.stop
    */
   stop(status) {
-    this.reset();
     this.page.fire("otree.game.stop", status);
   }
 

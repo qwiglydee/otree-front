@@ -10,6 +10,7 @@
 
   <body>
     <div class="otree-body container d-flex flex-column justify-content-start align-items-center">
+      
       <div class="overlay" data-ot-start data-ot-key="Space" data-ot-touch data-ot-click>
         <div class="d-flex flex-column justify-content-center align-items-center">
           <h3>Instructions</h3>
@@ -27,10 +28,9 @@
       <div class="overlay" data-ot-display="results">
         <div class="d-flex flex-column justify-content-center align-items-center">
           <h3>Results</h3>
-          <p>Total trials: <span data-ot-text="status.progress.total"></span></p>
-          <p>Correct answers: <span data-ot-text="status.progress.solved"></span></p>
-          <p>Incorrect answers: <span data-ot-text="status.progress.failed"></span></p>
-          <p>Skipped: <span data-ot-text="status.progress.skipped"></span></p>
+          <p>Total trials: <span data-ot-text="progress.total"></span></p>
+          <p>Correct answers: <span data-ot-text="progress.solved"></span></p>
+          <p>Incorrect answers: <span data-ot-text="progress.failed"></span></p>
         </div>
       </div>
 
@@ -49,24 +49,24 @@
       <div class="flex-fill"></div>
 
       <div data-ot-when="game.feedback==false">
-        retry <span data-ot-text="status.retries.tried"></span> /
-        <span data-ot-text="status.retries.total"></span>
+        retry <span data-ot-text="game.retries"></span> /
+        <span data-ot-text="conf.num_retries"></span>
       </div>
 
       <div class="response d-flex justify-content-center align-items-center">
-        <span data-ot-when="status.timeout==true">(skipped)</span>
+        <span data-ot-when="game.timeout==true">(skipped)</span>
         <span data-ot-when="game.response" data-ot-text="game.response"></span>
         <span data-ot-when="game.feedback==true" class="feedback-char valid">✔</span>
         <span data-ot-when="game.feedback==false" class="feedback-char invalid">✘</span>
       </div>
 
       <progress
-        data-ot-max="status.progress.total"
-        data-ot-value="status.progress.completed"
+        data-ot-max="progress.total"
+        data-ot-value="progress.completed"
       ></progress>
     </div>
 
-    <script type="module" src="../src/"></script>
+    <script type="module" src="../src/index.js"></script>
     <script type="module" src="./trials_data.js"></script>
     <script type="module" src="./trials.js"></script>
   </body>

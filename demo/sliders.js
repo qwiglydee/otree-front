@@ -1,37 +1,34 @@
-import { utils } from "../src/";
-import { Page, Live, Game } from "../src/";
+import { utils } from "../src";
+import { Page, Live, Game, playRound } from "../src";
 const Ref = utils.changes.Ref;
 
-
-let conf = null;
 const page = new Page();
 const live = new Live(page);
 const game = new Game(page);
 
-page.on("otree.game.start", async function (event, conf) {
-  console.debug("otree.game.start", conf);
-  live.send('load');
+page.on("otree.game.start", async function(event, status) {
+  console.debug("otree.game.start", status);
+  live.send("load"); // → live.game
 });
 
 page.on("otree.live.game", async function(event, puzzle) {
   console.debug("otree.live.game", puzzle);
 
   // need to load all images into Image objects
-
-  for (let i = 0; i < conf.num_sliders; i++) {
+  for (let i = 0; i < game.conf.num_sliders; i++) {
     puzzle.sliders[i].background = await utils.dom.loadImage(puzzle.sliders[i].background);
-    puzzle.sliders[i].idx = i; // for backref
-    puzzle.sliders[i].valid = true; // not part of the server state
+    puzzle.sliders[i].idx = i;
+    puzzle.sliders[i].valid = true;
   }
 
-  game.update({sliders: puzzle.sliders});
+  game.update(puzzle);
 });
 
 page.on("otree.page.response", function (event, input) {
   console.debug("otree.page.response", input);
   let { slider: ref, value } = input;
 
-  ref = ref.slice(5); // strip 'game.' prefix
+  ref = Ref.strip("game", ref); // FIXME: ugly hack
 
   game.update({
     [ref + ".value"]: value,
@@ -39,7 +36,8 @@ page.on("otree.page.response", function (event, input) {
   });
 
   let idx = Ref.extract(game.state, ref + ".idx");
-  live.send('response', { slider: idx, input: value });
+
+  live.send('response', { slider: idx, input: value }); // → live.update, live.status
 });
 
 page.on('otree.live.update', function(event, update) { 
@@ -49,26 +47,33 @@ page.on('otree.live.update', function(event, update) {
 
 page.on('otree.live.status', function(event, status) { 
   console.debug("otree.live.status", status);
-  game.status(status);
+
+  if ('stats' in status) {
+    page.update({ progress: status.stats });
+  }
+
+  if (status.completed) {
+    page.update({ status }); // to indicate lost/won results 
+    game.stop(status);
+  }
+
 });
 
+// main
 
-page.reset("status");
 game.reset();
 
 live.send('start');
-await page.wait("otree.live.setup").then(event => { 
-  console.debug("otree.live.setup", event.detail);
-  conf = event.detail;
-  page.update({ conf }); 
+await page.wait("otree.live.setup").then(event => {
+  const conf = event.detail; 
+  console.debug("otree.live.setup", conf);
+  game.reset(conf);
 });
 
 page.toggle({display: null});
-// page.fire("otree.page.start");
+
 await page.wait("otree.page.start"); // for user to press 'start'
 
-let status = await game.playRound({});
+await playRound(game, game.conf);
 
 page.toggle({display: "final"});
-
-console.debug("completed:", status);

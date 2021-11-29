@@ -20,6 +20,7 @@ export class otImg extends Directive {
     if (!!img && !(img instanceof Image)) {
       throw new Error(`Invalid value for image: ${img}`);
     }
+    console.debug("ot-img", this.elem, img);
     setChild(this.elem, img);
   }
 }

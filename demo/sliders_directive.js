@@ -1,4 +1,5 @@
-import { Directive, registerDirective } from "../src/";
+import { directives } from "../src"
+const { Directive, registerDirective } = directives;
 
 const HANDLE_R = 8;
 const HOVER_R = 16;

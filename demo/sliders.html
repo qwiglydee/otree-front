@@ -25,8 +25,8 @@
           <p data-ot-when="status.success==false">You lost!</p>
 
           <p>
-            <span data-ot-text="status.stats.solved"></span> sliders in 
-            <span data-ot-text="status.stats.moves"></span> moves
+            <span data-ot-text="progress.solved"></span> sliders in 
+            <span data-ot-text="progress.moves"></span> moves
           </p>
         </div>
       </div>
@@ -46,16 +46,16 @@
 
       <progress
         data-ot-max="conf.max_moves"
-        data-ot-value="status.stats.moves"
+        data-ot-value="progress.moves"
       ></progress>
       <progress
         data-ot-max="conf.num_sliders"
-        data-ot-value="status.stats.solved"
+        data-ot-value="progress.solved"
       ></progress>
 
     </div>
 
-    <script type="module" src="../src/"></script>
+    <script type="module" src="../src/index.js"></script>
 
     <script type="module" src="./sliders_directive.js"></script>
     <script type="module" src="./sliders_livemock.js"></script>
