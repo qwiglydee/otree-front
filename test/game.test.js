@@ -3,7 +3,7 @@ import { expect, oneEvent, aTimeout, nextFrame } from "@open-wc/testing";
 import { Changes } from "../src/utils/changes";
 
 import { Page } from "../src/page";
-import { Game, iterateRounds, playRound } from "../src/game";
+import { Game } from "../src/game";
 
 describe("Game", () => {
   let body, page, game, detail;
@@ -19,13 +19,9 @@ describe("Game", () => {
   });
 
   it("resets", async () => {
-    game.reset({ foo: "Bar" });
+    game.reset();
 
-    expect(game.conf).to.eql({ foo: "Bar" });
     expect(game.state).to.eql({});
-
-    detail = await pageEvent("otree.page.update");
-    expect(detail).to.eql(new Changes({ conf: { foo: "Bar" } }));
 
     detail = await pageEvent("otree.page.reset");
     expect(detail).to.eq("game");
@@ -99,33 +95,15 @@ describe.only("playing", () => {
     game = new Game(page);
   });
 
-  it("plays a round", async () => {
-    let running = playRound(game, { foo: "Bar" });
-
-    // it resets game
-    expect(game.conf).to.eql({ foo: "Bar" });
-    expect(game.state).to.eql({});
-
-    // it starts game
-    await pageEvent("otree.game.start");
-
-    game.stop({ success: true });
-
-    // it waits for game stop
-    let result = await running;
-
-    expect(result).to.eql({ success: true });
-  });
-
   it("sets up iteration", async () => {
-    let running = iterateRounds(game, { foo: "Bar" }, 2, 0);
+    let running = game.playIterations(2, 0);
 
-    await pageEvent("otree.game.start");
-    expect(game.conf).to.eql({ foo: "Bar", iteration: 1 });
+    detail = await pageEvent("otree.game.start");
+    expect(detail).to.eql({ iteration: 1 });
     game.stop({});
 
-    await pageEvent("otree.game.start");
-    expect(game.conf).to.eql({ foo: "Bar", iteration: 2 });
+    detail = await pageEvent("otree.game.start");
+    expect(detail).to.eql({ iteration: 2 });
     game.stop({});
 
     await running;
@@ -138,7 +116,7 @@ describe.only("playing", () => {
       game.stop({});
     });
 
-    await iterateRounds(game, {}, 10, 0);
+    await game.playIterations(10, 0);
 
     expect(counter).to.eql(10);
   });
@@ -152,7 +130,7 @@ describe.only("playing", () => {
       });
     });
 
-    await iterateRounds(game, {}, 10, 0);
+    await game.playIterations(10, 0);
 
     expect(counter).to.eql(5);
   });
@@ -166,13 +144,13 @@ describe.only("playing", () => {
       });
     });
 
-    await iterateRounds(game, {}, null, 0);
+    await game.playIterations(null, 0);
 
     expect(counter).to.eql(5);
   });
 
   it("makes pauses", async () => {
-    let running = iterateRounds(game, {}, 2, 200);
+    let running = game.playIterations(2, 200);
 
     await pageEvent("otree.game.start");
     game.stop({});
@@ -183,17 +161,19 @@ describe.only("playing", () => {
   });
 
   it("updates progress", async () => {
-    let running = iterateRounds(game, {}, 3, 0);
-
     let progress;
 
     page.on("otree.page.update", (ev, data) => {
       if (data.has('progress')) progress = data.get('progress');
     });
 
+    let running = game.playIterations(3, 0);
+
     // iter 1
 
     await pageEvent("otree.page.reset");
+
+    return;
 
     expect(progress).to.eql({
       total: 3,
@@ -266,6 +246,5 @@ describe.only("playing", () => {
     let result = await running;
 
     expect(result).to.eql(progress);
-
   });
 });

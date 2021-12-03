@@ -1,5 +1,4 @@
 import { utils } from "../src";
-import { iterateRounds } from "../src";
 
 import { generateTrial, validateTrial } from "./trials_data.js";
 
@@ -21,11 +20,10 @@ window.onload = async function main() {
   console.debug("global page:", page);
   console.debug("global game:", game);
 
+  page.on("otree.game.start", async function (event, params) {
+    console.debug("otree.game.start", params);
 
-  page.on("otree.game.start", async function (event, status) {
-    console.debug("otree.game.start", status);
-
-    let trial = generateTrial(game.conf.iteration);
+    let trial = generateTrial(params.iteration);
     trial.stimulus_img = await utils.dom.loadImage(trial.stimulus_img);
 
     game.update(trial);
@@ -106,7 +104,7 @@ window.onload = async function main() {
 
   await page.wait("otree.page.start");
 
-  await iterateRounds(game, CONF, CONF.num_iterations, CONF.iteration_pause);
+  await game.playIterations(CONF.num_iterations, CONF.iteration_pause);
 
   page.toggle({ display: "results" });
 }

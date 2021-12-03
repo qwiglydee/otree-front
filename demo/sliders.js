@@ -1,5 +1,4 @@
 import { utils } from "../src";
-import { playRound } from "../src";
 
 const Ref = utils.changes.Ref;
 
@@ -60,14 +59,14 @@ window.onload = async function main() {
   // main
 
   game.reset();
+  page.toggle({ display: null });
 
   liveSend({ type: "start" }); // expect 'setup'
 
-  page.toggle({ display: null });
-
   await page.wait("otree.page.start"); // for user to press 'start'
 
-  await playRound(game, game.conf);
+  game.start();
+  await page.wait('otree.game.stop');
 
-  page.toggle({ display: "final" });
+  page.toggle({ display: "results" });
 };
