@@ -1,6 +1,6 @@
 import { expect } from "@open-wc/testing";
 
-import { Ref, Changes } from "../../src/utils/changes";
+import { Ref, Changes } from "../src/utils/changes";
 
 describe("refs", () => {
 
