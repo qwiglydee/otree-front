@@ -30,7 +30,7 @@ class otWhen extends Directive {
 
   update(changes) {
     let value = changes.pick(this.ref);
-
+    console.debug("ot-when", this.ref, this.cond, value);
     // for ot-when="fld" -- any true-like
     // for ot-when="fld=val" -- any non-strict equivalent
     let toggle = (this.cond !== undefined) ? value == this.cond : !!value;  

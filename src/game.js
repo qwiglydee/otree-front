@@ -63,7 +63,7 @@ export class Game {
    * @fires Game.start
    */
   start(params) {
-    this.page.fire("otree.game.start", params);
+    this.page.fire("ot.started", params);
   }
 
   /**
@@ -73,27 +73,26 @@ export class Game {
    * @fires Game.status
    */
   status(status) {
-    this.page.fire("otree.game.status", status);
+    this.page.fire("ot.status", status);
   }
 
   /**
-   * Signals game stopped.
+   * Signals game completed.
    *
-   * @param {object} status flags
+   * @param {object} results some result flags.
    * @fires Game.stop
    */
-  stop(status) {
-    this.page.fire("otree.game.stop", status);
+  complete(result) {
+    this.page.fire("ot.completed", result);
   }
 
   /**
-   * Indicate some error, relevant to user.
-   *
-   * Triggers status event with `{ error: { code, message } }`
+   * Triggers an error event and update of `{ error: { code, message } }`
    *
    * @param {string} code
    * @param {string} message
-   * @fires Game.status
+   * @fires Game.error
+   * @fires Page.update
    */
   error(code, message) {
     let error = { code, message };
@@ -101,47 +100,30 @@ export class Game {
       error = null;
     }
 
-    this.page.fire("otree.game.error", error);
+    this.page.fire("ot.error", error);
     this.page.update({ error });
   }
 
   /**
-   * Disables inputs.
-   *
-   * Used to prevent sending input when it's not allowed.
-   *
-   * This overrides input flag from recent phase.
-   *
-   * @fires Schedule.phase
+   * Plays a game (single round)
+   * 
+   * @param {object} params to pass to `game.start()` 
+   * @returns {Promise} resolving when game completes  
    */
-  freeze() {
-    // FIXME: this interferes with actual time phases
-    this.page.fire("otree.time.phase", { input: false });
-  }
-
-  /**
-   * Enables inputs.
-   *
-   * Used to restore input, when game round is continuing.
-   *
-   * This overrides input flag from recent phase.
-   *
-   * @fires Schedule.phase
-   */
-  unfreeze() {
-    // FIXME: this interferes with actual time phases
-    this.page.fire("otree.time.phase", { input: true });
+  async play(params) {
+    this.reset();
+    this.start(params);
+    let result = (await this.page.wait("ot.completed")).detail;
+    return result;
   }
 
   /**
    * Runs multiple game rounds, or an infinite loop.
-   * Each iteration calls `this.start({ iteration: i })` and waits for `otree.game.stop`  
-   * 
-   * Updates page with progress = {@link Progress}
+   * Each iteration calls `this.start({ iteration: i })` and waits for `ot.completed`
    *
-   * The iterator expects final status (reported by `game.stop`) to contain:
-   * - {bool} `success`: indicating if the round is successful/won
-   * - {bool} `terminate`: indicateing that the loop should be terminated
+   * The iterator expects final result (reported by `game.complete`) to contain:
+   * - {bool} `success`: indicating to count solved/failed iterations
+   * - {bool} `terminate`: signalling that the loop should be terminated
    *
    * @param {number|null} num_rounds number of rounds to play or null for infinite
    * @param {number} trial_pause pause between rounds in ms
@@ -167,9 +149,7 @@ export class Game {
 
       this.page.update({ progress });
 
-      this.reset();
-      this.start({ iteration: i });
-      status = (await this.page.wait("otree.game.stop")).detail;
+      status = await this.play({ iteration: i });
 
       progress.completed += 1;
       progress.solved += status.success === true;
@@ -182,17 +162,70 @@ export class Game {
 
     return progress;
   }
-}
 
-/**
- * An arbitrary set of flags and fields indicating state of a game process.
- *
- * The status is ephemeral data and only exists in events. It does not reflect to page.
- *
- * @typedef {object} Status
- * @property {bool} [success] indicates that game was sucessful (won)
- * @property {bool} [terminate] indicates termination of iterations loop
- */
+  /**
+   * Sets handler for {@link Game.event:started}
+   * 
+   * @type {Game~onStart} 
+   */
+  set onStart(fn) {
+    this.page.on("ot.started", (ev) => fn(ev.detail));
+  }
+
+  /**
+   * Sets handler for {@link Game.status}
+   * 
+   * @type {Game~onStatus} 
+   */
+  set onStatus(fn) {
+    this.page.on("ot.status", (ev) => fn(ev.detail));
+  }
+
+  /**
+   * Sets handler for {@link Game.error}
+   * 
+   * @type {Game~onError} 
+   */
+  set onError(fn) {
+    this.page.on("ot.error", (ev) => fn(ev.detail));
+  }
+
+  /**
+   * Sets handler for {@link Game.completed}
+   * 
+   * @type {Game~onCompleted} 
+   */
+  set onComplete(fn) {
+    this.page.on("ot.completed", (ev) => fn(ev.detail));
+  }
+
+  /**
+   * Sets handler for {@link Schedule.phase}
+   * 
+   * @type {Game~onPhase} 
+   */
+  set onPhase(fn) {
+    this.page.on("ot.phase", (ev) => fn(ev.detail));
+  }
+
+  /**
+   * Sets handler for {@link Schedule.timeout}
+   * 
+   * @type {Game~onTimeout} 
+   */
+  set onTimeout(fn) {
+    this.page.on("ot.timeout", (ev) => fn(ev.detail));
+  }
+
+  /**
+   * Sets handler for {@link Page.input}
+   * 
+   * @type {Game~onInput} 
+   */
+  set onInput(fn) {
+    this.page.on("ot.input", (ev) => fn(ev.detail));
+  }
+}
 
 /**
  * A progress during iterations loop.
@@ -206,33 +239,62 @@ export class Game {
  */
 
 /**
+ * Indicates that a game (or something else) has been reset.
+ *
+ * @event Game.reset
+ * @property {string} type `ot.reset`
+ * @property {string} detail an object being reset, i.e. 'game' or 'progress'
+ */
+
+
+/**
  * Indicates a game has started.
  *
- * @event Game.start
- * @property {string} type `otree.game.start`
- * @property {Status} detail status flags
+ * @event Game.started
+ * @property {string} type `ot.started`
+ * @property {params} detail some params, like `{ iteration: i }`
  */
 
 /**
- * Indicates that gameplay process state changed.
+ * @callback Game~onStart
+ * @param {object} params some staring params such as provided by {@link Game.start}
+ */
+
+/**
+ * Indicates some game conditions changed.
  *
  * @event Game.status
- * @property {string} type `otree.game.status`
- * @property {Status} detail status flags
+ * @property {string} type `ot.status`
+ * @property {object} detail some flags
+ */
+
+/**
+ * @callback Game~onStatus
+ * @param {object} status some staring params provided by `game.status`
  */
 
 /**
  * Indicates an error (relvant to user) happend.
  *
  * @event Game.error
- * @property {string} type `otree.game.error`
+ * @property {string} type `ot.error`
  * @property {object|null} detail contains `code` and `message`, or null for reseting error
  */
 
 /**
- * Indicates a game has stopped.
+ * @callback Game~onError
+ * @param {object} error `{ code, message}`
+ */
+
+/**
+ * Indicates a game has completed.
  *
- * @event Game.stop
- * @property {string} type `otree.game.stop`
- * @property {Status} detail final status flags
+ * @event Game.completed
+ * @property {string} type `ot.completed`
+ * @property {object} detail result data indicating game outcome
+ */
+
+/**
+ * @callback Game~onCompleted
+ * @param {object} result 
  */

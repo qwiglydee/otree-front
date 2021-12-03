@@ -17,11 +17,11 @@ describe("ot-display", () => {
     });
 
     it("switches", async () => {
-      page.fire('otree.time.phase', { display: "foo" });
+      page.fire('ot.phase', { display: "foo" });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
 
-      page.fire('otree.time.phase', { display: "bar" });
+      page.fire('ot.phase', { display: "bar" });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -37,15 +37,15 @@ describe("ot-display", () => {
     });
 
     it("switches", async () => {
-      page.fire('otree.time.phase', { display: "foo" });
+      page.fire('ot.phase', { display: "foo" });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
 
-      page.fire('otree.time.phase', { display: "bar" });
+      page.fire('ot.phase', { display: "bar" });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
 
-      page.fire('otree.time.phase', { display: "baz" });
+      page.fire('ot.phase', { display: "baz" });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });

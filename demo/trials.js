@@ -20,8 +20,8 @@ window.onload = async function main() {
   console.debug("global page:", page);
   console.debug("global game:", game);
 
-  page.on("otree.game.start", async function (event, params) {
-    console.debug("otree.game.start", params);
+  game.onStart = async function (params) {
+    console.debug("start", params);
 
     let trial = generateTrial(params.iteration);
     trial.stimulus_img = await utils.dom.loadImage(trial.stimulus_img);
@@ -32,23 +32,23 @@ window.onload = async function main() {
     performance.clearMarks();
     performance.clearMeasures();
     schedule.run(PHASES);
-  });
+  };
 
-  page.on("otree.time.phase", (event, phase) => {
+  game.onPhase = function(phase) {
     if (phase.input) {
       performance.mark("input");
     }
-  });
+  };
 
-  page.on("otree.page.response", function (event, input) {
-    console.debug("otree.page.response", input);
+  game.onInput = function (input) {
+    console.debug("input", input);
 
     performance.mark("response");
     performance.measure("reaction_time", "input", "response");
     let measure = performance.getEntriesByName("reaction_time").pop();
     console.debug("reaction:", measure.duration);
 
-    game.freeze();
+    page.freeze();
 
     let response = input.response;
 
@@ -59,50 +59,37 @@ window.onload = async function main() {
     game.update({ feedback });
 
     if (feedback) {
-      game.stop({ success: feedback });
+      game.complete({ success: feedback });
     } else if (game.state.retries == CONF.num_retries) {
-      game.stop({});
+      game.complete({});
     } else {
       // continue round
-      game.unfreeze();
+      page.unfreeze();
     }
-  });
+  };
 
-  page.on("otree.time.out", function () {
-    console.debug("otree.time.out");
-    game.freeze();
+  game.onTimeout = function () {
+    page.freeze();
 
     if (game.state.feedback !== undefined) {
       // already has answered
-      game.stop({ success: game.state.feedback });
+      game.complete({ success: game.state.feedback });
     } else {
       game.update({ timeout: true });
-      game.stop({ timeout: true });
+      game.complete({ timeout: true });
     }
-  });
+  };
 
-  page.on("otree.game.stop", async function (event, status) {
-    console.debug("otree.game.stop", status);
+  game.onComplete = function (result) {
+    console.debug("completed", result);
     schedule.cancel();
     page.toggle({display: 'target'});
-  });
-
-  page.on("otree.game.reset", async function (event, detail) {
-    console.debug("otree.game.reset", setail);
-  });
-
-  page.on("otree.time.phase", async function (event, phase) {
-    console.debug("otree.time.phase", phase);
-  });
-
-  page.on("otree.page.update", async function (event, changes) {
-    console.debug("otree.page.update", changes);
-  });
+  };
 
   game.reset();
   page.toggle({ display: null, input: false});
 
-  await page.wait("otree.page.start");
+  await page.wait("ot.ready");
 
   await game.playIterations(CONF.num_iterations, CONF.iteration_pause);
 

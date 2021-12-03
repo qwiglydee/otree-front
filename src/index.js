@@ -27,3 +27,7 @@ window.addEventListener('load', function() {
   window.game = new Game(window.page);
   window.schedule = new Schedule(window.page);
 });
+
+
+
+

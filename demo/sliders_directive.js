@@ -31,7 +31,7 @@ class Slider extends Directive {
   }
 
   setup() {
-    this.on("otree.page.update", this.onUpdate);
+    this.on("ot.update", this.onUpdate);
     // TODO: add hover/pick/drag
     this.on("mousemove", this.onMouseMove, this.elem);
     this.on("mouseout", this.onMouseOut, this.elem);
@@ -168,7 +168,7 @@ class Slider extends Directive {
   }
 
   drop() {
-    this.page.response({ idx: this.idx, value: this.value });
+    this.page.input({ idx: this.idx, value: this.value });
   }
 }
 

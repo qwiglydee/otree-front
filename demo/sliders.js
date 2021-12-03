@@ -1,51 +1,56 @@
 import { utils } from "../src";
 
-const Ref = utils.changes.Ref;
+window.liveRecv = function(data) {
+  console.debug("liveRecv", data.type, data);
 
-let conf;
-
-window.liveRecv = async function(data) {
-  console.debug("liveRecv", data);
   switch (data.type) {
     case "setup":
-      conf = data.conf;
-      page.update({ conf: data.conf, progress: data.status.stats });
+      game.setupGame(data.setup);
       break;
 
     case "game":
-      let sliders = data.sliders;
-   
-      // need to load all images into Image objects
-      for (let i = 0; i < conf.num_sliders; i++) {
-        sliders[i].background = await utils.dom.loadImage(sliders[i].background);
-        sliders[i].idx = i;
-        sliders[i].valid = true;
-      }
-
-      game.update({ sliders });
-      page.update({ progress: data.status.stats });
+      game.loadGame(data.game);
       break;
 
     case "update":
       game.update(data.update);
-      page.update({ progress: data.status.stats });
-      if (data.status.completed) {
-        page.update({ result: data.status });
-        game.stop(data.status);
-      }
       break;
   }
-}
+
+  if (data.status) {
+    game.status(data.status);
+  }
+};
 
 window.onload = async function main() {
+  let conf = {};
+  
+  // ad-hoc method
+  game.setupGame = function(setup) {
+    conf = setup;
+    page.update({ conf: conf, progress: { moves: 0, solved: 0 }, active: undefined});
+  }
 
-  page.on("otree.game.start", async function (event, status) {
-    console.debug("otree.game.start", status);
-    liveSend({ type: "load" }); // expect 'game'
-  });
+  game.onStart = function () {
+    liveSend({ type: "load" }); // expect live 'game'
+  };
 
-  page.on("otree.page.response", function (event, input) {
-    console.debug("otree.page.response", input);
+  // ad-hoc method
+  game.loadGame = async function(gamedata) {
+    let sliders = gamedata.sliders;
+
+    // need to load all images into Image objects
+    for (let i = 0; i < conf.num_sliders; i++) {
+      sliders[i].background = await utils.dom.loadImage(sliders[i].background);
+      sliders[i].idx = i;
+      sliders[i].valid = true;
+    }
+
+    game.update({ sliders });
+  }
+
+  game.onInput = function (input) {
+    console.debug("input", input);
     let { idx, value } = input;
 
     game.update({
@@ -53,20 +58,42 @@ window.onload = async function main() {
       [`sliders.${idx}.valid`]: null,
     });
 
-    liveSend({ type: "response", slider: idx, input: value }); // expect 'update'
-  });
+    liveSend({ type: "response", slider: idx, input: value }); // expect live 'update'
+  };
+
+  game.onStatus = function (status) {
+    
+    if (status.progress) {
+      page.update({ progress: status.progress });
+    }
+
+    // for turn-based variation
+    if (status.active_player) {
+      if (status.active_player == conf.this_player) {
+        page.unfreeze();
+        page.update({ active: true });
+      } else {
+        page.freeze();
+        page.update({ active: false });
+      }
+    }
+
+    if (status.completed) {
+      page.update({ result: status });
+      game.completed(status);
+    }
+  };
 
   // main
 
-  game.reset();
   page.toggle({ display: null });
+  // game.reset();
 
-  liveSend({ type: "start" }); // expect 'setup'
+  await page.wait("ot.ready");
 
-  await page.wait("otree.page.start"); // for user to press 'start'
+  liveSend({ type: "start" }); // expect live 'setup'
 
-  game.start();
-  await page.wait('otree.game.stop');
+  await game.play();
 
   page.toggle({ display: "results" });
 };

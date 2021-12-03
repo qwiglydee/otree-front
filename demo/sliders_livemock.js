@@ -17,26 +17,26 @@ const CONF = {
 }
 
 let puzzle;
-let stats;
+let progress;
 
 
 function mocksend(message) {
   // console.debug("live", message);
   switch (message.type) {
     case "start":
-      mockrecv({ type: "setup", conf: CONF, status: { stats } });
+      mockrecv({ type: "setup", setup : CONF, status: { progress } });
       break;
 
     case "load":
       puzzle = generatePuzzle(CONF.num_sliders);
-      stats = { moves: 0, errors: 0, solved: 0 };
-      mockrecv({ type: "game", sliders: puzzle.sliders, status: { stats }});
-      delay(otherplayer, Math.random() * 5000 + 5000);
+      progress = { moves: 0, errors: 0, solved: 0 };
+      mockrecv({ type: "game", game: { sliders: puzzle }, status: { progress }});
+      // delay(otherplayer, Math.random() * 5000 + 5000);
       break;
 
     case "response":
       let { slider: idx, input } = message;
-      let { valid, value, correct } = validateSlider(puzzle.sliders[idx], input);
+      let { valid, value, correct } = validateSlider(puzzle[idx], input);
 
       let update = {
         [`sliders.${idx}.value`]: value,
@@ -44,30 +44,30 @@ function mocksend(message) {
         [`sliders.${idx}.valid`]: valid,
       };
 
-      stats.moves ++;
+      progress.moves ++;
 
-      if (!valid || !correct ) stats.errors ++;
+      if (!valid || !correct ) progress.errors ++;
 
       if (valid) {
-        puzzle.sliders[idx].value = value;
-        puzzle.sliders[idx].correct = correct;
+        puzzle[idx].value = value;
+        puzzle[idx].correct = correct;
       }
 
-      stats.solved = validatePuzzle(puzzle);
-      let success = stats.solved == CONF.num_sliders
-      let completed = success || stats.moves == CONF.max_moves;
+      progress.solved = validatePuzzle(puzzle);
+      let success = progress.solved == CONF.num_sliders
+      let completed = success || progress.moves == CONF.max_moves;
 
       if (completed) cancel(otherplayertimer);
 
-      mockrecv({ type: "update", update, status: { completed, success, stats }});
+      mockrecv({ type: "update", update, status: { completed, success, progress }});
     }
 };
 
 
 let otherplayertimer;
 function otherplayer() {
-  let idx = Math.floor(Math.random()*puzzle.sliders.length);
-  let input = Math.floor(Math.random() * 50 - 25) * 4 + puzzle.sliders[idx].target;
+  let idx = Math.floor(Math.random()*puzzle.length);
+  let input = Math.floor(Math.random() * 50 - 25) * 4 + puzzle[idx].target;
   mocksend({ type: 'response', slider: idx, input: input});
 
   otherplayertimer = delay(otherplayer, Math.random() * 5000 + 1000);

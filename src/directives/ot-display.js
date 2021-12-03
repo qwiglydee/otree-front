@@ -23,7 +23,7 @@ class otDisplay extends Directive {
   }
 
   setup() {
-    this.on('otree.time.phase', this.onPhase);
+    this.on('ot.phase', this.onPhase);
   }
   
   onPhase(event, phase) {

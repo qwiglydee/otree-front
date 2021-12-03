@@ -68,7 +68,7 @@ export function generatePuzzle(num_sliders) {
     sliders[i].correct = false;
   }
 
-  return { sliders };
+  return sliders;
 }
 
 export function validateSlider(slider, input) {
@@ -83,5 +83,5 @@ export function validateSlider(slider, input) {
 }
 
 export function validatePuzzle(puzzle) {
-  return puzzle.sliders.filter(slider => slider.correct).length;
+  return puzzle.filter(slider => slider.correct).length;
 }

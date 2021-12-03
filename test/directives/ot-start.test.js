@@ -24,19 +24,19 @@ describe("ot-start", () => {
 
   it("triggers on key", async () => {
     page.body.dispatchEvent(new KeyboardEvent("keydown", { ...EVENT_DEFAULTS, code: "Space" }));
-    await oneEvent(page.body, "otree.page.start");
+    await oneEvent(page.body, "ot.ready");
     expect(elem).not.to.be.displayed;
   });
 
   it("triggers on touch", async () => {
     elem.dispatchEvent(new TouchEvent("touchend", EVENT_DEFAULTS));
-    await oneEvent(page.body, "otree.page.start");
+    await oneEvent(page.body, "ot.ready");
     expect(elem).not.to.be.displayed;
   });
 
   it("triggers on click", async () => {
     elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
-    await oneEvent(page.body, "otree.page.start");
+    await oneEvent(page.body, "ot.ready");
     expect(elem).not.to.be.displayed;
   });
 

@@ -28,20 +28,20 @@ class otStart extends Directive {
     if (this.trigger.key) this.on("keydown", this.onKey, this.page);
     if (this.trigger.touch) this.on("touchend", this.onClick, this.elem);
     if (this.trigger.click) this.on("click", this.onClick, this.elem);
-    this.on('otree.page.start', this.onStart);
+    this.on('ot.ready', this.onStart);
   }
 
   onKey(event) {
     if (this.disabled) return;
     if (event.code != this.trigger.key) return;
     event.preventDefault();
-    this.page.start(); 
+    this.page.fire('ot.ready'); 
   }
 
   onClick(event) {
     if (this.disabled) return;
     event.preventDefault();
-    this.page.start();
+    this.page.fire('ot.ready'); 
   }
 
   onStart() {

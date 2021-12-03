@@ -18,17 +18,17 @@ describe("Page", () => {
 
   it("resets", async () => {
     page.reset();
-    detail = await pageEvent("otree.page.reset");
+    detail = await pageEvent("ot.reset");
     expect(detail).to.eq("game");
-    detail = await pageEvent("otree.page.update");
+    detail = await pageEvent("ot.update");
     expect(detail).to.eql(new Changes({ game: undefined }));
   });
 
   it("resets custom obj", async () => {
     page.reset("status.progress");
-    detail = await pageEvent("otree.page.reset");
+    detail = await pageEvent("ot.reset");
     expect(detail).to.eq("status.progress");
-    detail = await pageEvent("otree.page.update");
+    detail = await pageEvent("ot.update");
     expect(detail).to.eql(new Changes({ "status.progress": undefined }));
   });
 
@@ -38,34 +38,39 @@ describe("Page", () => {
   //   expect(detail).to.eql({ bar: "Bar" });
   // });
 
-  it("start", async () => {
-    page.start();
-    detail = await pageEvent("otree.page.start");
-    expect(detail).to.be.null;
-  });
-
   it("update", async () => {
     page.update({ foo: "Foo" });
-    detail = await pageEvent("otree.page.update");
+    detail = await pageEvent("ot.update");
     expect(detail).to.eql(new Changes({ foo: "Foo" }));
   });
 
-  it("response", async () => {
-    page.response({ foo: "Foo" });
-    detail = await pageEvent("otree.page.response");
+  it("input", async () => {
+    page.input({ foo: "Foo" });
+    detail = await pageEvent("ot.input");
     expect(detail).to.eql({ foo: "Foo" });
   });
-
 
   it("toggle", async () => {
     page.toggle({ foo: "Foo" });
-    detail = await pageEvent("otree.time.phase");
+    detail = await pageEvent("ot.phase");
     expect(detail).to.eql({ foo: "Foo" });
   });
 
-  it("ttimeout", async () => {
+  it("timeout", async () => {
     page.timeout();
-    await pageEvent("otree.time.out");
+    await pageEvent("ot.timeout");
+  });
+
+  it("freezes", async () => {
+    page.freeze();
+    detail = await pageEvent("ot.phase");
+    expect(detail).to.eql({ input: false });
+  });
+
+  it("unfreezes", async () => {
+    page.unfreeze();
+    detail = await pageEvent("ot.phase");
+    expect(detail).to.eql({ input: true });
   });
 
 
@@ -199,7 +204,4 @@ describe("events", () => {
       expect(result).to.be.instanceof(CustomEvent);
     });
   });
-
-
-
 });

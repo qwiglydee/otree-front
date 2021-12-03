@@ -90,7 +90,7 @@ export class Directive {
    * Default implementation sets up `update` handler to check if `this.ref` is affected and to call `this.update`
    */
   setup() {
-    this.on('otree.page.update', this.onUpdate);
+    this.on('ot.update', this.onUpdate);
   }
   
   onUpdate(event, changes) {

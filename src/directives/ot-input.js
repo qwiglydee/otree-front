@@ -24,7 +24,7 @@ class otRealInput extends Directive {
   }
 
   setup() {
-    this.on("otree.time.phase", this.onPhase);
+    this.on("ot.phase", this.onPhase);
     this.on("change", this.onChange, this.elem);
     if (isTextInput(this.elem)) this.on("keydown", this.onKey, this.elem);
   }
@@ -37,7 +37,7 @@ class otRealInput extends Directive {
     let value = this.elem.value;
     if (value === "true") value = true;
     if (value === "false") value = false;
-    this.page.response({ [this.ref]: value });
+    this.page.input({ [this.ref]: value });
   }
 
   onKey(event) {
@@ -107,7 +107,7 @@ class otCustomInput extends Directive {
   }
 
   setup() {
-    this.on("otree.time.phase", this.onPhase);
+    this.on("ot.phase", this.onPhase);
     if (this.trigger.key) this.on("keydown", this.onKey, this.page);
     if (this.trigger.touch) this.on("touchend", this.onClick, this.elem);
     if (this.trigger.click) this.on("click", this.onClick, this.elem);
@@ -121,14 +121,14 @@ class otCustomInput extends Directive {
   onClick(event) {
     if (isDisabled(this.elem)) return;
     event.preventDefault();
-    this.page.response({ [this.ref]: this.val });  
+    this.page.input({ [this.ref]: this.val });  
   }
 
   onKey(event) {
     if (isDisabled(this.elem)) return;
     if (event.code != this.trigger.key) return;
     event.preventDefault();
-    this.page.response({ [this.ref]: this.val });  
+    this.page.input({ [this.ref]: this.val });  
   }
 }
 

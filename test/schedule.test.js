@@ -26,15 +26,15 @@ describe("schedule", () => {
         { time: 200, foo: "foo2" },
       ]);
 
-      detail = await pageEvent("otree.time.phase");
+      detail = await pageEvent("ot.phase");
       expect(detail).to.eql({ time: 0, foo: "foo0" });
       expect(Date.now() - t0).to.be.within(0, 10);
 
-      detail = await pageEvent("otree.time.phase");
+      detail = await pageEvent("ot.phase");
       expect(detail).to.eql({ time: 100, foo: "foo1" });
       expect(Date.now() - t0).to.be.within(100, 110);
 
-      detail = await pageEvent("otree.time.phase");
+      detail = await pageEvent("ot.phase");
       expect(detail).to.eql({ time: 200, foo: "foo2" });
       expect(Date.now() - t0).to.be.within(200, 210);
     });
@@ -47,13 +47,13 @@ describe("schedule", () => {
         { time: 200, foo: "foo2" },
       ]);
 
-      detail = await pageEvent("otree.time.phase");
+      detail = await pageEvent("ot.phase");
       expect(detail).to.eql({ time: 100, foo: "foo1", timeout: 500 });
 
-      detail = await pageEvent("otree.time.phase");
+      detail = await pageEvent("ot.phase");
       expect(detail).to.eql({ time: 200, foo: "foo2" });
 
-      detail = await pageEvent("otree.time.out");
+      detail = await pageEvent("ot.timeout");
       expect(detail).to.be.null;
       expect(Date.now() - t0).to.be.within(600, 610);
     });
@@ -61,7 +61,7 @@ describe("schedule", () => {
     it("cancels timers after timeout", async () => {
       let counter = 0;
 
-      page.on("otree.time.phase", () => counter++);
+      page.on("ot.phase", () => counter++);
 
       schedule.run([
         { time: 100, foo: "foo1", timeout: 500 },
@@ -69,7 +69,7 @@ describe("schedule", () => {
         { time: 600, foo: "foo6" },
       ]);
 
-      detail = await pageEvent("otree.time.out");
+      detail = await pageEvent("ot.timeout");
       expect(counter).to.eq(2);
 
       await aTimeout(1000);
