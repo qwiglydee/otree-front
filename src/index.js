@@ -20,11 +20,12 @@ import "./directives/ot-when";
 
 import { Page } from "./page";
 import { Game } from "./game";
+import { Schedule } from "./schedule";
 
 window.addEventListener('load', function() {
   window.page = new Page(document.body);
-  window.game = new Game(window.page); 
+  window.game = new Game(window.page);
+  window.schedule = new Schedule(window.page);
 });
 
 export { playRound, iterateRounds } from "./game";
-export * from "./schedule";
