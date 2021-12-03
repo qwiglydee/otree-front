@@ -35,7 +35,6 @@ export class Game {
    */
   reset(conf) {
     this.conf = conf;
-    this.page.update({ conf });
     this.state = {};
     this.page.reset("game");
   }

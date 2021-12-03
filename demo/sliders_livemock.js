@@ -24,14 +24,13 @@ function mocksend(message) {
   // console.debug("live", message);
   switch (message.type) {
     case "start":
-      mockrecv({ type: "setup", ...CONF });
+      mockrecv({ type: "setup", conf: CONF, status: { stats } });
       break;
 
     case "load":
       puzzle = generatePuzzle(CONF.num_sliders);
       stats = { moves: 0, errors: 0, solved: 0 };
-      mockrecv({ type: "game", ...puzzle });
-      mockrecv({ type: "status", stats });
+      mockrecv({ type: "game", sliders: puzzle.sliders, status: { stats }});
       delay(otherplayer, Math.random() * 5000 + 5000);
       break;
 
@@ -44,8 +43,6 @@ function mocksend(message) {
         [`sliders.${idx}.correct`]: correct,
         [`sliders.${idx}.valid`]: valid,
       };
-
-      mockrecv({ type: "update", ...update });
 
       stats.moves ++;
 
@@ -60,10 +57,10 @@ function mocksend(message) {
       let success = stats.solved == CONF.num_sliders
       let completed = success || stats.moves == CONF.max_moves;
 
-      mockrecv({ type: "status", completed, success, stats });
-
       if (completed) cancel(otherplayertimer);
-  }
+
+      mockrecv({ type: "update", update, status: { completed, success, stats }});
+    }
 };
 
 

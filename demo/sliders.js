@@ -1,28 +1,48 @@
 import { utils } from "../src";
 import { playRound } from "../src";
-import { Live } from "../src/live";
 
 const Ref = utils.changes.Ref;
 
+let conf;
+
+window.liveRecv = async function(data) {
+  console.debug("liveRecv", data);
+  switch (data.type) {
+    case "setup":
+      conf = data.conf;
+      page.update({ conf: data.conf, progress: data.status.stats });
+      break;
+
+    case "game":
+      let sliders = data.sliders;
+   
+      // need to load all images into Image objects
+      for (let i = 0; i < conf.num_sliders; i++) {
+        sliders[i].background = await utils.dom.loadImage(sliders[i].background);
+        sliders[i].idx = i;
+        sliders[i].valid = true;
+      }
+
+      game.update({ sliders });
+      page.update({ progress: data.status.stats });
+      break;
+
+    case "update":
+      game.update(data.update);
+      page.update({ progress: data.status.stats });
+      if (data.status.completed) {
+        page.update({ result: data.status });
+        game.stop(data.status);
+      }
+      break;
+  }
+}
+
 window.onload = async function main() {
-  const live = new Live(page);
 
   page.on("otree.game.start", async function (event, status) {
     console.debug("otree.game.start", status);
-    live.send("load"); // → live.game
-  });
-
-  page.on("otree.live.game", async function (event, puzzle) {
-    console.debug("otree.live.game", puzzle);
-
-    // need to load all images into Image objects
-    for (let i = 0; i < game.conf.num_sliders; i++) {
-      puzzle.sliders[i].background = await utils.dom.loadImage(puzzle.sliders[i].background);
-      puzzle.sliders[i].idx = i;
-      puzzle.sliders[i].valid = true;
-    }
-
-    game.update(puzzle);
+    liveSend({ type: "load" }); // expect 'game'
   });
 
   page.on("otree.page.response", function (event, input) {
@@ -34,37 +54,14 @@ window.onload = async function main() {
       [`sliders.${idx}.valid`]: null,
     });
 
-    live.send("response", { slider: idx, input: value }); // → live.update, live.status
-  });
-
-  page.on("otree.live.update", function (event, update) {
-    console.debug("otree.live.update", update);
-    game.update(update);
-  });
-
-  page.on("otree.live.status", function (event, status) {
-    console.debug("otree.live.status", status);
-
-    if ("stats" in status) {
-      page.update({ progress: status.stats });
-    }
-
-    if (status.completed) {
-      page.update({ status }); // to indicate lost/won results
-      game.stop(status);
-    }
+    liveSend({ type: "response", slider: idx, input: value }); // expect 'update'
   });
 
   // main
 
   game.reset();
 
-  live.send("start");
-  await page.wait("otree.live.setup").then((event) => {
-    const conf = event.detail;
-    console.debug("otree.live.setup", conf);
-    game.reset(conf);
-  });
+  liveSend({ type: "start" }); // expect 'setup'
 
   page.toggle({ display: null });
 
