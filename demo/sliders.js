@@ -1,75 +1,76 @@
 import { utils } from "../src";
-import { Page, Live, Game, playRound } from "../src";
+import { playRound } from "../src";
+import { Live } from "../src/live";
+
 const Ref = utils.changes.Ref;
 
-const page = new Page();
-const live = new Live(page);
-const game = new Game(page);
+window.onload = async function main() {
+  const live = new Live(page);
 
-page.on("otree.game.start", async function(event, status) {
-  console.debug("otree.game.start", status);
-  live.send("load"); // → live.game
-});
-
-page.on("otree.live.game", async function(event, puzzle) {
-  console.debug("otree.live.game", puzzle);
-
-  // need to load all images into Image objects
-  for (let i = 0; i < game.conf.num_sliders; i++) {
-    puzzle.sliders[i].background = await utils.dom.loadImage(puzzle.sliders[i].background);
-    puzzle.sliders[i].idx = i;
-    puzzle.sliders[i].valid = true;
-  }
-
-  game.update(puzzle);
-});
-
-page.on("otree.page.response", function (event, input) {
-  console.debug("otree.page.response", input);
-  let { idx, value } = input;
-
-  game.update({
-    [`sliders.${idx}.value`]: value,
-    [`sliders.${idx}.valid`]: null,
+  page.on("otree.game.start", async function (event, status) {
+    console.debug("otree.game.start", status);
+    live.send("load"); // → live.game
   });
 
-  live.send('response', { slider: idx, input: value }); // → live.update, live.status
-});
+  page.on("otree.live.game", async function (event, puzzle) {
+    console.debug("otree.live.game", puzzle);
 
-page.on('otree.live.update', function(event, update) { 
-  console.debug("otree.live.update", update);
-  game.update(update);
-});
+    // need to load all images into Image objects
+    for (let i = 0; i < game.conf.num_sliders; i++) {
+      puzzle.sliders[i].background = await utils.dom.loadImage(puzzle.sliders[i].background);
+      puzzle.sliders[i].idx = i;
+      puzzle.sliders[i].valid = true;
+    }
 
-page.on('otree.live.status', function(event, status) { 
-  console.debug("otree.live.status", status);
+    game.update(puzzle);
+  });
 
-  if ('stats' in status) {
-    page.update({ progress: status.stats });
-  }
+  page.on("otree.page.response", function (event, input) {
+    console.debug("otree.page.response", input);
+    let { idx, value } = input;
 
-  if (status.completed) {
-    page.update({ status }); // to indicate lost/won results 
-    game.stop(status);
-  }
+    game.update({
+      [`sliders.${idx}.value`]: value,
+      [`sliders.${idx}.valid`]: null,
+    });
 
-});
+    live.send("response", { slider: idx, input: value }); // → live.update, live.status
+  });
 
-// main
+  page.on("otree.live.update", function (event, update) {
+    console.debug("otree.live.update", update);
+    game.update(update);
+  });
 
-game.reset();
+  page.on("otree.live.status", function (event, status) {
+    console.debug("otree.live.status", status);
 
-live.send('start');
-await page.wait("otree.live.setup").then(event => {
-  const conf = event.detail; 
-  console.debug("otree.live.setup", conf);
-  game.reset(conf);
-});
+    if ("stats" in status) {
+      page.update({ progress: status.stats });
+    }
 
-page.toggle({display: null});
+    if (status.completed) {
+      page.update({ status }); // to indicate lost/won results
+      game.stop(status);
+    }
+  });
 
-await page.wait("otree.page.start"); // for user to press 'start'
+  // main
 
-await playRound(game, game.conf);
+  game.reset();
 
-page.toggle({display: "final"});
+  live.send("start");
+  await page.wait("otree.live.setup").then((event) => {
+    const conf = event.detail;
+    console.debug("otree.live.setup", conf);
+    game.reset(conf);
+  });
+
+  page.toggle({ display: null });
+
+  await page.wait("otree.page.start"); // for user to press 'start'
+
+  await playRound(game, game.conf);
+
+  page.toggle({ display: "final" });
+};

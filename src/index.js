@@ -1,7 +1,11 @@
-export * from "./page";
-export * from "./game";
-export * from "./live";
-export * from "./schedule";
+import * as changes from "./utils/changes"; 
+import * as dom from "./utils/dom";
+import * as random from "./utils/random";
+import * as timers from "./utils/timers";
+
+export const utils = {
+  dom, random, changes, timers
+};
 
 export * as directives from "./directives/base";
 // directives register themselves
@@ -14,12 +18,13 @@ import "./directives/ot-img";
 import "./directives/ot-attr";
 import "./directives/ot-when";
 
-import * as changes from "./utils/changes"; 
-import * as dom from "./utils/dom";
-import * as random from "./utils/random";
-import * as timers from "./utils/timers";
+import { Page } from "./page";
+import { Game } from "./game";
 
-export const utils = {
-  dom, random, changes, timers
-};
+window.addEventListener('load', function() {
+  window.page = new Page(document.body);
+  window.game = new Game(window.page); 
+});
 
+export { playRound, iterateRounds } from "./game";
+export * from "./schedule";
