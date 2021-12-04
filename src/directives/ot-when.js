@@ -4,9 +4,18 @@ import { toggleDisplay } from "../utils/dom";
 import { Directive, registerDirective } from "./base";
 
 /**
- * Directive `data-ot-when="reference"` and `data-ot-when="reference==value"`.
+ * Directive `data-ot-when="var"`, `data-ot-when="var==val", data-ot-when="var===val"`.
+ *
+ * It shows/hides host element on {@link Page.event:update}. 
  * 
- * It shows host element by {@link Page.event:update}, when referenced field is defined, true-like or matches specified value.
+ * The `var` is a page var reference like `game.feedback`, the `val` is a primitive json expression 
+ * like "true" (boolean), "42" (number), "'foo'" (string). 
+ * 
+ * For `data-ot-when="var"` element shows when the `var` is defined.
+ * 
+ * For `data-ot-when="var==val"` element shows when the `var` is defined and equal to the val.
+ * 
+ * For `data-ot-when="var===val"` element shows when the `var` is defined and strictly equal to the val.
  * 
  * @hideconstructor
  */
@@ -17,23 +26,28 @@ class otWhen extends Directive {
 
   init() {
     const when = this.param();
-    const match = when.match(/^([\w.]+)(==(.+))?$/);
+    const match = when.match(/^([\w.]+)((===?)(.+))?$/);
     if (!match) throw new Error(`Invalid expression for when: ${when}`);
     
-    this.ref = match[1];
-    Ref.validate(this.ref);
+    const [_0, ref, _2, eq, rhs] = match;
+
+    Ref.validate(ref);
+    this.ref = ref;
     
-    this.cond = match[3];
-    if (this.cond === "true") this.cond = true;
-    if (this.cond === "false") this.cond = false; 
+    let val = rhs ? JSON.parse(rhs.replaceAll("'", '"')) : null;
+
+    if (eq == '==') {
+      this.check = (v) => (v !== undefined) && v == val;
+    } else if (eq == '===') {
+      this.check = (v) => (v !== undefined) && v === val;
+    } else {
+      this.check = (v) => (v !== undefined);
+    }
   }
 
   update(changes) {
     let value = changes.pick(this.ref);
-    console.debug("ot-when", this.ref, this.cond, value);
-    // for ot-when="fld" -- any true-like
-    // for ot-when="fld=val" -- any non-strict equivalent
-    let toggle = (this.cond !== undefined) ? value == this.cond : !!value;  
+    let toggle = this.check(value);
 
     toggleDisplay(this.elem, toggle);
   }
