@@ -45,6 +45,10 @@ class otWhen extends Directive {
     }
   }
 
+  reset() {
+    toggleDisplay(this.elem, false);
+  }
+
   update(changes) {
     let value = changes.pick(this.ref);
     let toggle = this.check(value);

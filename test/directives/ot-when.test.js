@@ -1,5 +1,6 @@
 import { expect, fixture, elementUpdated } from "@open-wc/testing";
 
+import { toggleDisplay } from "../../src/utils/dom";
 import { Page } from "../../src/page";
 
 import "../../src/directives/ot-when";
@@ -15,49 +16,38 @@ describe("ot-when", () => {
     });
 
     it("resets", async () => {
-      page.reset("obj");
+      toggleDisplay(elem, true);
+      page.emitReset("obj");
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches on", async () => {
-      page.reset("obj");
-      await elementUpdated(elem);
-
-      page.update({ "obj.fld": "foo" });
+      page.emitUpdate({ "obj.fld": "foo" });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
     });
 
     it("switches on by false-like values", async () => {
-      page.reset("obj");
-      await elementUpdated(elem);
-
-      page.update({ "obj.fld": false });
+      page.emitUpdate({ "obj.fld": false });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
     });
 
     it("switches off by undef", async () => {
-      page.reset("obj");
+      page.emitUpdate({ "obj.fld": true });
       await elementUpdated(elem);
 
-      page.update({ "obj.fld": true });
-      await elementUpdated(elem);
-
-      page.update({ "obj.fld": undefined });
+      page.emitUpdate({ "obj.fld": undefined });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches off by missing", async () => {
-      page.reset("obj");
+      page.emitUpdate({ obj: { fld: true } });
       await elementUpdated(elem);
 
-      page.update({ obj: { fld: true } });
-      await elementUpdated(elem);
-
-      page.update({ obj: {} });
+      page.emitUpdate({ obj: {} });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -71,49 +61,38 @@ describe("ot-when", () => {
     });
 
     it("resets", async () => {
-      page.reset("obj");
+      toggleDisplay(elem, true);
+      page.emitReset("obj");
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches on", async () => {
-      page.reset("obj");
-      await elementUpdated(elem);
-
-      page.update({ "obj.fld": 42 });
+      page.emitUpdate({ "obj.fld": 42 });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
     });
 
     it("switches on by str-eq", async () => {
-      page.reset("obj");
-      await elementUpdated(elem);
-
-      page.update({ "obj.fld": "42" });
+      page.emitUpdate({ "obj.fld": "42" });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
     });
 
     it("switches off by undef", async () => {
-      page.reset("obj");
+      page.emitUpdate({ "obj.fld": 42 });
       await elementUpdated(elem);
 
-      page.update({ "obj.fld": 42 });
-      await elementUpdated(elem);
-
-      page.update({ "obj.fld": undefined });
+      page.emitUpdate({ "obj.fld": undefined });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches off by missing", async () => {
-      page.reset("obj");
+      page.emitUpdate({ obj: { fld: 42 } });
       await elementUpdated(elem);
 
-      page.update({ obj: { fld: 42 } });
-      await elementUpdated(elem);
-
-      page.update({ obj: {} });
+      page.emitUpdate({ obj: {} });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -127,49 +106,38 @@ describe("ot-when", () => {
     });
 
     it("resets", async () => {
-      page.reset("obj");
+      toggleDisplay(elem, true);
+      page.emitReset("obj");
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches on", async () => {
-      page.reset("obj");
-      await elementUpdated(elem);
-
-      page.update({ "obj.fld": 42 });
+      page.emitUpdate({ "obj.fld": 42 });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
     });
 
     it("doesn't switches on by str-eq", async () => {
-      page.reset("obj");
-      await elementUpdated(elem);
-
-      page.update({ "obj.fld": "42" });
+      page.emitUpdate({ "obj.fld": "42" });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches off by undef", async () => {
-      page.reset("obj");
+      page.emitUpdate({ "obj.fld": 42 });
       await elementUpdated(elem);
 
-      page.update({ "obj.fld": 42 });
-      await elementUpdated(elem);
-
-      page.update({ "obj.fld": undefined });
+      page.emitUpdate({ "obj.fld": undefined });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches off by missing", async () => {
-      page.reset("obj");
+      page.emitUpdate({ obj: { fld: 42 } });
       await elementUpdated(elem);
 
-      page.update({ obj: { fld: 42 } });
-      await elementUpdated(elem);
-
-      page.update({ obj: {} });
+      page.emitUpdate({ obj: {} });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -183,49 +151,38 @@ describe("ot-when", () => {
     });
 
     it("resets", async () => {
-      page.reset("obj");
+      toggleDisplay(elem, true);
+      page.emitReset("obj");
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches on", async () => {
-      page.reset("obj");
-      await elementUpdated(elem);
-
-      page.update({ "obj.fld": false });
+      page.emitUpdate({ "obj.fld": false });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
     });
 
     it("switches on by str-eq", async () => {
-      page.reset("obj");
-      await elementUpdated(elem);
-
-      page.update({ "obj.fld": "" });
+      page.emitUpdate({ "obj.fld": "" });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
     });
 
     it("switches off by undef", async () => {
-      page.reset("obj");
+      page.emitUpdate({ "obj.fld": false });
       await elementUpdated(elem);
 
-      page.update({ "obj.fld": false });
-      await elementUpdated(elem);
-
-      page.update({ "obj.fld": undefined });
+      page.emitUpdate({ "obj.fld": undefined });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches off by missing", async () => {
-      page.reset("obj");
+      page.emitUpdate({ obj: { fld: false } });
       await elementUpdated(elem);
 
-      page.update({ obj: { fld: false } });
-      await elementUpdated(elem);
-
-      page.update({ obj: {} });
+      page.emitUpdate({ obj: {} });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -239,49 +196,38 @@ describe("ot-when", () => {
     });
 
     it("resets", async () => {
-      page.reset("obj");
+      toggleDisplay(elem, true);
+      page.emitReset("obj");
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches on", async () => {
-      page.reset("obj");
-      await elementUpdated(elem);
-
-      page.update({ "obj.fld": false });
+      page.emitUpdate({ "obj.fld": false });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
     });
 
     it("doesnt switch on by str-eq", async () => {
-      page.reset("obj");
-      await elementUpdated(elem);
-
-      page.update({ "obj.fld": "" });
+      page.emitUpdate({ "obj.fld": "" });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches off by undef", async () => {
-      page.reset("obj");
+      page.emitUpdate({ "obj.fld": false });
       await elementUpdated(elem);
 
-      page.update({ "obj.fld": false });
-      await elementUpdated(elem);
-
-      page.update({ "obj.fld": undefined });
+      page.emitUpdate({ "obj.fld": undefined });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches off by missing", async () => {
-      page.reset("obj");
+      page.emitUpdate({ obj: { fld: false } });
       await elementUpdated(elem);
 
-      page.update({ obj: { fld: false } });
-      await elementUpdated(elem);
-
-      page.update({ obj: {} });
+      page.emitUpdate({ obj: {} });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -295,40 +241,32 @@ describe("ot-when", () => {
     });
 
     it("resets", async () => {
-      page.reset("obj");
+      toggleDisplay(elem, true);
+      page.emitReset("obj");
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches on", async () => {
-      page.reset("obj");
-      await elementUpdated(elem);
-
-      page.update({ "obj.fld": "foo" });
+      page.emitUpdate({ "obj.fld": "foo" });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
     });
 
     it("switches off by undef", async () => {
-      page.reset("obj");
+      page.emitUpdate({ "obj.fld": "foo" });
       await elementUpdated(elem);
 
-      page.update({ "obj.fld": "foo" });
-      await elementUpdated(elem);
-
-      page.update({ "obj.fld": undefined });
+      page.emitUpdate({ "obj.fld": undefined });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches off by missing", async () => {
-      page.reset("obj");
+      page.emitUpdate({ obj: { fld: "foo" } });
       await elementUpdated(elem);
 
-      page.update({ obj: { fld: "foo" } });
-      await elementUpdated(elem);
-
-      page.update({ obj: {} });
+      page.emitUpdate({ obj: {} });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });

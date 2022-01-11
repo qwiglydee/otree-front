@@ -34,9 +34,9 @@ export class Directive {
   }
 
   /** 
-   * Returns a value from dataset, corresponding to the name.
+   * Returns a value from attribute `data-ot-name`.
    * 
-   * i.e. value of `data-ot-foo` attribute. 
+   * @param {string} [name=this.name] the param to get 
    */
   param(name) {
     if (name === undefined) name = this.name; 
@@ -63,13 +63,10 @@ export class Directive {
    * 
    * @param {String} eventype
    * @param {Function} handler either `this.something` or a standalone function
-   * @param {HTMLElement} [target=page] either the element itself or the page 
+   * @param {HTMLElement} [target=page.body] either the element itself or the page 
   */
-  on(eventype, handler, target) {
-    if (target === undefined || target === this.page) {
-      target = this.page.body;
-    }
-    return this.page.on(eventype, handler.bind(this), target);
+  onEvent(eventype, handler, target) {
+    this.page.onEvent(eventype, (event) => handler.bind(this)(event, event.detail), target);
   }
 
   /** 
@@ -80,25 +77,50 @@ export class Directive {
    * Default implementation takes reference from corresponding attr and puts it into `this.ref`   
    */
   init() {
-    this.ref = this.param(this.name);
+    this.ref = this.param();
     Ref.validate(this.ref); 
   } 
 
   /**
    * Sets up event handlers
    * 
-   * Default implementation sets up `update` handler to check if `this.ref` is affected and to call `this.update`
+   * Default implementation sets up handlers for `reset` and `update` events, 
+   * checking if `this.ref` is affected by event and calling `this.reset` or `this.update` 
    */
   setup() {
-    this.on('ot.update', this.onUpdate);
+    this.onEvent('ot.reset', this.onReset);
+    this.onEvent('ot.update', this.onUpdate);
   }
   
+  onReset(event, topname) {
+    if (Ref.includes(topname, this.ref)) {
+      this.reset();
+    }
+  }
+
+  /**
+   * Called in default imlementation when `reset` event affects `this.ref`.
+   * 
+   * Override to do something useful.
+   */
+  reset() {
+    // do something
+    throw new Error("Method not implemented");
+  }
+
   onUpdate(event, changes) {
     if (changes.affects(this.ref)) {
       this.update(changes);
     }
   }
 
+  /**
+   * Called in default imlementation when `update` event affects `this.ref`.
+   * 
+   * Override to do something useful.
+   *  
+   * @param {Changes} changes 
+   */
   update(changes) {
     // do something
     throw new Error("Method not implemented");

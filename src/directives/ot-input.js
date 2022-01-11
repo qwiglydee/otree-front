@@ -24,9 +24,9 @@ class otRealInput extends Directive {
   }
 
   setup() {
-    this.on("ot.phase", this.onPhase);
-    this.on("change", this.onChange, this.elem);
-    if (isTextInput(this.elem)) this.on("keydown", this.onKey, this.elem);
+    this.onEvent("ot.phase", this.onPhase);
+    this.onEvent("change", this.onChange, this.elem);
+    if (isTextInput(this.elem)) this.onEvent("keydown", this.onKey, this.elem);
   }
 
   onPhase(event, phase) {
@@ -37,7 +37,7 @@ class otRealInput extends Directive {
     let value = this.elem.value;
     if (value === "true") value = true;
     if (value === "false") value = false;
-    this.page.input({ [this.ref]: value });
+    this.page.emitInput({ [this.ref]: value });
   }
 
   onKey(event) {
@@ -107,10 +107,10 @@ class otCustomInput extends Directive {
   }
 
   setup() {
-    this.on("ot.phase", this.onPhase);
-    if (this.trigger.key) this.on("keydown", this.onKey, this.page);
-    if (this.trigger.touch) this.on("touchend", this.onClick, this.elem);
-    if (this.trigger.click) this.on("click", this.onClick, this.elem);
+    this.onEvent("ot.phase", this.onPhase);
+    if (this.trigger.key) this.onEvent("keydown", this.onKey);
+    if (this.trigger.touch) this.onEvent("touchend", this.onClick, this.elem);
+    if (this.trigger.click) this.onEvent("click", this.onClick, this.elem);
   }
 
   onPhase(event, phase) {
@@ -121,14 +121,14 @@ class otCustomInput extends Directive {
   onClick(event) {
     if (isDisabled(this.elem)) return;
     event.preventDefault();
-    this.page.input({ [this.ref]: this.val });  
+    this.page.emitInput({ [this.ref]: this.val });  
   }
 
   onKey(event) {
     if (isDisabled(this.elem)) return;
     if (event.code != this.trigger.key) return;
     event.preventDefault();
-    this.page.input({ [this.ref]: this.val });  
+    this.page.emitInput({ [this.ref]: this.val });  
   }
 }
 

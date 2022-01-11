@@ -2,7 +2,7 @@ import { expect, fixture, elementUpdated, oneEvent } from "@open-wc/testing";
 
 import { Page } from "../../src/page";
 
-import "../../src/directives/ot-start";
+import "../../src/directives/ot-ready";
 
 const EVENT_DEFAULTS = {
     view: window,
@@ -17,7 +17,7 @@ describe("ot-start", () => {
   beforeEach(async () => {
     body = document.createElement("body");
     elem = await fixture(
-        `<div data-ot-click data-ot-touch data-ot-key="Space" data-ot-start></div>`,
+        `<div data-ot-click data-ot-touch data-ot-key="Space" data-ot-ready></div>`,
         { parentNode: body });
     page = new Page(body);
   });

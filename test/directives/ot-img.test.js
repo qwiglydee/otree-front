@@ -1,5 +1,6 @@
 import { expect, fixture, elementUpdated } from "@open-wc/testing";
 
+import { setChild } from "../../src/utils/dom";
 import { Page } from "../../src/page";
 
 import "../../src/directives/ot-img";
@@ -33,98 +34,99 @@ describe("ot-img", () => {
     });
 
     it("resets", async () => {
-      page.reset('obj');
+      setChild(elem, foo_img);
+      page.emitReset('obj');
       await elementUpdated(elem);
       expect(elem).to.be.empty;
     });
 
     it("changes by fld", async () => {
-      page.reset('obj');
+      page.emitReset('obj');
       await elementUpdated(elem);
 
-      page.update({ "obj.fld": foo_img });
+      page.emitUpdate({ "obj.fld": foo_img });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
 
-      page.update({ "obj.fld": bar_img });
+      page.emitUpdate({ "obj.fld": bar_img });
       await elementUpdated(elem);
       expect(elem).to.contain(bar_img);
     });
 
     it("changes by obj", async () => {
-      page.reset('obj');
+      page.emitReset('obj');
       await elementUpdated(elem);
 
-      page.update({ obj: { fld: foo_img } });
+      page.emitUpdate({ obj: { fld: foo_img } });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
 
-      page.update({ obj: { fld: bar_img } });
+      page.emitUpdate({ obj: { fld: bar_img } });
       await elementUpdated(elem);
       expect(elem).to.contain(bar_img);
     });
 
     it("ignores unrelated fld", async () => {
-      page.reset('obj');
+      page.emitReset('obj');
       await elementUpdated(elem);
 
-      page.update({ "obj.fld": foo_img });
+      page.emitUpdate({ "obj.fld": foo_img });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
 
-      page.update({ "obj.fld2": bar_img });
+      page.emitUpdate({ "obj.fld2": bar_img });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
     });
 
     it("ignores unrelated obj", async () => {
-      page.reset('obj');
+      page.emitReset('obj');
       await elementUpdated(elem);
 
-      page.update({ obj: { fld: foo_img } });
+      page.emitUpdate({ obj: { fld: foo_img } });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
 
-      page.update({ obj2: { fld: bar_img } });
+      page.emitUpdate({ obj2: { fld: bar_img } });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
     });
 
     it("clears by fld deletion", async () => {
-      page.reset('obj');
+      page.emitReset('obj');
       await elementUpdated(elem);
 
-      page.update({ "obj.fld": foo_img });
+      page.emitUpdate({ "obj.fld": foo_img });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
 
-      page.update({ "obj.fld": undefined });
+      page.emitUpdate({ "obj.fld": undefined });
       await elementUpdated(elem);
       expect(elem).to.be.empty;
     });
 
     it("clears by empty obj", async () => {
-      page.reset('obj');
+      page.emitReset('obj');
       await elementUpdated(elem);
 
-      page.update({ obj: { fld: foo_img } });
+      page.emitUpdate({ obj: { fld: foo_img } });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
 
-      page.update({ obj: {} });
+      page.emitUpdate({ obj: {} });
       await elementUpdated(elem);
       expect(elem).to.be.empty;
     });
 
     it("clears by obj deletion", async () => {
-      page.reset('obj');
+      page.emitReset('obj');
       await elementUpdated(elem);
 
-      page.update({ obj: { fld: foo_img } });
+      page.emitUpdate({ obj: { fld: foo_img } });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
 
-      page.update({ obj: undefined });
+      page.emitUpdate({ obj: undefined });
       await elementUpdated(elem);
       expect(elem).to.be.empty;
     });

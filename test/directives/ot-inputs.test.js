@@ -57,19 +57,19 @@ describe("ot-input", () => {
     });
 
     it("switches on phase", async () => {
-      page.toggle({input: true});
+      page.togglePhase({input: true});
       await elementUpdated(elem);
       expect(elem).not.to.have.attr("disabled");
       expect(elem).not.to.have.class("ot-disabled");
 
-      page.toggle({input: false});
+      page.togglePhase({input: false});
       await elementUpdated(elem);
       expect(elem).to.have.attr("disabled");
       expect(elem).to.have.class("ot-disabled");
     });
 
     it("triggers on change", async () => {
-      page.toggle({input: true});
+      page.togglePhase({input: true});
       await elementUpdated(elem);
 
       elem.value = "Foo";
@@ -90,19 +90,19 @@ describe("ot-input", () => {
     });
 
     it("switches on phase", async () => {
-      page.toggle({input: true});
+      page.togglePhase({input: true});
       await elementUpdated(elem);
       expect(elem).not.to.have.attr("disabled");
       expect(elem).not.to.have.class("ot-disabled");
 
-      page.toggle({input: false});
+      page.togglePhase({input: false});
       await elementUpdated(elem);
       expect(elem).to.have.attr("disabled");
       expect(elem).to.have.class("ot-disabled");
     });
 
     it("triggers on click", async () => {
-      page.toggle({input: true});
+      page.togglePhase({input: true});
       await elementUpdated(elem);
       elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
       detail = await pageEvent("ot.input");
@@ -120,17 +120,17 @@ describe("ot-input", () => {
     });
 
     it("switches on phase", async () => {
-      page.toggle({input: true});
+      page.togglePhase({input: true});
       await elementUpdated(elem);
       expect(elem).not.to.have.class("ot-disabled");
 
-      page.toggle({input: false});
+      page.togglePhase({input: false});
       await elementUpdated(elem);
       expect(elem).to.have.class("ot-disabled");
     });
 
     it("triggers on key", async () => {
-      page.toggle({input: true});
+      page.togglePhase({input: true});
       await elementUpdated(elem);
       page.body.dispatchEvent(new KeyboardEvent("keydown", { ...EVENT_DEFAULTS, code: "Space" }));
       detail = await pageEvent("ot.input");
@@ -138,7 +138,7 @@ describe("ot-input", () => {
     });
 
     it("triggers on touch", async () => {
-      page.toggle({input: true});
+      page.togglePhase({input: true});
       await elementUpdated(elem);
       elem.dispatchEvent(new TouchEvent("touchend", EVENT_DEFAULTS));
       detail = await pageEvent("ot.input");
@@ -146,7 +146,7 @@ describe("ot-input", () => {
     });
 
     it("triggers on click", async () => {
-      page.toggle({input: true});
+      page.togglePhase({input: true});
       await elementUpdated(elem);
       elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
       detail = await pageEvent("ot.input");

@@ -22,6 +22,10 @@ import { Directive, registerDirective } from "./base";
  * @hideconstructor
  */
 class otAttrBase extends Directive {
+  reset() {
+    setAttr(this.elem, this.name, null);
+  }
+
   update(changes) {
     setAttr(this.elem, this.name, changes.pick(this.ref));
   }

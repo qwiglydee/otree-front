@@ -15,6 +15,10 @@ export class otImg extends Directive {
     return "img";
   }
 
+  reset() {
+    setChild(this.elem, null);
+  }
+
   update(changes) {
     let img = changes.pick(this.ref);
     if (!!img && !(img instanceof Image)) {

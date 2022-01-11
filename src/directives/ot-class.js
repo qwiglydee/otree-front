@@ -18,6 +18,10 @@ class otClass extends Directive {
     this.defaults = Array.from(this.elem.classList);
   }
 
+  reset() {
+    setClasses(this.elem, this.defaults);
+  }
+
   update(changes) {
     let classes = this.defaults.slice();
     let val = changes.pick(this.ref);

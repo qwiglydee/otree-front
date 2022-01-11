@@ -9,9 +9,9 @@ import { Directive, registerDirective } from "./base";
  * 
  * @hideconstructor
  */
-class otStart extends Directive {
+class otReady extends Directive {
   get name() {
-    return "start";
+    return "ready";
   }
 
   init() {
@@ -25,23 +25,23 @@ class otStart extends Directive {
   }
 
   setup() {
-    if (this.trigger.key) this.on("keydown", this.onKey, this.page);
-    if (this.trigger.touch) this.on("touchend", this.onClick, this.elem);
-    if (this.trigger.click) this.on("click", this.onClick, this.elem);
-    this.on('ot.ready', this.onStart);
+    if (this.trigger.key) this.onEvent("keydown", this.onKey);
+    if (this.trigger.touch) this.onEvent("touchend", this.onClick, this.elem);
+    if (this.trigger.click) this.onEvent("click", this.onClick, this.elem);
+    this.onEvent('ot.ready', this.onStart);
   }
 
   onKey(event) {
     if (this.disabled) return;
     if (event.code != this.trigger.key) return;
     event.preventDefault();
-    this.page.fire('ot.ready'); 
+    this.page.emitEvent('ot.ready'); 
   }
 
   onClick(event) {
     if (this.disabled) return;
     event.preventDefault();
-    this.page.fire('ot.ready'); 
+    this.page.emitEvent('ot.ready'); 
   }
 
   onStart() {
@@ -50,4 +50,4 @@ class otStart extends Directive {
   }
 }
 
-registerDirective("[data-ot-start]", otStart);
+registerDirective("[data-ot-ready]", otReady);
