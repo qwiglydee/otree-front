@@ -10,70 +10,91 @@ describe("schedule", () => {
     return (await oneEvent(body, type)).detail;
   }
 
-  beforeEach(() => {
+  beforeEach(async () => {
     body = document.createElement("body");
     page = new Page(body);
     schedule = new Schedule(page);
+    await pageEvent("ot.phase"); // page resetting phase
   });
 
-  describe("running", () => {
-    it("runs phases", async () => {
-      const t0 = Date.now();
-
-      schedule.run([
+  it("runs phases", async () => {
+    schedule.setup({
+      phases: [
         { time: 0, foo: "foo0" },
         { time: 100, foo: "foo1" },
         { time: 200, foo: "foo2" },
-      ]);
-
-      detail = await pageEvent("ot.phase");
-      expect(detail).to.eql({ time: 0, foo: "foo0" });
-      expect(Date.now() - t0).to.be.within(0, 10);
-
-      detail = await pageEvent("ot.phase");
-      expect(detail).to.eql({ time: 100, foo: "foo1" });
-      expect(Date.now() - t0).to.be.within(100, 110);
-
-      detail = await pageEvent("ot.phase");
-      expect(detail).to.eql({ time: 200, foo: "foo2" });
-      expect(Date.now() - t0).to.be.within(200, 210);
+      ],
     });
 
-    it("timeouts", async () => {
-      const t0 = Date.now();
+    const t0 = Date.now();
+    schedule.start();
 
-      schedule.run([
-        { time: 100, foo: "foo1", timeout: 500 },
+    detail = await pageEvent("ot.phase");
+    expect(detail).to.eql({ foo: "foo0" });
+    expect(Date.now() - t0).to.be.within(0, 10);
+
+    detail = await pageEvent("ot.phase");
+    expect(detail).to.eql({ foo: "foo1" });
+    expect(Date.now() - t0).to.be.within(100, 110);
+
+    detail = await pageEvent("ot.phase");
+    expect(detail).to.eql({ foo: "foo2" });
+    expect(Date.now() - t0).to.be.within(200, 210);
+  });
+
+  it("timeouts", async () => {
+    schedule.setup({ timeout: 100 });
+
+    const t0 = Date.now();
+    schedule.start();
+
+    detail = await pageEvent("ot.timeout");
+    expect(detail).to.be.null;
+    expect(Date.now() - t0).to.be.within(100, 110);
+  });
+
+  it("cancels timers after timeout", async () => {
+    let counter = 0;
+
+    page.onEvent("ot.phase", () => counter++);
+
+    schedule.setup({
+      timeout: 250,
+      phases: [
+        { time: 100, foo: "foo1" },
         { time: 200, foo: "foo2" },
-      ]);
-
-      detail = await pageEvent("ot.phase");
-      expect(detail).to.eql({ time: 100, foo: "foo1", timeout: 500 });
-
-      detail = await pageEvent("ot.phase");
-      expect(detail).to.eql({ time: 200, foo: "foo2" });
-
-      detail = await pageEvent("ot.timeout");
-      expect(detail).to.be.null;
-      expect(Date.now() - t0).to.be.within(600, 610);
+        { time: 300, foo: "foo3" },
+        { time: 400, foo: "foo4" },
+      ],
     });
 
-    it("cancels timers after timeout", async () => {
-      let counter = 0;
+    schedule.start();
 
-      page.on("ot.phase", () => counter++);
+    await aTimeout(1000);
+    expect(counter).to.eq(2);
+  });
 
-      schedule.run([
-        { time: 100, foo: "foo1", timeout: 500 },
-        { time: 500, foo: "foo5" },
-        { time: 600, foo: "foo6" },
-      ]);
 
-      detail = await pageEvent("ot.timeout");
-      expect(counter).to.eq(2);
+  it("cancels timers when stopped", async () => {
+    let counter = 0;
 
-      await aTimeout(1000);
-      expect(counter).to.eq(2);
+    page.onEvent("ot.phase", () => counter++);
+
+    schedule.setup({
+      phases: [
+        { time: 100, foo: "foo1" },
+        { time: 200, foo: "foo2" },
+        { time: 300, foo: "foo3" },
+        { time: 400, foo: "foo4" },
+      ],
     });
+
+    schedule.start();
+
+    await aTimeout(250);
+    schedule.stop();
+
+    await aTimeout(1000);
+    expect(counter).to.eq(2);
   });
 });
