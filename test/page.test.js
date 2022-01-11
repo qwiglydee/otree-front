@@ -6,85 +6,6 @@ import { Changes } from "../src/utils/changes";
 describe("Page", () => {
   let body, page, elem, detail;
 
-  beforeEach(async () => {
-    body = document.createElement("body");
-    elem = await fixture(`<div></div>`, { parentNode: body });
-    page = new Page(body);
-  });
-
-  async function pageEvent(type) {
-    return (await oneEvent(body, type)).detail;
-  }
-
-  it("resets", async () => {
-    page.reset();
-    detail = await pageEvent("ot.reset");
-    expect(detail).to.eq("game");
-    detail = await pageEvent("ot.update");
-    expect(detail).to.eql(new Changes({ game: undefined }));
-  });
-
-  it("resets custom obj", async () => {
-    page.reset("status.progress");
-    detail = await pageEvent("ot.reset");
-    expect(detail).to.eq("status.progress");
-    detail = await pageEvent("ot.update");
-    expect(detail).to.eql(new Changes({ "status.progress": undefined }));
-  });
-
-  // it("random on target", async () => {
-  //   page.fire("foo", { bar: "Bar" }, elem);
-  //   detail = await elemEvent("foo");
-  //   expect(detail).to.eql({ bar: "Bar" });
-  // });
-
-  it("update", async () => {
-    page.update({ foo: "Foo" });
-    detail = await pageEvent("ot.update");
-    expect(detail).to.eql(new Changes({ foo: "Foo" }));
-  });
-
-  it("input", async () => {
-    page.input({ foo: "Foo" });
-    detail = await pageEvent("ot.input");
-    expect(detail).to.eql({ foo: "Foo" });
-  });
-
-  it("toggle", async () => {
-    page.toggle({ foo: "Foo" });
-    detail = await pageEvent("ot.phase");
-    expect(detail).to.eql({ foo: "Foo" });
-  });
-
-  it("timeout", async () => {
-    page.timeout();
-    await pageEvent("ot.timeout");
-  });
-
-  it("freezes", async () => {
-    page.freeze();
-    detail = await pageEvent("ot.phase");
-    expect(detail).to.eql({ input: false });
-  });
-
-  it("unfreezes", async () => {
-    page.unfreeze();
-    detail = await pageEvent("ot.phase");
-    expect(detail).to.eql({ input: true });
-  });
-
-
-});
-
-describe("events", () => {
-  let body, page, elem, detail;
-
-  beforeEach(async () => {
-    body = document.createElement("body");
-    elem = await fixture(`<div></div>`, { parentNode: body });
-    page = new Page(body);
-  });
-
   async function pageEvent(type) {
     return (await oneEvent(body, type)).detail;
   }
@@ -93,66 +14,53 @@ describe("events", () => {
     return (await oneEvent(elem, type)).detail;
   }
 
-  describe("page", () => {
-    
-    it("fires", async () => {
-      page.fire("foo", { bar: "Bar" });
+  describe("emitting", () => {
+    beforeEach(async () => {
+      body = document.createElement("body");
+      elem = await fixture(`<div></div>`, { parentNode: body });
+      page = new Page(body);
+    });
+
+    it("resets", async () => {
+      page.emitReset();
+      detail = await pageEvent("ot.reset");
+      expect(detail).to.eq("game");
+    });
+
+    it("resets custom obj", async () => {
+      page.emitReset("status.progress");
+      detail = await pageEvent("ot.reset");
+      expect(detail).to.eq("status.progress");
+    });
+
+    it("update", async () => {
+      page.emitUpdate({ foo: "Foo" });
+      detail = await pageEvent("ot.update");
+      expect(detail).to.eql(new Changes({ foo: "Foo" }));
+    });
+
+    it("input", async () => {
+      page.emitInput({ foo: "Foo" });
+      detail = await pageEvent("ot.input");
+      expect(detail).to.eql({ foo: "Foo" });
+    });
+
+    it("timeout", async () => {
+      page.emitTimeout();
+      await pageEvent("ot.timeout");
+    });
+  });
+
+
+  describe("events", () => {
+    it("emits", async () => {
+      page.emitEvent("foo", { bar: "Bar" });
       detail = await pageEvent("foo");
       expect(detail).to.eql({ bar: "Bar" });
     });
 
-    it("binds", async () => {
-      let wrapper, called;
-
-      function handler() {
-        called = arguments;
-      }
-
-      wrapper = page.on("foo", handler);
-
-      page.fire("foo", { bar: "Bar" });
-      await pageEvent("foo");
-
-      expect(called).not.to.be.undefined;
-      expect(called[0]).to.be.instanceof(CustomEvent);
-      expect(called[1]).to.eql({ bar: "Bar" });
-    });
-
-    it("unbinds", async () => {
-      let wrapper, called;
-
-      function handler() {
-        called = arguments;
-      }
-
-      wrapper = page.on("foo", handler);
-
-      page.fire("foo", { bar: "Bar" });
-      await pageEvent("foo");
-      expect(called).not.to.be.undefined;
-
-      called = undefined;
-      wrapper.off();
-
-      page.fire("foo", { bar: "Bar" });
-      await pageEvent("foo");
-      expect(called).to.be.undefined;
-    });
-
-    it("waits", async () => {
-      let waiting, result;
-      waiting = page.wait("foo");
-      page.fire("foo", { bar: "Bar" });
-      await pageEvent("foo");
-      result = await waiting;
-      expect(result).to.be.instanceof(CustomEvent);
-    });
-  });
-
-  describe("elem", () => {
-    
-    it("fires", async () => {
-      page.fire("foo", { bar: "Bar" }, elem);
+    it("emits on elem", async () => {
+      page.emitEvent("foo", { bar: "Bar" }, elem);
       detail = await elemEvent("foo");
       expect(detail).to.eql({ bar: "Bar" });
     });
@@ -164,14 +72,29 @@ describe("events", () => {
         called = arguments;
       }
 
-      wrapper = page.on("foo", handler, elem);
- 
-      page.fire("foo", { bar: "Bar" }, elem);
+      wrapper = page.onEvent("foo", handler);
+
+      page.emitEvent("foo", { bar: "Bar" });
+      await pageEvent("foo");
+
+      expect(called).not.to.be.undefined;
+      expect(called[0]).to.be.instanceof(CustomEvent);
+    });
+
+    it("binds to elem", async () => {
+      let wrapper, called;
+
+      function handler() {
+        called = arguments;
+      }
+
+      wrapper = page.onEvent("foo", handler, elem);
+
+      page.emitEvent("foo", { bar: "Bar" }, elem);
       await elemEvent("foo");
 
       expect(called).not.to.be.undefined;
       expect(called[0]).to.be.instanceof(CustomEvent);
-      expect(called[1]).to.eql({ bar: "Bar" });
     });
 
     it("unbinds", async () => {
@@ -181,27 +104,141 @@ describe("events", () => {
         called = arguments;
       }
 
-      wrapper = page.on("foo", handler, elem);
+      page.onEvent("foo", handler);
 
-      page.fire("foo", { bar: "Bar" }, elem);
+      page.emitEvent("foo", { bar: "Bar" });
+      await pageEvent("foo");
+      expect(called).not.to.be.undefined;
+
+      called = undefined;
+      page.offEvent("foo", handler);
+
+      page.emitEvent("foo", { bar: "Bar" });
+      await pageEvent("foo");
+      expect(called).to.be.undefined;
+    });
+
+    it("unbinds from elem", async () => {
+      let wrapper, called;
+
+      function handler() {
+        called = arguments;
+      }
+
+      page.onEvent("foo", handler, elem);
+
+      page.emitEvent("foo", { bar: "Bar" }, elem);
       await elemEvent("foo");
       expect(called).not.to.be.undefined;
 
       called = undefined;
-      wrapper.off();
+      page.offEvent("foo", handler, elem);
 
-      page.fire("foo", { bar: "Bar" }, elem);
+      page.emitEvent("foo", { bar: "Bar" }, elem);
       await elemEvent("foo");
       expect(called).to.be.undefined;
     });
 
     it("waits", async () => {
       let waiting, result;
-      waiting = page.wait("foo", elem);
-      page.fire("foo", { bar: "Bar" }, elem);
+      waiting = page.waitEvent("foo");
+      page.emitEvent("foo", { bar: "Bar" });
+      await pageEvent("foo");
+      result = await waiting;
+      expect(result).to.be.instanceof(CustomEvent);
+    });
+
+    it("waits on elem", async () => {
+      let waiting, result;
+      waiting = page.waitEvent("foo", elem);
+      page.emitEvent("foo", { bar: "Bar" }, elem);
       await elemEvent("foo");
       result = await waiting;
       expect(result).to.be.instanceof(CustomEvent);
+    });
+  });
+
+  describe("phases", () => {
+    it("initializes", async () => {
+      page.init();
+      expect(page.phase).to.eql({ display: null, input: false });
+    });
+
+    it("resets", async () => {
+      page.resetPhase();
+      detail = await pageEvent("ot.phase");
+      expect(detail).to.eql({ display: null, input: false });
+      expect(page.phase).to.eql({ display: null, input: false });
+    })
+
+    it("resets custom flags", async () => {
+      page.resetPhase({ foo: "Foo", input: true });
+      detail = await pageEvent("ot.phase");
+      expect(detail).to.eql({ display: null, input: true, foo: "Foo" });
+      expect(page.phase).to.eql({ display: null, input: true, foo: "Foo" });
+    });
+
+    it("toggles", async () => {
+      page.resetPhase();
+      await pageEvent("ot.phase");
+
+      page.togglePhase({ display: "foo", input: false });
+      detail = await pageEvent("ot.phase");
+      expect(detail).to.eql({ display: "foo", input: false });
+      expect(page.phase).to.eql({ display: "foo", input: false });
+
+      page.togglePhase({ input: true });
+      detail = await pageEvent("ot.phase");
+      expect(detail).to.eql({ input: true });
+      expect(page.phase).to.eql({ display: "foo", input: true });
+    });
+
+    it("switches display", async () => {
+      page.resetPhase();
+      await pageEvent("ot.phase");
+
+      page.switchDisplay("foo");
+      detail = await pageEvent("ot.phase");
+      expect(detail).to.eql({ display: "foo" });
+      expect(page.phase).to.eql({ display: null, input: false });
+    });
+
+    it("freezes/unfreezes inputs", async () => {
+      page.resetPhase({ input: true });
+      await pageEvent("ot.phase");
+      expect(page.phase.input).to.be.true;
+
+      page.freezeInputs();
+      detail = await pageEvent("ot.phase");
+      expect(detail).to.eql({ input: false });
+      expect(page.phase.input).to.be.true;
+
+      page.unfreezeInputs();
+      detail = await pageEvent("ot.phase");
+      expect(detail).to.eql({ input: true });
+      expect(page.phase.input).to.be.true;
+    });
+
+    it("doesn't unfreeze after phase change", async () => {
+      page.resetPhase({ input: true });
+      await pageEvent("ot.phase");
+      expect(page.phase.input).to.be.true;
+
+      page.freezeInputs();
+      detail = await pageEvent("ot.phase");
+      expect(detail).to.eql({ input: false });
+      expect(page.phase.input).to.be.true;
+
+      page.togglePhase({ input: false });
+      await pageEvent("ot.phase");
+      expect(page.phase.input).to.be.false;
+
+      page.unfreezeInputs();
+      let emitted = false; 
+      oneEvent(body, "ot.phase").then(() => { emitted = true; });
+      await aTimeout(1000);
+      expect(emitted).to.be.false;
+      expect(page.phase.input).to.be.false;
     });
   });
 });

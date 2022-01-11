@@ -200,7 +200,7 @@ export class Game {
   }
 
   /**
-   * Sets handler for {@link Schedule.phase}
+   * Sets handler for {@link Page.phase}
    * 
    * @type {Game~onPhase} 
    */

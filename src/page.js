@@ -12,6 +12,7 @@ import { registry } from "./directives/base";
  *
  * *NB*: The installation happens only once, directives won't work in dynamically added html code.
  *
+ * @property {Phase} phase set of flags indicating common state of directives, `{ display, input }`
  */
 export class Page {
   /**
@@ -19,6 +20,7 @@ export class Page {
    */
   constructor(body) {
     this.body = body || document.body;
+    this.phase = {};
     this.init();
   }
 
@@ -31,22 +33,30 @@ export class Page {
         inst.setup();
       });
     });
+
+    this.resetPhase();
   }
 
   /**
    * Binds an event handler
    *
-   * @param {String} type of an event
-   * @param {function(event, detail)} handler
+   * @param {String} type type of an event
+   * @param {Function} handler
    * @param {HTMLElement} [target=page.body] an element to bind handler, instead of the page itself
-   * @returns {Function} handler wrapper bound to events, the wrapper has method off() to unbind itself
    */
-  on(type, handler, target) {
-    target = target || this.body;
-    const listener = (event) => handler(event, event.detail);
-    listener.off = () => target.removeEventListener(type, listener);
-    target.addEventListener(type, listener);
-    return listener;
+  onEvent(type, handler, target) {
+    (target || this.body).addEventListener(type, handler);
+  }
+
+  /**
+   * Removes event hanfler
+   *
+   * @param {String} type type of an event
+   * @param {Function} handler, previously binded to an event
+   * @param {HTMLElement} [target=page.body]
+   */
+  offEvent(type, handler, target) {
+    (target || this.body).removeEventListener(type, handler);
   }
 
   /**
@@ -58,16 +68,17 @@ export class Page {
    *
    * Example:
    *
-   *    await page.wait('ot.time.out'); // suspend script until timeout fired
+   *    await page.waitEvent('ot.time.out'); // suspend script until timeout emitd
    *
-   *    let waiting = page.wait('ot.timeout'); // start waiting without suspending
+   *    let waiting = page.waitEvent('ot.timeout'); // start waiting without suspending
    *    // do some work during which a timeout might happen
    *    await waiting; // suspend for an event happend since the 'waiting' created
    *
    * @param {String} type of the event
-   * @returns {Promise} resolved when event fired
+   * @param {HTMLElement} [target=page.body]
+   * @returns {Promise} resolved when event emitd
    */
-  wait(type, target) {
+  waitEvent(type, target) {
     target = target || this.body;
     return new Promise((resolve) => {
       function listener(event) {
@@ -79,13 +90,16 @@ export class Page {
   }
 
   /**
-   * Fires an event
+   * Emits an event.
+   *
+   * The event is always a `CustomEvent`.
+   * To emit built-in events, use built-in `target.dispatchEvent(event)`.
    *
    * @param {String} type type of the event
    * @param {Object} detail any data to attach to the event
-   * @param {HTMLElement} [target=page.body] an alternate element to fire at
+   * @param {HTMLElement} [target=page.body] an alternate element to emit at
    */
-  fire(type, detail, target) {
+  emitEvent(type, detail, target) {
     // console.debug("firing", type, detail);
     const event = new CustomEvent(type, { detail });
     target = target || this.body;
@@ -94,81 +108,118 @@ export class Page {
   }
 
   /**
-   * Triggers reset and page update.
+   * Emits page reset.
    *
-   * @param {string} [obj='game'] obj to reset (e.g. 'progress')
+   * @param {string} [obj='game'] alternate obj to reset (e.g. 'progress')
    * @fires Page.reset
-   * @fires Page.update
    */
-  reset(obj = "game") {
-    this.fire("ot.reset", obj);
-    this.fire("ot.update", new Changes({ [obj]: undefined }));
+  emitReset(obj = "game") {
+    this.emitEvent("ot.reset", obj);
   }
 
   /**
-   * Signals user input.
+   * Emits user input.
    *
    * @param {object} data
    * @fires Page.update
    */
-  input(data) {
-    this.fire("ot.input", data);
+  emitInput(data) {
+    this.emitEvent("ot.input", data);
   }
 
   /**
-   * Triggers updates on directives.
+   * Emits update.
    *
-   * @param {object|Canges} changes
+   * @param {object|Changes} changes
    * @fires Page.update
    */
-  update(changes) {
+  emitUpdate(changes) {
     if (!(changes instanceof Changes)) changes = new Changes(changes);
-    this.fire("ot.update", changes);
+    this.emitEvent("ot.update", changes);
   }
 
   /**
-   * Triggers phase change.
-   *
-   * @param {Phase} phase all the flags of the phase
-   * @fires Schedule.phase
-   */
-  toggle(phase) {
-    this.fire("ot.phase", phase);
-  }
-
-  /**
-   * Triggers timeout.
+   * Emits timeout.
    *
    * @fires Schedule.timeout
    */
-  timeout() {
-    this.fire("ot.timeout");
+  emitTimeout() {
+    this.emitEvent("ot.timeout");
   }
 
   /**
-   * Disables inputs.
+   * Temporary disables inputs.
    *
-   * (Overrides input flag from recent phase.)
+   * Emits phase event, but doesn't affect current phase.
    *
-   * @fires Schedule.phase
+   * @fires Page.phase
    */
-  freeze() {
-    // FIXME: this interferes with actual time phases
-    this.toggle({ input: false });
+  freezeInputs() {
+    this.emitEvent("ot.phase", { input: false });
   }
 
   /**
-   * Enables inputs.
+   * Reenables inputs.
    *
-   * (Overrides input flag from recent phase.)
+   * Emits phase event, but doesn't affect current phase.
+   * Inputs wont be reenabled, if a phase change happened and disabled inputs.
    *
-   * @fires Schedule.phase
+   * @fires Page.phase
    */
-  unfreeze() {
-    // FIXME: this interferes with actual time phases
-    this.toggle({ input: true });
+  unfreezeInputs() {
+    if (!this.phase.input) return;
+    this.emitEvent("ot.phase", { input: true });
+  }
+
+  /**
+   * Switches display directives.
+   *
+   * Emits phase event, but doesn't affect current phase.
+   *
+   * @param {String} name matching `ot-display="name"`
+   */
+  switchDisplay(name) {
+    this.emitEvent("ot.phase", { display: name });
+  }
+
+  /**
+   * Resets page phase.
+   *
+   * @param {Object} [flags] some additional initial flags
+   */
+  resetPhase(flags) {
+    let phase0 = { display: null, input: false };
+    if (flags) {
+      Object.assign(phase0, flags);
+    }
+    this.phase = phase0;
+    this.emitEvent("ot.phase", phase0);
+  }
+
+  /**
+   * Toggles page phase.
+   *
+   * The provided flags override existing, unaffected flags are preserved.
+   * I.e. `togglePhase({ input: true })` keeps current value of `display` flag.
+   *
+   * @param {Phase} phase set of flags to change
+   * @fires Page.phase
+   */
+  togglePhase(phase) {
+    Object.assign(this.phase, phase);
+    this.emitEvent("ot.phase", phase); // NB: only changes are signalled
   }
 }
+
+/**
+ * A page phase flags
+ *
+ * The set of fields can be extended by anything else needed for custom directives.
+ *
+ * @typedef {Object} Phase
+ * @property {string} [display] to toggle `ot-display` directives
+ * @property {bool} [input] to enable/disable `ot-input` directives
+ */
 
 /**
  * Indicates that a user started a game pressing 'Space' or something.
@@ -193,4 +244,19 @@ export class Page {
  * @event Page.input
  * @property {string} type `ot.input`
  * @property {object} detail an object like `{field: value}` corresponding to directive `ot-input="field=value"`
+ */
+
+/**
+ * Indicates a timed phase switching display, input, or something else
+ *
+ * @event Page.phase
+ * @property {string} type `ot.phase`
+ * @property {object} detail an object like `{display: something, input: bool, ...}`
+ */
+
+/**
+ * Indicates timeout happened.
+ *
+ * @event Page.timeout
+ * @property {string} type `ot.timeout`
  */

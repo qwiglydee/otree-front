@@ -31,19 +31,3 @@ export class Schedule {
     this.timers.cancel();
   }
 }
-
-
-/**
- * Indicates a timed phase switching display, input, or something else
- *
- * @event Schedule.phase
- * @property {string} type `ot.phase`
- * @property {object} detail an object like `{display: something, input: bool, ...}`
- */
-
-/**
- * Indicates timeout happened.
- *
- * @event Schedule.timeout
- * @property {string} type `ot.timeout`
- */
