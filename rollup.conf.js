@@ -7,13 +7,13 @@ export default [
   {
     input: "src/index.js",
     output: {
-      file: `dist/otree-web-${version}.js`,
+      file: `dist/otree-ui-${version}.js`,
     },
   },
   {
     input: "src/index.js",
     output: {
-      file: `dist/otree-web-${version}.min.js`,
+      file: `dist/otree-ui-${version}.min.js`,
     },
     plugins: [terser()]
   }
