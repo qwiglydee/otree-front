@@ -13,7 +13,7 @@ describe("Game", () => {
   }
 
   async function pageFire(type, data) {
-    page.fire(type, data);
+    page.emitEvent(type, data);
     await oneEvent(body, type);
   }
 
@@ -23,56 +23,97 @@ describe("Game", () => {
     game = new Game(page);
   });
 
-  describe("methods", () => {
-    it("resets", async () => {
-      game.reset();
+  it("setups", async () => {
+    game.setup({ foo: "Foo" });
 
-      expect(game.state).to.eql({});
+    expect(game.config).to.eql({ foo: "Foo" });
+    detail = await pageEvent("ot.update");
+    expect(detail).to.eql(new Changes({ config: { foo: "Foo" } }));
+  });
 
-      detail = await pageEvent("ot.reset");
-      expect(detail).to.eq("game");
+  it("resets", async () => {
+    game.reset();
 
-      detail = await pageEvent("ot.update");
-      expect(detail).to.eql(new Changes({ game: undefined }));
-    });
+    expect(game.state).to.eql({});
+    expect(game.status).to.eql({});
+    expect(game.result).to.be.undefined;
+    expect(game.error).to.be.undefined;
 
-    it("starts", async () => {
-      game.start({ foo: "Bar" });
+    // detail = await pageEvent("ot.reset");
+    // expect(detail).to.eql(new Set(["game", "status", "error", "result"]));
+  });
 
-      detail = await pageEvent("ot.started");
-      expect(detail).to.eql({ foo: "Bar" });
-    });
+  it("starts", async () => {
+    game.start();
+    detail = await pageEvent("ot.started");
+  });
 
-    it("status", async () => {
-      game.status({ foo: "Bar" });
+  it("completes", async () => {
+    game.complete({ foo: "Foo" });
 
-      detail = await pageEvent("ot.status");
-      expect(detail).to.eql({ foo: "Bar" });
-    });
+    detail = await pageEvent("ot.completed");
+    expect(detail).to.eql({ foo: "Foo" });
 
-    it("updates", async () => {
-      game.state = { foo: "Foo" };
-      game.update({ bar: "Bar" });
+    detail = await pageEvent("ot.update");
+    expect(detail).to.eql(new Changes({ result: { foo: "Foo" } }));
 
-      detail = await pageEvent("ot.update");
-      expect(detail).to.eql(new Changes({ "game.bar": "Bar" }));
-      expect(game.state).to.eql({ foo: "Foo", bar: "Bar" });
-    });
+    expect(game.result).to.eql({ foo: "Foo" });
+  });
 
-    it("stops", async () => {
-      game.complete({ foo: "Bar" });
+  it("sets status", async () => {
+    game.status = { foo: "Foo" };
+    game.setStatus({ bar: "Bar" });
 
-      detail = await pageEvent("ot.completed");
-      expect(detail).to.eql({ foo: "Bar" });
-    });
+    detail = await pageEvent("ot.status");
+    expect(detail).to.eql({ bar: "Bar" });
 
-    it("errors", async () => {
-      game.error("code", "message");
-      detail = await pageEvent("ot.error");
-      expect(detail).to.eql({ code: "code", message: "message" });
+    detail = await pageEvent("ot.update");
+    expect(detail).to.eql(new Changes({ status: { bar: "Bar" } }));
 
-      detail = await pageEvent("ot.update");
-      expect(detail).to.eql(new Changes({ error: { code: "code", message: "message" } }));
+    expect(game.status).to.eql({ bar: "Bar" });
+  });
+
+  it("updates states", async () => {
+    game.state = { foo: "Foo" };
+    game.updateState({ bar: "Bar" });
+
+    detail = await pageEvent("ot.update");
+    expect(detail).to.eql(new Changes({ "game.bar": "Bar" }));
+    expect(game.state).to.eql({ foo: "Foo", bar: "Bar" });
+  });
+
+  it("sets error", async () => {
+    game.setError("code", "message");
+    detail = await pageEvent("ot.error");
+    expect(detail).to.eql({ code: "code", message: "message" });
+
+    detail = await pageEvent("ot.update");
+    expect(detail).to.eql(new Changes({ error: { code: "code", message: "message" } }));
+
+    expect(game.error).to.eql({ code: "code", message: "message" });
+  });
+
+  it("clears error", async () => {
+    game.error = { code: "code", message: "message" };
+    game.clearError();
+    detail = await pageEvent("ot.error");
+    expect(detail).to.eq(null);
+
+    detail = await pageEvent("ot.reset");
+    expect(detail).to.eq("error");
+
+    expect(game.error).to.be.undefined;
+  });
+
+  describe("playing", () => {
+    it("plays", async () => {
+      let playing = game.play();
+      await pageEvent("ot.started");
+
+      game.complete({ foo: "Foo"});
+      await pageEvent("ot.completed");
+
+      await playing;
     });
   });
 
@@ -89,15 +130,15 @@ describe("Game", () => {
       game = new Game(page);
     });
 
-    it("sets up iteration", async () => {
+    it("increments iteration", async () => {
       let running = game.playIterations(2, 0);
 
-      detail = await pageEvent("ot.started");
-      expect(detail).to.eql({ iteration: 1 });
+      await pageEvent("ot.started");
+      expect(game.iteration).to.eq(1);
       game.complete({});
 
-      detail = await pageEvent("ot.started");
-      expect(detail).to.eql({ iteration: 2 });
+      await pageEvent("ot.started");
+      expect(game.iteration).to.eq(2);
       game.complete({});
 
       await running;
@@ -105,7 +146,7 @@ describe("Game", () => {
 
     it("iterates loop", async () => {
       let counter = 0;
-      page.on("ot.started", () => {
+      page.onEvent("ot.started", () => {
         counter++;
         game.complete({});
       });
@@ -117,11 +158,10 @@ describe("Game", () => {
 
     it("terminates loop", async () => {
       let counter = 0;
-      page.on("ot.started", () => {
+      page.onEvent("ot.started", () => {
         counter++;
-        game.complete({
-          terminate: counter == 5,
-        });
+        game.complete({});
+        if (counter == 5) game.stopIterations();
       });
 
       await game.playIterations(10, 0);
@@ -131,11 +171,10 @@ describe("Game", () => {
 
     it("iterates infinite loop", async () => {
       let counter = 0;
-      page.on("ot.started", () => {
+      page.onEvent("ot.started", () => {
         counter++;
-        game.complete({
-          terminate: counter == 5,
-        });
+        game.complete({});
+        if (counter == 5) game.stopIterations();
       });
 
       await game.playIterations(null, 0);
@@ -157,8 +196,8 @@ describe("Game", () => {
     it("updates progress", async () => {
       let progress;
 
-      page.on("ot.update", (ev, data) => {
-        if (data.has("progress")) progress = data.get("progress");
+      page.onEvent("ot.update", (ev) => {
+        if (ev.detail.has("progress")) progress = ev.detail.get("progress");
       });
 
       let running = game.playIterations(3, 0);
@@ -241,16 +280,16 @@ describe("Game", () => {
     });
   });
 
-  describe("handlers", () => {
+  describe("handling events", () => {
     it("onStart", async () => {
       let called;
       game.onStart = function () {
         called = Array.from(arguments);
       };
 
-      await pageFire("ot.started", { foo: "Foo" });
-
-      expect(called).to.eql([{ foo: "Foo" }]);
+      await pageFire("ot.started");
+      expect(called).not.to.be.undefined;
+      expect(called).to.eql([null]);
     });
 
     it("onStatus", async () => {
@@ -261,6 +300,7 @@ describe("Game", () => {
 
       await pageFire("ot.status", { foo: "Foo" });
 
+      expect(called).not.to.be.undefined;
       expect(called).to.eql([{ foo: "Foo" }]);
     });
 
@@ -272,6 +312,7 @@ describe("Game", () => {
 
       await pageFire("ot.input", { foo: "Foo" });
 
+      expect(called).not.to.be.undefined;
       expect(called).to.eql([{ foo: "Foo" }]);
     });
 
@@ -283,6 +324,7 @@ describe("Game", () => {
 
       await pageFire("ot.error", { foo: "Foo" });
 
+      expect(called).not.to.be.undefined;
       expect(called).to.eql([{ foo: "Foo" }]);
     });
 
@@ -292,20 +334,10 @@ describe("Game", () => {
         called = Array.from(arguments);
       };
 
-      await pageFire("ot.timeout", { foo: "Foo" });
+      await pageFire("ot.timeout");
 
-      expect(called).to.eql([{ foo: "Foo" }]);
-    });
-
-    it("onPhase", async () => {
-      let called;
-      game.onPhase = function () {
-        called = Array.from(arguments);
-      };
-
-      await pageFire("ot.phase", { foo: "Foo" });
-
-      expect(called).to.eql([{ foo: "Foo" }]);
+      expect(called).not.to.be.undefined;
+      expect(called).to.eql([null]);
     });
 
     it("onComplete", async () => {
@@ -316,6 +348,7 @@ describe("Game", () => {
 
       await pageFire("ot.completed", { foo: "Foo" });
 
+      expect(called).not.to.be.undefined;
       expect(called).to.eql([{ foo: "Foo" }]);
     });
   });

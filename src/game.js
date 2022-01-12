@@ -9,8 +9,12 @@ import { Changes } from "../src/utils/changes";
  * The game state is an arbitraty object holding all the data needed to play and display the game.
  * It is initially empty and updated via `update` method, that keeps it in sync with html directives.
  *
- * @property {object} conf some constant config vars for the game (or a round)
- * @property {object} state the game state
+ * @property {object} conf constant config vars
+ * @property {object} state main game data
+ * @property {object} status set of flags indicating game status
+ * @property {object} result result data
+ * @property {object} error in form of `{ code, message }`
+ * @property {number} iteration when in iterations loop
  */
 export class Game {
   /**
@@ -18,19 +22,44 @@ export class Game {
    */
   constructor(page) {
     this.page = page;
+    this.config = {};
     this.state = {};
+    this.status = {};
+    this.error = undefined;
+    this.result = undefined;
+    this.iteration = undefined;
   }
 
   /**
-   * Resets game to initial state:
-   * - sets state data to empty object
-   * - updates page with empty 'game' object
+   * Sets config and resets game.
+   *
+   * The page is updated forr 'config' vars.
+   *
+   * @param {object} config
+   * @fires Page.update
+   */
+  setup(config) {
+    this.config = config;
+    this.page.emitUpdate({ config });
+  }
+
+  /**
+   * Resets game to initial state.
+   *
+   * Sets `state`, `status`, `error`, `result` to empty objects or nulls.
+   * Updates page with all the affected objects.
    *
    * @fires Page.reset
    */
   reset() {
     this.state = {};
-    this.page.reset("game");
+    this.page.emitReset("game");
+    this.status = {};
+    this.page.emitReset("status");
+    this.error = undefined;
+    this.page.emitReset("error");
+    this.result = undefined;
+    this.page.emitReset("result");
   }
 
   /**
@@ -42,7 +71,7 @@ export class Game {
    *
    * Example:
    *
-   *   game.update({'foo': "Foo", 'bar': "Bar"})
+   *   game.updateState({'foo': "Foo", 'bar': "Bar"})
    *   // is equiv:
    *   game.state.foo = "Foo";
    *   game.state.bar = "Bar";
@@ -51,71 +80,87 @@ export class Game {
    * @param {Object} changes the changes to apply
    * @fires Page.update
    */
-  update(changes) {
+  updateState(changes) {
     new Changes(changes).patch(this.state);
-    this.page.update(new Changes(changes, "game"));
+    this.page.emitUpdate(new Changes(changes, "game"));
   }
 
   /**
-   * Signals game started.
+   * Sets game status.
    *
-   * @param {object} status flags
-   * @fires Game.start
-   */
-  start(params) {
-    this.page.fire("ot.started", params);
-  }
-
-  /**
-   * Signals game status change.
-   *
-   * @param {object} status flags and fields
+   * @param {Object} status
    * @fires Game.status
    */
-  status(status) {
-    this.page.fire("ot.status", status);
+  setStatus(status) {
+    this.status = status;
+    this.page.emitEvent("ot.status", status);
+    this.page.emitUpdate({ status });
   }
 
   /**
-   * Signals game completed.
+   * Sets error with a code and a message
    *
-   * @param {object} results some result flags.
-   * @fires Game.stop
-   */
-  complete(result) {
-    this.page.fire("ot.completed", result);
-  }
-
-  /**
-   * Triggers an error event and update of `{ error: { code, message } }`
+   * Updates 'error' page variables.
    *
    * @param {string} code
    * @param {string} message
    * @fires Game.error
    * @fires Page.update
    */
-  error(code, message) {
-    let error = { code, message };
-    if (!code) {
-      error = null;
-    }
+  setError(code, message) {
+    this.error = { code, message };
+    this.page.emitEvent("ot.error", this.error);
+    this.page.emitUpdate({ error: this.error });
+  }
 
-    this.page.fire("ot.error", error);
-    this.page.update({ error });
+  /**
+   * Clears error.
+   *
+   * Resets 'error' page variables.
+   *
+   * @fires Game.error
+   * @fires Page.reset
+   */
+  clearError() {
+    this.error = undefined;
+    this.page.emitEvent("ot.error", null);
+    this.page.emitReset("error");
+  }
+
+  /**
+   * Signals game start.
+   *
+   * @fires Game.start
+   */
+  start() {
+    this.page.emitEvent("ot.started");
+  }
+
+  /**
+   * Signals game completion.
+   *
+   * @param {object} result some result data.
+   * @fires Game.complete
+   */
+  complete(result) {
+    this.result = result;
+    this.page.emitEvent("ot.completed", result);
+    this.page.emitUpdate({ result });
   }
 
   /**
    * Plays a game (single round)
-   * 
-   * @param {object} params to pass to `game.start()` 
-   * @returns {Promise} resolving when game completes  
+   *
+   * @returns {Promise} resolving with result when game completes
    */
-  async play(params) {
+  async play() {
     this.reset();
-    this.start(params);
-    let result = (await this.page.wait("ot.completed")).detail;
+    this.start();
+    let result = (await this.page.waitEvent("ot.completed")).detail;
     return result;
   }
+
+
 
   /**
    * Runs multiple game rounds, or an infinite loop.
@@ -128,10 +173,9 @@ export class Game {
    * @param {number|null} num_rounds number of rounds to play or null for infinite
    * @param {number} trial_pause pause between rounds in ms
    */
-  async playIterations(num_rounds, trial_pause) {
-    const game = this;
+   async playIterations(num_rounds, trial_pause) {
+    let result;
 
-    let status = {};
     const progress = {
       total: num_rounds,
       current: 0,
@@ -140,22 +184,21 @@ export class Game {
       failed: 0,
     };
 
-    const cont = num_rounds
-      ? (i) => i <= num_rounds && !status.terminate
-      : (i) => !status.terminate;
+    // continue until num_rounds or _i is deleted
+    const cont = num_rounds ? (i) => i && i <= num_rounds : (i) => i;
 
-    for (let i = 1; cont(i); i++) {
-      progress.current = i;
+    for (this.iteration = 1; cont(this.iteration); this.iteration++) {
+      progress.current = this.iteration;
 
-      this.page.update({ progress });
+      this.page.emitUpdate({ progress });
 
-      status = await this.play({ iteration: i });
+      result = await this.play();
 
       progress.completed += 1;
-      progress.solved += status.success === true;
-      progress.failed += status.success === false;
+      progress.solved += result.success === true;
+      progress.failed += result.success === false;
 
-      this.page.update({ progress });
+      this.page.emitUpdate({ progress });
 
       await sleep(trial_pause);
     }
@@ -164,66 +207,64 @@ export class Game {
   }
 
   /**
+   * Cancels iterations loop.
+   */
+  stopIterations() {
+    delete this.iteration;
+  }
+
+  /**
    * Sets handler for {@link Game.event:started}
-   * 
-   * @type {Game~onStart} 
+   *
+   * @type {Game~onStart}
    */
   set onStart(fn) {
-    this.page.on("ot.started", (ev) => fn(ev.detail));
+    this.page.onEvent("ot.started", (ev) => fn(ev.detail));
   }
 
   /**
    * Sets handler for {@link Game.status}
-   * 
-   * @type {Game~onStatus} 
+   *
+   * @type {Game~onStatus}
    */
   set onStatus(fn) {
-    this.page.on("ot.status", (ev) => fn(ev.detail));
+    this.page.onEvent("ot.status", (ev) => fn(ev.detail));
   }
 
   /**
    * Sets handler for {@link Game.error}
-   * 
-   * @type {Game~onError} 
+   *
+   * @type {Game~onError}
    */
   set onError(fn) {
-    this.page.on("ot.error", (ev) => fn(ev.detail));
+    this.page.onEvent("ot.error", (ev) => fn(ev.detail));
   }
 
   /**
    * Sets handler for {@link Game.completed}
-   * 
-   * @type {Game~onCompleted} 
+   *
+   * @type {Game~onCompleted}
    */
   set onComplete(fn) {
-    this.page.on("ot.completed", (ev) => fn(ev.detail));
-  }
-
-  /**
-   * Sets handler for {@link Page.phase}
-   * 
-   * @type {Game~onPhase} 
-   */
-  set onPhase(fn) {
-    this.page.on("ot.phase", (ev) => fn(ev.detail));
+    this.page.onEvent("ot.completed", (ev) => fn(ev.detail));
   }
 
   /**
    * Sets handler for {@link Schedule.timeout}
-   * 
-   * @type {Game~onTimeout} 
+   *
+   * @type {Game~onTimeout}
    */
   set onTimeout(fn) {
-    this.page.on("ot.timeout", (ev) => fn(ev.detail));
+    this.page.onEvent("ot.timeout", (ev) => fn(ev.detail));
   }
 
   /**
    * Sets handler for {@link Page.input}
-   * 
-   * @type {Game~onInput} 
+   *
+   * @type {Game~onInput}
    */
   set onInput(fn) {
-    this.page.on("ot.input", (ev) => fn(ev.detail));
+    this.page.onEvent("ot.input", (ev) => fn(ev.detail));
   }
 }
 
@@ -245,7 +286,6 @@ export class Game {
  * @property {string} type `ot.reset`
  * @property {string} detail an object being reset, i.e. 'game' or 'progress'
  */
-
 
 /**
  * Indicates a game has started.
@@ -296,5 +336,5 @@ export class Game {
 
 /**
  * @callback Game~onCompleted
- * @param {object} result 
+ * @param {object} result
  */
