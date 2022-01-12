@@ -52,7 +52,7 @@ describe("ot-input", () => {
   describe("real", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<input type="text" data-ot-input="obj.fld"></div>`, { parentNode: body });
+      elem = await fixture(`<input type="text" data-ot-input="game.fld"></div>`, { parentNode: body });
       page = new Page(body);
     });
 
@@ -76,7 +76,7 @@ describe("ot-input", () => {
       elem.dispatchEvent(new InputEvent("change"));
 
       detail = await pageEvent("ot.input");
-      expect(detail).to.eql({ "obj.fld": "Foo" });
+      expect(detail).to.eql({ "game.fld": "Foo" });
     });
 
     it("triggers on enter");
@@ -85,7 +85,7 @@ describe("ot-input", () => {
   describe("button", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<button data-ot-input="obj.fld=foo"></button>`, { parentNode: body });
+      elem = await fixture(`<button data-ot-input="game.fld=foo"></button>`, { parentNode: body });
       page = new Page(body);
     });
 
@@ -106,14 +106,14 @@ describe("ot-input", () => {
       await elementUpdated(elem);
       elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
       detail = await pageEvent("ot.input");
-      expect(detail).to.eql({ "obj.fld": "foo" });
+      expect(detail).to.eql({ "game.fld": "foo" });
     });
   });
 
   describe("custom", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-click data-ot-touch data-ot-key="Space" data-ot-input="obj.fld=foo"></div>`, {
+      elem = await fixture(`<div data-ot-click data-ot-touch data-ot-key="Space" data-ot-input="game.fld=foo"></div>`, {
         parentNode: body,
       });
       page = new Page(body);
@@ -134,7 +134,7 @@ describe("ot-input", () => {
       await elementUpdated(elem);
       page.body.dispatchEvent(new KeyboardEvent("keydown", { ...EVENT_DEFAULTS, code: "Space" }));
       detail = await pageEvent("ot.input");
-      expect(detail).to.eql({ "obj.fld": "foo" });
+      expect(detail).to.eql({ "game.fld": "foo" });
     });
 
     it("triggers on touch", async () => {
@@ -142,7 +142,7 @@ describe("ot-input", () => {
       await elementUpdated(elem);
       elem.dispatchEvent(new TouchEvent("touchend", EVENT_DEFAULTS));
       detail = await pageEvent("ot.input");
-      expect(detail).to.eql({ "obj.fld": "foo" });
+      expect(detail).to.eql({ "game.fld": "foo" });
     });
 
     it("triggers on click", async () => {
@@ -150,7 +150,7 @@ describe("ot-input", () => {
       await elementUpdated(elem);
       elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
       detail = await pageEvent("ot.input");
-      expect(detail).to.eql({ "obj.fld": "foo" });
+      expect(detail).to.eql({ "game.fld": "foo" });
     });
 
     it("errors frozen on key");

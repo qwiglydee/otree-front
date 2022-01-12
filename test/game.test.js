@@ -39,8 +39,8 @@ describe("Game", () => {
     expect(game.result).to.be.undefined;
     expect(game.error).to.be.undefined;
 
-    // detail = await pageEvent("ot.reset");
-    // expect(detail).to.eql(new Set(["game", "status", "error", "result"]));
+    detail = await pageEvent("ot.reset");
+    expect(detail).to.eql(["game", "status", "error", "result"]);
   });
 
   it("starts", async () => {

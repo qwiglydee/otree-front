@@ -25,71 +25,74 @@ describe("ot-attr", () => {
   describe("updating", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<progress data-ot-value="obj.val" data-ot-max="obj.max"></progress>`, {
-        parentNode: body,
-      });
+      elem = await fixture(
+        `<progress data-ot-value="game.val" data-ot-max="game.max"></progress>`,
+        {
+          parentNode: body,
+        }
+      );
       page = new Page(body);
     });
 
     it("resets", async () => {
-      setAttr(elem, 'max', "100");
-      setAttr(elem, 'value', "1");
-      page.emitReset('obj');
+      setAttr(elem, "max", "100");
+      setAttr(elem, "value", "1");
+      page.emitReset();
       await elementUpdated(elem);
       expect(elem).not.to.have.attr("max");
       expect(elem).not.to.have.attr("value");
     });
 
     it("changes by fld", async () => {
-      page.emitReset('obj');
+      page.emitReset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ "obj.val": 50, 'obj.max': 100 });
+      page.emitUpdate({ "game.val": 50, "game.max": 100 });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).to.have.attr("value", "50");
 
-      page.emitUpdate({ "obj.val": 75 });
+      page.emitUpdate({ "game.val": 75 });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).to.have.attr("value", "75");
     });
 
     it("changes by obj", async () => {
-      page.emitReset('obj');
+      page.emitReset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ obj: { val: 50, max: 100 } });
+      page.emitUpdate({ game: { val: 50, max: 100 } });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).to.have.attr("value", "50");
 
-      page.emitUpdate({ obj: { val: 75, max: 100 } });
+      page.emitUpdate({ game: { val: 75, max: 100 } });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).to.have.attr("value", "75");
     });
 
     it("ignores unrelated fld", async () => {
-      page.emitReset('obj');
+      page.emitReset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ obj: { val: 50, max: 100 } });
+      page.emitUpdate({ game: { val: 50, max: 100 } });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).to.have.attr("value", "50");
 
-      page.emitUpdate({ "obj.xxx": 150 });
+      page.emitUpdate({ "game.xxx": 150 });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).to.have.attr("value", "50");
     });
 
     it("ignores unrelated obj", async () => {
-      page.emitReset('obj');
+      page.emitReset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ obj: { val: 50, max: 100 } });
+      page.emitUpdate({ game: { val: 50, max: 100 } });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).to.have.attr("value", "50");
@@ -101,42 +104,42 @@ describe("ot-attr", () => {
     });
 
     it("clears by fld deletion", async () => {
-      page.emitReset('obj');
+      page.emitReset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ obj: { val: 50, max: 100 } });
+      page.emitUpdate({ game: { val: 50, max: 100 } });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).to.have.attr("value", "50");
 
-      page.emitUpdate({ "obj.val": undefined });
+      page.emitUpdate({ "game.val": undefined });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).not.to.have.attr("value");
     });
 
     it("clears by empty obj", async () => {
-      page.emitReset('obj');
+      page.emitReset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ obj: { val: 50, max: 100 } });
+      page.emitUpdate({ game: { val: 50, max: 100 } });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).to.have.attr("value", "50");
 
-      page.emitUpdate({ obj: {} });
+      page.emitUpdate({ game: {} });
       await elementUpdated(elem);
       expect(elem).not.to.have.attr("max");
       expect(elem).not.to.have.attr("value");
     });
 
     it("clears by obj deletion", async () => {
-      page.emitUpdate({ obj: { val: 50, max: 100 } });
+      page.emitUpdate({ game: { val: 50, max: 100 } });
       await elementUpdated(elem);
       expect(elem).to.have.attr("max", "100");
       expect(elem).to.have.attr("value", "50");
 
-      page.emitUpdate({ obj: undefined });
+      page.emitUpdate({ game: undefined });
       await elementUpdated(elem);
       expect(elem).not.to.have.attr("max");
       expect(elem).not.to.have.attr("value");

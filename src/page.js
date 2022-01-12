@@ -110,11 +110,11 @@ export class Page {
   /**
    * Emits page reset.
    *
-   * @param {string} [obj='game'] alternate obj to reset (e.g. 'progress')
+   * @param {string[]} [vars] list of vars being reset, by default only ['game']
    * @fires Page.reset
    */
-  emitReset(obj = "game") {
-    this.emitEvent("ot.reset", obj);
+  emitReset(vars) {
+    this.emitEvent("ot.reset", vars || ['game']);
   }
 
   /**
@@ -228,6 +228,15 @@ export class Page {
  * @event Page.ready
  * @property {string} type `ot.ready`
  */
+
+/**
+ * Indicates that some page vars have been reset
+ *
+ * @event Page.reset
+ * @property {string} type `ot.reset`
+ * @property {string[]} detail list of top-level vars
+ */
+
 
 /**
  * Indicates that page variables has changed.

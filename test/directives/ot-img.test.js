@@ -29,61 +29,61 @@ describe("ot-img", () => {
   describe("updating", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-img="obj.fld"></div>`, { parentNode: body });
+      elem = await fixture(`<div data-ot-img="game.fld"></div>`, { parentNode: body });
       page = new Page(body);
     });
 
     it("resets", async () => {
       setChild(elem, foo_img);
-      page.emitReset('obj');
+      page.emitReset();
       await elementUpdated(elem);
       expect(elem).to.be.empty;
     });
 
     it("changes by fld", async () => {
-      page.emitReset('obj');
+      page.emitReset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ "obj.fld": foo_img });
+      page.emitUpdate({ "game.fld": foo_img });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
 
-      page.emitUpdate({ "obj.fld": bar_img });
+      page.emitUpdate({ "game.fld": bar_img });
       await elementUpdated(elem);
       expect(elem).to.contain(bar_img);
     });
 
     it("changes by obj", async () => {
-      page.emitReset('obj');
+      page.emitReset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ obj: { fld: foo_img } });
+      page.emitUpdate({ game: { fld: foo_img } });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
 
-      page.emitUpdate({ obj: { fld: bar_img } });
+      page.emitUpdate({ game: { fld: bar_img } });
       await elementUpdated(elem);
       expect(elem).to.contain(bar_img);
     });
 
     it("ignores unrelated fld", async () => {
-      page.emitReset('obj');
+      page.emitReset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ "obj.fld": foo_img });
+      page.emitUpdate({ "game.fld": foo_img });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
 
-      page.emitUpdate({ "obj.fld2": bar_img });
+      page.emitUpdate({ "game.fld2": bar_img });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
     });
 
     it("ignores unrelated obj", async () => {
-      page.emitReset('obj');
+      page.emitReset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ obj: { fld: foo_img } });
+      page.emitUpdate({ game: { fld: foo_img } });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
 
@@ -93,40 +93,40 @@ describe("ot-img", () => {
     });
 
     it("clears by fld deletion", async () => {
-      page.emitReset('obj');
+      page.emitReset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ "obj.fld": foo_img });
+      page.emitUpdate({ "game.fld": foo_img });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
 
-      page.emitUpdate({ "obj.fld": undefined });
+      page.emitUpdate({ "game.fld": undefined });
       await elementUpdated(elem);
       expect(elem).to.be.empty;
     });
 
     it("clears by empty obj", async () => {
-      page.emitReset('obj');
+      page.emitReset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ obj: { fld: foo_img } });
+      page.emitUpdate({ game: { fld: foo_img } });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
 
-      page.emitUpdate({ obj: {} });
+      page.emitUpdate({ game: {} });
       await elementUpdated(elem);
       expect(elem).to.be.empty;
     });
 
     it("clears by obj deletion", async () => {
-      page.emitReset('obj');
+      page.emitReset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ obj: { fld: foo_img } });
+      page.emitUpdate({ game: { fld: foo_img } });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
 
-      page.emitUpdate({ obj: undefined });
+      page.emitUpdate({ game: undefined });
       await elementUpdated(elem);
       expect(elem).to.be.empty;
     });

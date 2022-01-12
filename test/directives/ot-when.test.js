@@ -11,43 +11,43 @@ describe("ot-when", () => {
   describe("var", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-when="obj.fld"></div>`, { parentNode: body });
+      elem = await fixture(`<div data-ot-when="game.fld"></div>`, { parentNode: body });
       page = new Page(body);
     });
 
     it("resets", async () => {
       toggleDisplay(elem, true);
-      page.emitReset("obj");
+      page.emitReset();
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches on", async () => {
-      page.emitUpdate({ "obj.fld": "foo" });
+      page.emitUpdate({ "game.fld": "foo" });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
     });
 
     it("switches on by false-like values", async () => {
-      page.emitUpdate({ "obj.fld": false });
+      page.emitUpdate({ "game.fld": false });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
     });
 
     it("switches off by undef", async () => {
-      page.emitUpdate({ "obj.fld": true });
+      page.emitUpdate({ "game.fld": true });
       await elementUpdated(elem);
 
-      page.emitUpdate({ "obj.fld": undefined });
+      page.emitUpdate({ "game.fld": undefined });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches off by missing", async () => {
-      page.emitUpdate({ obj: { fld: true } });
+      page.emitUpdate({ game: { fld: true } });
       await elementUpdated(elem);
 
-      page.emitUpdate({ obj: {} });
+      page.emitUpdate({ game: {} });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -56,43 +56,43 @@ describe("ot-when", () => {
   describe("var==number", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-when="obj.fld==42"></div>`, { parentNode: body });
+      elem = await fixture(`<div data-ot-when="game.fld==42"></div>`, { parentNode: body });
       page = new Page(body);
     });
 
     it("resets", async () => {
       toggleDisplay(elem, true);
-      page.emitReset("obj");
+      page.emitReset();
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches on", async () => {
-      page.emitUpdate({ "obj.fld": 42 });
+      page.emitUpdate({ "game.fld": 42 });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
     });
 
     it("switches on by str-eq", async () => {
-      page.emitUpdate({ "obj.fld": "42" });
+      page.emitUpdate({ "game.fld": "42" });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
     });
 
     it("switches off by undef", async () => {
-      page.emitUpdate({ "obj.fld": 42 });
+      page.emitUpdate({ "game.fld": 42 });
       await elementUpdated(elem);
 
-      page.emitUpdate({ "obj.fld": undefined });
+      page.emitUpdate({ "game.fld": undefined });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches off by missing", async () => {
-      page.emitUpdate({ obj: { fld: 42 } });
+      page.emitUpdate({ game: { fld: 42 } });
       await elementUpdated(elem);
 
-      page.emitUpdate({ obj: {} });
+      page.emitUpdate({ game: {} });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -101,43 +101,43 @@ describe("ot-when", () => {
   describe("var===number", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-when="obj.fld===42"></div>`, { parentNode: body });
+      elem = await fixture(`<div data-ot-when="game.fld===42"></div>`, { parentNode: body });
       page = new Page(body);
     });
 
     it("resets", async () => {
       toggleDisplay(elem, true);
-      page.emitReset("obj");
+      page.emitReset();
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches on", async () => {
-      page.emitUpdate({ "obj.fld": 42 });
+      page.emitUpdate({ "game.fld": 42 });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
     });
 
     it("doesn't switches on by str-eq", async () => {
-      page.emitUpdate({ "obj.fld": "42" });
+      page.emitUpdate({ "game.fld": "42" });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches off by undef", async () => {
-      page.emitUpdate({ "obj.fld": 42 });
+      page.emitUpdate({ "game.fld": 42 });
       await elementUpdated(elem);
 
-      page.emitUpdate({ "obj.fld": undefined });
+      page.emitUpdate({ "game.fld": undefined });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches off by missing", async () => {
-      page.emitUpdate({ obj: { fld: 42 } });
+      page.emitUpdate({ game: { fld: 42 } });
       await elementUpdated(elem);
 
-      page.emitUpdate({ obj: {} });
+      page.emitUpdate({ game: {} });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -146,43 +146,43 @@ describe("ot-when", () => {
   describe("var==bool", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-when="obj.fld==false"></div>`, { parentNode: body });
+      elem = await fixture(`<div data-ot-when="game.fld==false"></div>`, { parentNode: body });
       page = new Page(body);
     });
 
     it("resets", async () => {
       toggleDisplay(elem, true);
-      page.emitReset("obj");
+      page.emitReset();
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches on", async () => {
-      page.emitUpdate({ "obj.fld": false });
+      page.emitUpdate({ "game.fld": false });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
     });
 
     it("switches on by str-eq", async () => {
-      page.emitUpdate({ "obj.fld": "" });
+      page.emitUpdate({ "game.fld": "" });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
     });
 
     it("switches off by undef", async () => {
-      page.emitUpdate({ "obj.fld": false });
+      page.emitUpdate({ "game.fld": false });
       await elementUpdated(elem);
 
-      page.emitUpdate({ "obj.fld": undefined });
+      page.emitUpdate({ "game.fld": undefined });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches off by missing", async () => {
-      page.emitUpdate({ obj: { fld: false } });
+      page.emitUpdate({ game: { fld: false } });
       await elementUpdated(elem);
 
-      page.emitUpdate({ obj: {} });
+      page.emitUpdate({ game: {} });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -191,43 +191,43 @@ describe("ot-when", () => {
   describe("var===bool", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-when="obj.fld===false"></div>`, { parentNode: body });
+      elem = await fixture(`<div data-ot-when="game.fld===false"></div>`, { parentNode: body });
       page = new Page(body);
     });
 
     it("resets", async () => {
       toggleDisplay(elem, true);
-      page.emitReset("obj");
+      page.emitReset();
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches on", async () => {
-      page.emitUpdate({ "obj.fld": false });
+      page.emitUpdate({ "game.fld": false });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
     });
 
     it("doesnt switch on by str-eq", async () => {
-      page.emitUpdate({ "obj.fld": "" });
+      page.emitUpdate({ "game.fld": "" });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches off by undef", async () => {
-      page.emitUpdate({ "obj.fld": false });
+      page.emitUpdate({ "game.fld": false });
       await elementUpdated(elem);
 
-      page.emitUpdate({ "obj.fld": undefined });
+      page.emitUpdate({ "game.fld": undefined });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches off by missing", async () => {
-      page.emitUpdate({ obj: { fld: false } });
+      page.emitUpdate({ game: { fld: false } });
       await elementUpdated(elem);
 
-      page.emitUpdate({ obj: {} });
+      page.emitUpdate({ game: {} });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -236,40 +236,39 @@ describe("ot-when", () => {
   describe("var=='str'", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-when="obj.fld=='foo'"></div>`, { parentNode: body });
+      elem = await fixture(`<div data-ot-when="game.fld=='foo'"></div>`, { parentNode: body });
       page = new Page(body);
     });
 
     it("resets", async () => {
       toggleDisplay(elem, true);
-      page.emitReset("obj");
+      page.emitReset();
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches on", async () => {
-      page.emitUpdate({ "obj.fld": "foo" });
+      page.emitUpdate({ "game.fld": "foo" });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
     });
 
     it("switches off by undef", async () => {
-      page.emitUpdate({ "obj.fld": "foo" });
+      page.emitUpdate({ "game.fld": "foo" });
       await elementUpdated(elem);
 
-      page.emitUpdate({ "obj.fld": undefined });
+      page.emitUpdate({ "game.fld": undefined });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("switches off by missing", async () => {
-      page.emitUpdate({ obj: { fld: "foo" } });
+      page.emitUpdate({ game: { fld: "foo" } });
       await elementUpdated(elem);
 
-      page.emitUpdate({ obj: {} });
+      page.emitUpdate({ game: {} });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
   });
-
 });

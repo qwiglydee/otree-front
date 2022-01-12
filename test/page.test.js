@@ -24,13 +24,13 @@ describe("Page", () => {
     it("resets", async () => {
       page.emitReset();
       detail = await pageEvent("ot.reset");
-      expect(detail).to.eq("game");
+      expect(detail).to.eql(["game"]);
     });
 
-    it("resets custom obj", async () => {
-      page.emitReset("status.progress");
+    it("resets custom vars", async () => {
+      page.emitReset(["foo", "bar"]);
       detail = await pageEvent("ot.reset");
-      expect(detail).to.eq("status.progress");
+      expect(detail).to.eql(["foo", "bar"]);
     });
 
     it("update", async () => {

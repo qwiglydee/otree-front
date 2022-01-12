@@ -92,9 +92,9 @@ export class Directive {
     this.onEvent('ot.update', this.onUpdate);
   }
   
-  onReset(event, topname) {
-    if (Ref.includes(topname, this.ref)) {
-      this.reset();
+  onReset(event, vars) {
+    if (vars.some(topname => Ref.includes(topname, this.ref))) {
+      this.reset(vars);
     }
   }
 

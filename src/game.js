@@ -53,13 +53,10 @@ export class Game {
    */
   reset() {
     this.state = {};
-    this.page.emitReset("game");
     this.status = {};
-    this.page.emitReset("status");
     this.error = undefined;
-    this.page.emitReset("error");
     this.result = undefined;
-    this.page.emitReset("result");
+    this.page.emitReset(["game", "status", "error", "result"]);
   }
 
   /**
