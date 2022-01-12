@@ -5,6 +5,6 @@
  * 
  * @param {Array} choices
  */
-export function random_choice(choices) {
+export function choice(choices) {
   return choices[Math.floor(Math.random() * choices.length)];
 }
