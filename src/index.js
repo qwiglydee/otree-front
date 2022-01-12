@@ -9,7 +9,7 @@ export const utils = {
 
 export * as directives from "./directives/base";
 // directives register themselves
-import "./directives/ot-start";
+import "./directives/ot-ready";
 import "./directives/ot-display";
 import "./directives/ot-input";
 import "./directives/ot-class";

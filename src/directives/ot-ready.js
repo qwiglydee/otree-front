@@ -3,7 +3,7 @@ import { toggleDisplay, toggleDisabled, isDisabled } from "../utils/dom";
 import { Directive, registerDirective } from "./base";
 
 /**
- * Directive `data-ot-start`
+ * Directive `data-ot-ready`
  * 
  * It is activated by any configured trigger `data-ot-key="keycode"`, `data-ot-touch`, `data-ot-click`, and triggers {@link Page.event:start}. 
  * 

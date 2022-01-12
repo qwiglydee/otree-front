@@ -223,7 +223,7 @@ export class Page {
 
 /**
  * Indicates that a user started a game pressing 'Space' or something.
- * Triggered by directive `ot-start`
+ * Triggered by directive `ot-ready`
  *
  * @event Page.ready
  * @property {string} type `ot.ready`
