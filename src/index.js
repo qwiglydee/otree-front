@@ -2,9 +2,10 @@ import * as changes from "./utils/changes";
 import * as dom from "./utils/dom";
 import * as random from "./utils/random";
 import * as timers from "./utils/timers";
+import * as measurement from "./utils/measurement";
 
 export const utils = {
-  dom, random, changes, timers
+  dom, random, changes, timers, measurement
 };
 
 export * as directives from "./directives/base";

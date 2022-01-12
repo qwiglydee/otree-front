@@ -4,4 +4,5 @@ export * as dom from "./dom";
 export * as random from "./random";
 export * as changes from "./changes";
 export * as ref from "./ref";
-export * as timers from "./timeers";
+export * as timers from "./timers";
+export * as measurement from "./measurement";
