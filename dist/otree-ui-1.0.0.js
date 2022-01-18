@@ -1000,6 +1000,7 @@ class Page {
    */
   constructor(body) {
     this.body = body || document.body;
+    this.form = body.querySelector('form'); 
     this.phase = {};
     this.init();
   }
@@ -1188,6 +1189,10 @@ class Page {
   togglePhase(phase) {
     Object.assign(this.phase, phase);
     this.emitEvent("ot.phase", phase); // NB: only changes are signalled
+  }
+
+  submit() {
+    this.form.submit();
   }
 }
 
