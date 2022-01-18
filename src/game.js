@@ -263,6 +263,18 @@ export class Game {
   set onInput(fn) {
     this.page.onEvent("ot.input", (ev) => fn(ev.detail));
   }
+
+  /**
+   * Sets handler for {@link Page.phase}
+   * 
+   * Does not trigger on resetting and temporaty freezing/unfreezing/switching. 
+   */
+  set onPhase(fn) {
+    this.page.onEvent("ot.phase", (ev) => {
+      if( ev.detail._resetting || ev.detail._freezing || ev.detail._switching ) return;
+      fn(ev.detail);
+    });
+  }
 }
 
 /**

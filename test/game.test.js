@@ -304,6 +304,41 @@ describe("Game", () => {
       expect(called).to.eql([{ foo: "Foo" }]);
     });
 
+    it("onPhase", async () => {
+      await pageEvent("ot.phase"); // initial;
+
+      let called;
+      game.onPhase = function () {
+        called = Array.from(arguments);
+      };
+
+      await pageFire("ot.phase", { foo: "Foo" });
+
+      expect(called).not.to.be.undefined;
+      expect(called).to.eql([{ foo: "Foo" }]);
+    });
+
+    it("onPhase ignores freezing", async () => {
+      await pageEvent("ot.phase"); // initial;
+      page.resetPhase({ input: true });      
+      await pageEvent("ot.phase");
+
+      let called;
+      game.onPhase = function () {
+        called = Array.from(arguments);
+      };
+
+      page.freezeInputs();
+      await pageEvent("ot.phase");
+
+      expect(called).to.be.undefined;
+
+      page.unfreezeInputs();
+      await pageEvent("ot.phase");
+
+      expect(called).to.be.undefined;
+    });
+
     it("onInput", async () => {
       let called;
       game.onInput = function () {

@@ -1135,7 +1135,7 @@ class Page {
    * @fires Page.phase
    */
   freezeInputs() {
-    this.emitEvent("ot.phase", { input: false });
+    this.emitEvent("ot.phase", { input: false, _freezing: true });
   }
 
   /**
@@ -1148,7 +1148,7 @@ class Page {
    */
   unfreezeInputs() {
     if (!this.phase.input) return;
-    this.emitEvent("ot.phase", { input: true });
+    this.emitEvent("ot.phase", { input: true, _freezing: true });
   }
 
   /**
@@ -1159,7 +1159,7 @@ class Page {
    * @param {String} name matching `ot-display="name"`
    */
   switchDisplay(name) {
-    this.emitEvent("ot.phase", { display: name });
+    this.emitEvent("ot.phase", { display: name, _switching: true });
   }
 
   /**
@@ -1173,7 +1173,7 @@ class Page {
       Object.assign(phase0, flags);
     }
     this.phase = phase0;
-    this.emitEvent("ot.phase", phase0);
+    this.emitEvent("ot.phase", { _resetting: true, ...phase0 });
   }
 
   /**
@@ -1511,6 +1511,18 @@ class Game {
    */
   set onInput(fn) {
     this.page.onEvent("ot.input", (ev) => fn(ev.detail));
+  }
+
+  /**
+   * Sets handler for {@link Page.phase}
+   * 
+   * Does not trigger on resetting and temporaty freezing/unfreezing/switching. 
+   */
+  set onPhase(fn) {
+    this.page.onEvent("ot.phase", (ev) => {
+      if( ev.detail._resetting || ev.detail._freezing || ev.detail._switching ) return;
+      fn(ev.detail);
+    });
   }
 }
 

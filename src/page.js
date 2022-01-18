@@ -155,7 +155,7 @@ export class Page {
    * @fires Page.phase
    */
   freezeInputs() {
-    this.emitEvent("ot.phase", { input: false });
+    this.emitEvent("ot.phase", { input: false, _freezing: true });
   }
 
   /**
@@ -168,7 +168,7 @@ export class Page {
    */
   unfreezeInputs() {
     if (!this.phase.input) return;
-    this.emitEvent("ot.phase", { input: true });
+    this.emitEvent("ot.phase", { input: true, _freezing: true });
   }
 
   /**
@@ -179,7 +179,7 @@ export class Page {
    * @param {String} name matching `ot-display="name"`
    */
   switchDisplay(name) {
-    this.emitEvent("ot.phase", { display: name });
+    this.emitEvent("ot.phase", { display: name, _switching: true });
   }
 
   /**
@@ -193,7 +193,7 @@ export class Page {
       Object.assign(phase0, flags);
     }
     this.phase = phase0;
-    this.emitEvent("ot.phase", phase0);
+    this.emitEvent("ot.phase", { _resetting: true, ...phase0 });
   }
 
   /**
