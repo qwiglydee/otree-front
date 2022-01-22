@@ -2,7 +2,7 @@ import { setText } from "../utils/dom";
 import { DirectiveBase, registerDirective } from "./base";
 
 /**
- * Directive `data-ot-text="reference"`
+ * Directive `ot-text="reference"`
  * 
  * It inserts text content from {@link Page.event:update}.
  * 
@@ -22,4 +22,4 @@ class otText extends DirectiveBase {
   }
 }
 
-registerDirective("[data-ot-text]", otText);
+registerDirective("[ot-text]", otText);

@@ -4,18 +4,18 @@ import { toggleDisplay } from "../utils/dom";
 import { DirectiveBase, registerDirective } from "./base";
 
 /**
- * Directive `data-ot-when="var"`, `data-ot-when="var==val", data-ot-when="var===val"`.
+ * Directive `ot-when="var"`, `ot-when="var==val", ot-when="var===val"`.
  *
  * It shows/hides host element on {@link Page.event:update}. 
  * 
  * The `var` is a page var reference like `game.feedback`, the `val` is a primitive json expression 
  * like "true" (boolean), "42" (number), "'foo'" (string). 
  * 
- * For `data-ot-when="var"` element shows when the `var` is defined.
+ * For `ot-when="var"` element shows when the `var` is defined.
  * 
- * For `data-ot-when="var==val"` element shows when the `var` is defined and equal to the val.
+ * For `ot-when="var==val"` element shows when the `var` is defined and equal to the val.
  * 
- * For `data-ot-when="var===val"` element shows when the `var` is defined and strictly equal to the val.
+ * For `ot-when="var===val"` element shows when the `var` is defined and strictly equal to the val.
  * 
  * @hideconstructor
  */
@@ -57,4 +57,4 @@ class otWhen extends DirectiveBase {
   }
 }
 
-registerDirective("[data-ot-when]", otWhen);
+registerDirective("[ot-when]", otWhen);

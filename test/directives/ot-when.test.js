@@ -11,7 +11,7 @@ describe("ot-when", () => {
   describe("var", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-when="game.fld"></div>`, { parentNode: body });
+      elem = await fixture(`<div ot-when="game.fld"></div>`, { parentNode: body });
       page = new Page(body);
     });
 
@@ -56,7 +56,7 @@ describe("ot-when", () => {
   describe("var==number", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-when="game.fld==42"></div>`, { parentNode: body });
+      elem = await fixture(`<div ot-when="game.fld==42"></div>`, { parentNode: body });
       page = new Page(body);
     });
 
@@ -101,7 +101,7 @@ describe("ot-when", () => {
   describe("var===number", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-when="game.fld===42"></div>`, { parentNode: body });
+      elem = await fixture(`<div ot-when="game.fld===42"></div>`, { parentNode: body });
       page = new Page(body);
     });
 
@@ -146,7 +146,7 @@ describe("ot-when", () => {
   describe("var==bool", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-when="game.fld==false"></div>`, { parentNode: body });
+      elem = await fixture(`<div ot-when="game.fld==false"></div>`, { parentNode: body });
       page = new Page(body);
     });
 
@@ -191,7 +191,7 @@ describe("ot-when", () => {
   describe("var===bool", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-when="game.fld===false"></div>`, { parentNode: body });
+      elem = await fixture(`<div ot-when="game.fld===false"></div>`, { parentNode: body });
       page = new Page(body);
     });
 
@@ -236,7 +236,7 @@ describe("ot-when", () => {
   describe("var=='str'", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-when="game.fld=='foo'"></div>`, { parentNode: body });
+      elem = await fixture(`<div ot-when="game.fld=='foo'"></div>`, { parentNode: body });
       page = new Page(body);
     });
 

@@ -14,12 +14,12 @@ describe("ot-img", () => {
 
   describe("errors", () => {
     it("invalid path", async () => {
-      elem = await fixture(`<div data-ot-img=".foo"></div>`);
+      elem = await fixture(`<div ot-img=".foo"></div>`);
       expect(() => new Page(document.body)).to.throw();
     });
 
     it("invalid chars", async () => {
-      elem = await fixture(`<div data-ot-img="foo/bar"></div>`);
+      elem = await fixture(`<div ot-img="foo/bar"></div>`);
       expect(() => new Page(document.body)).to.throw();
     });
 
@@ -29,7 +29,7 @@ describe("ot-img", () => {
   describe("updating", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-img="game.fld"></div>`, { parentNode: body });
+      elem = await fixture(`<div ot-img="game.fld"></div>`, { parentNode: body });
       page = new Page(body);
     });
 

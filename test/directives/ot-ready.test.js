@@ -17,7 +17,7 @@ describe("ot-start", () => {
   beforeEach(async () => {
     body = document.createElement("body");
     elem = await fixture(
-        `<div data-ot-click data-ot-touch data-ot-key="Space" data-ot-ready></div>`,
+        `<div ot-click ot-touch ot-key="Space" ot-ready></div>`,
         { parentNode: body });
     page = new Page(body);
   });

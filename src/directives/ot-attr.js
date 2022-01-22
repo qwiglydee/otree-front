@@ -3,7 +3,7 @@ import { setAttr } from "../utils/dom";
 import { DirectiveBase, registerDirective } from "./base";
 
 /**
- * Directives `data-ot-attr-something="reference"`
+ * Directives `ot-attr-something="reference"`
  * 
  * The allowed attributes are: 
  * - `disabled` 
@@ -34,12 +34,12 @@ class otAttrBase extends DirectiveBase {
 const ALLOWED_ATTRIBS = ["disabled", "hidden", "height", "width", "min", "max", "low", "high", "optimum", "value"];
 
 // create subclass for each attr with static property
-// register them as `data-ot-something`
+// register them as `ot-something`
 ALLOWED_ATTRIBS.forEach(attrname => {
   class otAttr extends otAttrBase {
     get name() {
       return attrname;
     }
   };
-  registerDirective(`[data-ot-${attrname}]`, otAttr);
+  registerDirective(`[ot-${attrname}]`, otAttr);
 });

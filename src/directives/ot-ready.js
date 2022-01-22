@@ -3,9 +3,9 @@ import { toggleDisplay, toggleDisabled, isDisabled } from "../utils/dom";
 import { DirectiveBase, registerDirective } from "./base";
 
 /**
- * Directive `data-ot-ready`
+ * Directive `ot-ready`
  * 
- * It is activated by any configured trigger `data-ot-key="keycode"`, `data-ot-touch`, `data-ot-click`, and triggers {@link Page.event:start}. 
+ * It is activated by any configured trigger `ot-key="keycode"`, `ot-touch`, `ot-click`, and triggers {@link Page.event:start}. 
  * 
  * @hideconstructor
  */
@@ -15,11 +15,10 @@ class otReady extends DirectiveBase {
   }
 
   init() {
-    const dataset = this.elem.dataset;
     this.trigger = {
-      click: "otClick" in dataset,
-      touch: "otTouch" in dataset,
-      key: "otKey" in dataset ? dataset.otKey : false,
+      click: this.elem.hasAttribute("ot-click"),
+      touch: this.elem.hasAttribute("ot-touch"),
+      key: this.elem.hasAttribute("ot-key") ?  this.elem.getAttribute("ot-key"): false,
     }
     this.disabled = false;
   }
@@ -50,4 +49,4 @@ class otReady extends DirectiveBase {
   }
 }
 
-registerDirective("[data-ot-ready]", otReady);
+registerDirective("[ot-ready]", otReady);

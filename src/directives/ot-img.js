@@ -3,7 +3,7 @@ import { setChild } from "../utils/dom";
 import { DirectiveBase, registerDirective } from "./base";
 
 /**
- * Directive `data-ot-img="reference"`
+ * Directive `ot-img="reference"`
  * 
  * It inserts image element from {@link Page.event:update} inside its host.
  * The value in the Changes should be an instance of created and pre-loaded Image element. 
@@ -28,4 +28,4 @@ export class otImg extends DirectiveBase {
   }
 }
 
-registerDirective("[data-ot-img]", otImg);
+registerDirective("[ot-img]", otImg);

@@ -60,20 +60,20 @@ class otRealInput extends DirectiveBase {
 }
 
 registerDirective(
-  "input[data-ot-input], select[data-ot-input], textarea[data-ot-input]",
+  "input[ot-input], select[ot-input], textarea[ot-input]",
   otRealInput
 );
 
 
 /**
- * Directive `data-ot-input="field"` for custom inputs: any `<div>`, `<span>`, `<button>`, `<kbd>`.
+ * Directive `ot-input` for custom inputs: any `<div>`, `<span>`, `<button>`, `<kbd>`.
  * 
- * The directive should be accompanied with method of triggering `data-ot-
+ * The directive should be accompanied with method of triggering `ot-
  * 
  * It triggers {@link Page.event:response} by a configred trigger:
- * - `data-ot-click` to trigger on click
- * - `data-ot-touch` to trigger on touch
- * - `data-ot-key="keycode" to trigger on keypress
+ * - `ot-click` to trigger on click
+ * - `ot-touch` to trigger on touch
+ * - `ot-key="keycode" to trigger on keypress
  * 
  * The list of available is at MDN: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code/code_values  
  * Basically, it is something like 'Enter', 'Space', 'Escape', or 'KeyQ' for "q" key.
@@ -98,12 +98,11 @@ class otCustomInput extends DirectiveBase {
     if (this.inp_value === "true") this.inp_value = true;
     if (this.inp_value === "false") this.inp_value = false; 
 
-    const dataset = this.elem.dataset;
     this.trigger = {
-      click: "otClick" in dataset,
-      touch: "otTouch" in dataset,
-      key: "otKey" in dataset ? dataset.otKey : false,
-    };
+      click: this.elem.hasAttribute("ot-click"),
+      touch: this.elem.hasAttribute("ot-touch"),
+      key: this.elem.hasAttribute("ot-key") ?  this.elem.getAttribute("ot-key"): false,
+    }
 
     if (this.elem.tagName == "BUTTON") this.trigger.click = true; 
   }
@@ -135,6 +134,6 @@ class otCustomInput extends DirectiveBase {
 }
 
 registerDirective(
-  "div[data-ot-input], span[data-ot-input], button[data-ot-input], kbd[data-ot-input]",
+  "div[ot-input], span[ot-input], button[ot-input], kbd[ot-input]",
   otCustomInput
 );

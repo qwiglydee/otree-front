@@ -12,12 +12,12 @@ describe("ot-attr", () => {
     let elem;
 
     it("invalid path", async () => {
-      elem = await fixture(`<div data-ot-value=".foo"></div>`);
+      elem = await fixture(`<div ot-value=".foo"></div>`);
       expect(() => new Page(document.body)).to.throw();
     });
 
     it("invalid chars", async () => {
-      elem = await fixture(`<div data-ot-value="foo/bar"></div>`);
+      elem = await fixture(`<div ot-value="foo/bar"></div>`);
       expect(() => new Page(document.body)).to.throw();
     });
   });
@@ -26,7 +26,7 @@ describe("ot-attr", () => {
     beforeEach(async () => {
       body = document.createElement("body");
       elem = await fixture(
-        `<progress data-ot-value="game.val" data-ot-max="game.max"></progress>`,
+        `<progress ot-value="game.val" ot-max="game.max"></progress>`,
         {
           parentNode: body,
         }

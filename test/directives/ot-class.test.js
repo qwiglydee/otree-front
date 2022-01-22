@@ -10,12 +10,12 @@ describe("ot-class", () => {
 
   describe("errors", () => {
     it("invalid path", async () => {
-      elem = await fixture(`<div data-ot-class=".foo"></div>`);
+      elem = await fixture(`<div ot-class=".foo"></div>`);
       expect(() => new Page(document.body)).to.throw();
     });
 
     it("invalid chars", async () => {
-      elem = await fixture(`<div data-ot-class="foo/bar"></div>`);
+      elem = await fixture(`<div ot-class="foo/bar"></div>`);
       expect(() => new Page(document.body)).to.throw();
     });
   });
@@ -23,7 +23,7 @@ describe("ot-class", () => {
   describe("updating", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div class="cls1 cls2" data-ot-class="game.fld"></div>`, { parentNode: body });
+      elem = await fixture(`<div class="cls1 cls2" ot-class="game.fld"></div>`, { parentNode: body });
       page = new Page(body);
     });
 

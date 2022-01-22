@@ -10,12 +10,12 @@ describe("ot-text", () => {
 
   describe("errors", () => {
     it("invalid path", async () => {
-      elem = await fixture(`<div data-ot-text=".foo"></div>`);
+      elem = await fixture(`<div ot-text=".foo"></div>`);
       expect(() => new Page(document.body)).to.throw();
     });
 
     it("invalid chars", async () => {
-      elem = await fixture(`<div data-ot-text="foo/bar"></div>`);
+      elem = await fixture(`<div ot-text="foo/bar"></div>`);
       expect(() => new Page(document.body)).to.throw();
     });
   });
@@ -23,7 +23,7 @@ describe("ot-text", () => {
   describe("updating", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-text="game.fld"></div>`, { parentNode: body });
+      elem = await fixture(`<div ot-text="game.fld"></div>`, { parentNode: body });
       page = new Page(body);
     });
 

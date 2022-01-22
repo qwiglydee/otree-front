@@ -10,7 +10,7 @@ describe("ot-display", () => {
   describe("switching", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-display="foo"></div>`, {
+      elem = await fixture(`<div ot-display="foo"></div>`, {
         parentNode: body,
       });
       page = new Page(body);
@@ -30,7 +30,7 @@ describe("ot-display", () => {
   describe("switching conjunction", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-display="foo|bar"></div>`, {
+      elem = await fixture(`<div ot-display="foo|bar"></div>`, {
         parentNode: body,
       });
       page = new Page(body);

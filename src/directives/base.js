@@ -7,7 +7,7 @@ export const registry = new Map();
  * Registers a directive class.
  * 
  * The {@link Page} sets up all registered directives on all found elements in html.
- * The elements a searched by provided selector, which is something like `[data-ot-something]` but actually can be anything.
+ * The elements a searched by provided selector, which is something like `[ot-something]` but actually can be anything.
  * 
  * @param {string} selector a css selector for elements
  * @param {class} cls a class derived from {@link DirectiveBase}  
@@ -25,7 +25,7 @@ export class DirectiveBase {
   /** 
    * directive name
    * 
-   * like "foo" for `data-ot-foo`
+   * like "foo" for `ot-foo`
    * 
    * should be redefined in derived classes 
    */  
@@ -34,13 +34,13 @@ export class DirectiveBase {
   }
 
   /** 
-   * Returns a value from attribute `data-ot-name`.
+   * Returns a value from attribute `ot-name`.
    * 
    * @param {string} [name=this.name] the param to get 
    */
-  param(name) {
-    if (name === undefined) name = this.name; 
-    return this.elem.dataset["ot" + name[0].toUpperCase() + name.slice(1).toLowerCase()];
+  param(attr) {
+    if (attr === undefined) attr = this.name; 
+    return this.elem.getAttribute(`ot-${attr}`)
   }
 
   /**

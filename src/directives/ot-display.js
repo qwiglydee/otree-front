@@ -2,7 +2,7 @@ import { toggleDisplay } from "../utils/dom";
 import { DirectiveBase, registerDirective } from "./base";
 
 /**
- * Directive `data-ot-display="phaseflag"`
+ * Directive `ot-display="phaseflag"`
  * 
  * It shows/hides an element when {@link Phase} contains matching `display` field.
  * If the phase doesn't contain the field, it is ignored (i.e. phases toggling just `input` do not affect the display). 
@@ -32,4 +32,4 @@ class otDisplay extends DirectiveBase {
   }
 }
 
-registerDirective("[data-ot-display]", otDisplay);
+registerDirective("[ot-display]", otDisplay);
