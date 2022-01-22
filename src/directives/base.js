@@ -93,7 +93,7 @@ export class Directive {
   }
   
   onReset(event, vars) {
-    if (vars.some(topname => Ref.includes(topname, this.ref))) {
+    if (vars == "*" || vars.some(topname => Ref.includes(topname, this.ref))) {
       this.reset(vars);
     }
   }

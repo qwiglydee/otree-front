@@ -24,7 +24,7 @@ describe("Page", () => {
     it("resets", async () => {
       page.emitReset();
       detail = await pageEvent("ot.reset");
-      expect(detail).to.eql(["game"]);
+      expect(detail).to.eql("*");
     });
 
     it("resets custom vars", async () => {
@@ -167,14 +167,14 @@ describe("Page", () => {
     it("resets", async () => {
       page.resetPhase();
       detail = await pageEvent("ot.phase");
-      expect(detail).to.eql({ display: null, input: false });
+      expect(detail).to.eql({ display: null, input: false, _resetting: true });
       expect(page.phase).to.eql({ display: null, input: false });
     })
 
     it("resets custom flags", async () => {
       page.resetPhase({ foo: "Foo", input: true });
       detail = await pageEvent("ot.phase");
-      expect(detail).to.eql({ display: null, input: true, foo: "Foo" });
+      expect(detail).to.eql({ display: null, input: true, foo: "Foo", _resetting: true });
       expect(page.phase).to.eql({ display: null, input: true, foo: "Foo" });
     });
 
@@ -199,7 +199,7 @@ describe("Page", () => {
 
       page.switchDisplay("foo");
       detail = await pageEvent("ot.phase");
-      expect(detail).to.eql({ display: "foo" });
+      expect(detail).to.eql({ display: "foo", _switching: true });
       expect(page.phase).to.eql({ display: null, input: false });
     });
 
@@ -210,12 +210,12 @@ describe("Page", () => {
 
       page.freezeInputs();
       detail = await pageEvent("ot.phase");
-      expect(detail).to.eql({ input: false });
+      expect(detail).to.eql({ input: false, _freezing: true });
       expect(page.phase.input).to.be.true;
 
       page.unfreezeInputs();
       detail = await pageEvent("ot.phase");
-      expect(detail).to.eql({ input: true });
+      expect(detail).to.eql({ input: true, _freezing: true });
       expect(page.phase.input).to.be.true;
     });
 
@@ -226,7 +226,7 @@ describe("Page", () => {
 
       page.freezeInputs();
       detail = await pageEvent("ot.phase");
-      expect(detail).to.eql({ input: false });
+      expect(detail).to.eql({ input: false, _freezing: true });
       expect(page.phase.input).to.be.true;
 
       page.togglePhase({ input: false });

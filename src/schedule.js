@@ -56,7 +56,7 @@ export class Schedule {
         `timeout`,
         () => {
           this.stop();
-          this.page.emitTimeout();
+          this.page.emitTimeout(this.timeout);
         },
         this.timeout
       );

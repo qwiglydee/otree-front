@@ -20,7 +20,6 @@ export class Page {
    */
   constructor(body) {
     this.body = body || document.body;
-    this.form = body.querySelector('form'); 
     this.phase = {};
     this.init();
   }
@@ -115,7 +114,12 @@ export class Page {
    * @fires Page.reset
    */
   emitReset(vars) {
-    this.emitEvent("ot.reset", vars || ['game']);
+    if (vars === undefined) {
+      this.emitEvent("ot.reset", "*");
+    } else {
+      if (!Array.isArray(vars)) vars = [vars];
+      this.emitEvent("ot.reset", vars);
+    }
   }
 
   /**
@@ -144,8 +148,8 @@ export class Page {
    *
    * @fires Schedule.timeout
    */
-  emitTimeout() {
-    this.emitEvent("ot.timeout");
+  emitTimeout(time) {
+    this.emitEvent("ot.timeout", time);
   }
 
   /**
@@ -212,7 +216,7 @@ export class Page {
   }
 
   submit() {
-    this.form.submit();
+    this.documentQuery("form").submit();
   }
 }
 
@@ -241,7 +245,6 @@ export class Page {
  * @property {string} type `ot.reset`
  * @property {string[]} detail list of top-level vars
  */
-
 
 /**
  * Indicates that page variables has changed.
