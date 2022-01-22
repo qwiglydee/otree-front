@@ -4,7 +4,6 @@ import { Page } from "../../src/page";
 
 import "../../src/directives/ot-input";
 
-
 const EVENT_DEFAULTS = {
   view: window,
   bubbles: true,
@@ -22,7 +21,7 @@ describe("ot-input", () => {
     return (await oneEvent(elem, type)).detail;
   }
 
-  describe("text input", () => {
+  describe("textinputEnable", () => {
     beforeEach(async () => {
       body = document.createElement("body");
       elem = await fixture(`<input type="text" ot-input name="foo"></div>`, { parentNode: body });
@@ -30,7 +29,7 @@ describe("ot-input", () => {
     });
 
     it("clears on reset", async () => {
-      elem.value="xxx";
+      elem.value = "xxx";
 
       page.emitReset();
       await elementUpdated(elem);
@@ -39,19 +38,19 @@ describe("ot-input", () => {
     });
 
     it("switches on phase", async () => {
-      page.togglePhase({input: true});
+      page.togglePhase({ inputEnabled: true });
       await elementUpdated(elem);
       expect(elem.disabled).to.be.false;
       expect(elem).not.to.have.class("ot-disabled");
 
-      page.togglePhase({input: false});
+      page.togglePhase({ inputEnabled: false });
       await elementUpdated(elem);
       expect(elem.disabled).to.be.true;
       expect(elem).to.have.class("ot-disabled");
     });
 
     it("triggers on change", async () => {
-      page.resetPhase({ input: true});
+      page.resetPhase({ inputEnabled: true });
       await elementUpdated(elem);
 
       elem.value = "Foo";
@@ -62,11 +61,11 @@ describe("ot-input", () => {
     });
 
     it("triggers on enter", async () => {
-      page.resetPhase({ input: true});
+      page.resetPhase({ inputEnabled: true });
       await elementUpdated(elem);
 
       elem.value = "Foo";
-      elem.dispatchEvent(new KeyboardEvent("keydown", { code: "Enter"}));
+      elem.dispatchEvent(new KeyboardEvent("keydown", { code: "Enter" }));
 
       detail = await pageEvent("ot.input");
       expect(detail).to.eql({ name: "foo", value: "Foo" });
@@ -81,7 +80,7 @@ describe("ot-input", () => {
     });
 
     it("triggers on change", async () => {
-      page.resetPhase({ input: true});
+      page.resetPhase({ inputEnabled: true });
       await elementUpdated(elem);
 
       elem.value = "Foo";
@@ -90,31 +89,31 @@ describe("ot-input", () => {
       detail = await pageEvent("ot.input");
       expect(detail).to.eql({ name: "", value: "Foo" });
     });
-
-  })
-
+  });
 
   describe("button", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<button ot-input name="foo" value="Foo"></button>`, { parentNode: body });
+      elem = await fixture(`<button ot-input name="foo" value="Foo"></button>`, {
+        parentNode: body,
+      });
       page = new Page(body);
     });
 
     it("switches on phase", async () => {
-      page.togglePhase({input: true});
+      page.togglePhase({ inputEnabled: true });
       await elementUpdated(elem);
       expect(elem).not.to.have.attr("disabled");
       expect(elem).not.to.have.class("ot-disabled");
 
-      page.togglePhase({input: false});
+      page.togglePhase({ inputEnabled: false });
       await elementUpdated(elem);
       expect(elem).to.have.attr("disabled");
       expect(elem).to.have.class("ot-disabled");
     });
 
     it("triggers on click", async () => {
-      page.togglePhase({input: true});
+      page.togglePhase({ inputEnabled: true });
       await elementUpdated(elem);
       elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
       detail = await pageEvent("ot.input");
@@ -125,24 +124,27 @@ describe("ot-input", () => {
   describe("custom", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div ot-click ot-touch ot-key="Space" ot-input  name="foo" value="Foo"></div>`, {
-        parentNode: body,
-      });
+      elem = await fixture(
+        `<div ot-click ot-touch ot-key="Space" ot-input  name="foo" value="Foo"></div>`,
+        {
+          parentNode: body,
+        }
+      );
       page = new Page(body);
     });
 
     it("switches on phase", async () => {
-      page.togglePhase({input: true});
+      page.togglePhase({ inputEnabled: true });
       await elementUpdated(elem);
       expect(elem).not.to.have.class("ot-disabled");
 
-      page.togglePhase({input: false});
+      page.togglePhase({ inputEnabled: false });
       await elementUpdated(elem);
       expect(elem).to.have.class("ot-disabled");
     });
 
     it("triggers on key", async () => {
-      page.togglePhase({input: true});
+      page.togglePhase({ inputEnabled: true });
       await elementUpdated(elem);
       page.body.dispatchEvent(new KeyboardEvent("keydown", { ...EVENT_DEFAULTS, code: "Space" }));
       detail = await pageEvent("ot.input");
@@ -150,7 +152,7 @@ describe("ot-input", () => {
     });
 
     it("triggers on touch", async () => {
-      page.togglePhase({input: true});
+      page.togglePhase({ inputEnabled: true });
       await elementUpdated(elem);
       elem.dispatchEvent(new TouchEvent("touchend", EVENT_DEFAULTS));
       detail = await pageEvent("ot.input");
@@ -158,7 +160,7 @@ describe("ot-input", () => {
     });
 
     it("triggers on click", async () => {
-      page.togglePhase({input: true});
+      page.togglePhase({ inputEnabled: true });
       await elementUpdated(elem);
       elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
       detail = await pageEvent("ot.input");

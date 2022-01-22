@@ -73,7 +73,7 @@ export class Game {
     this.trial = trial;
 
     this.page.emitUpdate({ trial });
-    await this.page.waitEvent("ot.update"); // make sure the hook is called after page update
+    await this.page.waitForEvent("ot.update"); // make sure the hook is called after page update
     this.startTrial(this.trial);
   }
 
@@ -257,7 +257,7 @@ export class Game {
    */
   async playTrial() {
     this.resetTrial();
-    await this.page.waitEvent("ot.completed");
+    await this.page.waitForEvent("ot.completed");
   }
 
   async playIterations() {

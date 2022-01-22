@@ -49,9 +49,9 @@ describe("Page", () => {
     });
 
     it("input", async () => {
-      page.emitInput('foo', "Foo");
+      page.emitInput("foo", "Foo");
       detail = await pageEvent("ot.input");
-      expect(detail).to.eql({ name: 'foo', value: "Foo" });
+      expect(detail).to.eql({ name: "foo", value: "Foo" });
     });
 
     it("timeout", async () => {
@@ -59,7 +59,6 @@ describe("Page", () => {
       await pageEvent("ot.timeout");
     });
   });
-
 
   describe("events", () => {
     it("emits", async () => {
@@ -150,7 +149,7 @@ describe("Page", () => {
 
     it("waits", async () => {
       let waiting, result;
-      waiting = page.waitEvent("foo");
+      waiting = page.waitForEvent("foo");
       page.emitEvent("foo", { bar: "Bar" });
       await pageEvent("foo");
       result = await waiting;
@@ -159,7 +158,7 @@ describe("Page", () => {
 
     it("waits on elem", async () => {
       let waiting, result;
-      waiting = page.waitEvent("foo", elem);
+      waiting = page.waitForEvent("foo", elem);
       page.emitEvent("foo", { bar: "Bar" }, elem);
       await elemEvent("foo");
       result = await waiting;
@@ -170,36 +169,36 @@ describe("Page", () => {
   describe("phases", () => {
     it("initializes", async () => {
       page.init();
-      expect(page.phase).to.eql({ display: null, input: false });
+      expect(page.phase).to.eql({ display: null, inputEnabled: false });
     });
 
     it("resets", async () => {
       page.resetPhase();
       detail = await pageEvent("ot.phase");
-      expect(detail).to.eql({ display: null, input: false, _resetting: true });
-      expect(page.phase).to.eql({ display: null, input: false });
-    })
+      expect(detail).to.eql({ display: null, inputEnabled: false, _resetting: true });
+      expect(page.phase).to.eql({ display: null, inputEnabled: false });
+    });
 
     it("resets custom flags", async () => {
-      page.resetPhase({ foo: "Foo", input: true });
+      page.resetPhase({ foo: "Foo", inputEnabled: true });
       detail = await pageEvent("ot.phase");
-      expect(detail).to.eql({ display: null, input: true, foo: "Foo", _resetting: true });
-      expect(page.phase).to.eql({ display: null, input: true, foo: "Foo" });
+      expect(detail).to.eql({ display: null, inputEnabled: true, foo: "Foo", _resetting: true });
+      expect(page.phase).to.eql({ display: null, inputEnabled: true, foo: "Foo" });
     });
 
     it("toggles", async () => {
       page.resetPhase();
       await pageEvent("ot.phase");
 
-      page.togglePhase({ display: "foo", input: false });
+      page.togglePhase({ display: "foo", inputEnabled: false });
       detail = await pageEvent("ot.phase");
-      expect(detail).to.eql({ display: "foo", input: false });
-      expect(page.phase).to.eql({ display: "foo", input: false });
+      expect(detail).to.eql({ display: "foo", inputEnabled: false });
+      expect(page.phase).to.eql({ display: "foo", inputEnabled: false });
 
-      page.togglePhase({ input: true });
+      page.togglePhase({ inputEnabled: true });
       detail = await pageEvent("ot.phase");
-      expect(detail).to.eql({ input: true });
-      expect(page.phase).to.eql({ display: "foo", input: true });
+      expect(detail).to.eql({ inputEnabled: true });
+      expect(page.phase).to.eql({ display: "foo", inputEnabled: true });
     });
 
     it("switches display", async () => {
@@ -209,45 +208,47 @@ describe("Page", () => {
       page.switchDisplay("foo");
       detail = await pageEvent("ot.phase");
       expect(detail).to.eql({ display: "foo", _switching: true });
-      expect(page.phase).to.eql({ display: null, input: false });
+      expect(page.phase).to.eql({ display: null, inputEnabled: false });
     });
 
     it("freezes/unfreezes inputs", async () => {
-      page.resetPhase({ input: true });
+      page.resetPhase({ inputEnabled: true });
       await pageEvent("ot.phase");
-      expect(page.phase.input).to.be.true;
+      expect(page.phase.inputEnabled).to.be.true;
 
       page.freezeInputs();
       detail = await pageEvent("ot.phase");
-      expect(detail).to.eql({ input: false, _freezing: true });
-      expect(page.phase.input).to.be.true;
+      expect(detail).to.eql({ inputEnabled: false, _freezing: true });
+      expect(page.phase.inputEnabled).to.be.true;
 
       page.unfreezeInputs();
       detail = await pageEvent("ot.phase");
-      expect(detail).to.eql({ input: true, _freezing: true });
-      expect(page.phase.input).to.be.true;
+      expect(detail).to.eql({ inputEnabled: true, _freezing: true });
+      expect(page.phase.inputEnabled).to.be.true;
     });
 
     it("doesn't unfreeze after phase change", async () => {
-      page.resetPhase({ input: true });
+      page.resetPhase({ inputEnabled: true });
       await pageEvent("ot.phase");
-      expect(page.phase.input).to.be.true;
+      expect(page.phase.inputEnabled).to.be.true;
 
       page.freezeInputs();
       detail = await pageEvent("ot.phase");
-      expect(detail).to.eql({ input: false, _freezing: true });
-      expect(page.phase.input).to.be.true;
+      expect(detail).to.eql({ inputEnabled: false, _freezing: true });
+      expect(page.phase.inputEnabled).to.be.true;
 
-      page.togglePhase({ input: false });
+      page.togglePhase({ inputEnabled: false });
       await pageEvent("ot.phase");
-      expect(page.phase.input).to.be.false;
+      expect(page.phase.inputEnabled).to.be.false;
 
       page.unfreezeInputs();
-      let emitted = false; 
-      oneEvent(body, "ot.phase").then(() => { emitted = true; });
+      let emitted = false;
+      oneEvent(body, "ot.phase").then(() => {
+        emitted = true;
+      });
       await aTimeout(1000);
       expect(emitted).to.be.false;
-      expect(page.phase.input).to.be.false;
+      expect(page.phase.inputEnabled).to.be.false;
     });
   });
 });

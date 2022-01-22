@@ -5,7 +5,7 @@ import { DirectiveBase, registerDirective } from "./base";
  * Directive `ot-display="phaseflag"`
  * 
  * It shows/hides an element when {@link Phase} contains matching `display` field.
- * If the phase doesn't contain the field, it is ignored (i.e. phases toggling just `input` do not affect the display). 
+ * If the phase doesn't contain the field, it is ignored (i.e. phases toggling just `inputEnabled` do not affect the display). 
  * 
  * @hideconstructor
  */

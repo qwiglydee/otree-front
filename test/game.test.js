@@ -210,7 +210,7 @@ describe("Game", () => {
 
       let onphase = spy(game, "onPhase", function () {});
 
-      page.togglePhase({ input: true });
+      page.togglePhase({inputEnabled: true });
       await pageEvent("ot.phase");
 
       expect(onphase.count).to.eq(1);

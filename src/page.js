@@ -12,7 +12,7 @@ import { registry } from "./directives/base";
  *
  * *NB*: The installation happens only once, directives won't work in dynamically added html code.
  *
- * @property {Phase} phase set of flags indicating common state of directives, `{ display, input }`
+ * @property {Phase} phase set of flags indicating common state of directives, `{ display, inputEnabled }`
  */
 export class Page {
   /**
@@ -69,9 +69,9 @@ export class Page {
    *
    * Example:
    *
-   *    await page.waitEvent('ot.time.out'); // suspend script until timeout emitd
+   *    await page.waitForEvent('ot.time.out'); // suspend script until timeout emitd
    *
-   *    let waiting = page.waitEvent('ot.timeout'); // start waiting without suspending
+   *    let waiting = page.waitForEvent('ot.timeout'); // start waiting without suspending
    *    // do some work during which a timeout might happen
    *    await waiting; // suspend for an event happend since the 'waiting' created
    *
@@ -79,7 +79,7 @@ export class Page {
    * @param {HTMLElement} [target=page.body]
    * @returns {Promise} resolved when event emitd
    */
-  waitEvent(type, target) {
+  waitForEvent(type, target) {
     target = target || this.body;
     return new Promise((resolve) => {
       function listener(event) {
@@ -162,7 +162,7 @@ export class Page {
    * @fires Page.phase
    */
   freezeInputs() {
-    this.emitEvent("ot.phase", { input: false, _freezing: true });
+    this.emitEvent("ot.phase", { inputEnabled: false, _freezing: true });
   }
 
   /**
@@ -174,8 +174,8 @@ export class Page {
    * @fires Page.phase
    */
   unfreezeInputs() {
-    if (!this.phase.input) return;
-    this.emitEvent("ot.phase", { input: true, _freezing: true });
+    if (!this.phase.inputEnabled) return;
+    this.emitEvent("ot.phase", { inputEnabled: true, _freezing: true });
   }
 
   /**
@@ -195,7 +195,7 @@ export class Page {
    * @param {Object} [flags] some additional initial flags
    */
   resetPhase(flags) {
-    let phase0 = { display: null, input: false };
+    let phase0 = { display: null, inputEnabled: false };
     if (flags) {
       Object.assign(phase0, flags);
     }
@@ -207,7 +207,7 @@ export class Page {
    * Toggles page phase.
    *
    * The provided flags override existing, unaffected flags are preserved.
-   * I.e. `togglePhase({ input: true })` keeps current value of `display` flag.
+   * I.e. `togglePhase({ inputEnabled: true })` keeps current value of `display` flag.
    *
    * @param {Phase} phase set of flags to change
    * @fires Page.phase
@@ -229,7 +229,7 @@ export class Page {
  *
  * @typedef {Object} Phase
  * @property {string} [display] to toggle `ot-display` directives
- * @property {bool} [input] to enable/disable `ot-input` directives
+ * @property {bool} [inputEnabled] to enable/disable `ot-input` directives
  */
 
 /**
@@ -266,11 +266,11 @@ export class Page {
  */
 
 /**
- * Indicates a timed phase switching display, input, or something else
+ * Indicates a timed phase switching display, inputEnabled, or something else
  *
  * @event Page.phase
  * @property {string} type `ot.phase`
- * @property {object} detail an object like `{display: something, input: bool, ...}`
+ * @property {object} detail an object like `{display: something, inputEnabled: bool, ...}`
  */
 
 /**

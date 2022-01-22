@@ -33,7 +33,7 @@ class otRealInput extends DirectiveBase {
   }
 
   onPhase(event, phase) {
-    toggleDisabled(this.elem, !phase.input);
+    toggleDisabled(this.elem, !phase.inputEnabled);
   }
 
   onChange(event) {
@@ -115,8 +115,8 @@ class otCustomInput extends DirectiveBase {
   }
 
   onPhase(event, phase) {
-    if (!('input' in phase)) return;
-    toggleDisabled(this.elem, !phase.input);
+    if (!('inputEnabled' in phase)) return;
+    toggleDisabled(this.elem, !phase.inputEnabled);
   }
 
   onClick(event) {

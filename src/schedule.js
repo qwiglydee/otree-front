@@ -18,8 +18,8 @@ export class Schedule {
    * The `phases` in config is a list of {@link Phase} augmented with `time` field indicating time in ms to emit phase events.
    * ```
    * { phases: [
-   *  { time: 0, display: "something", }
-   *  { time: 1000, display: "somethingelse", input: false }
+   *  { at: 0, display: "something", }
+   *  { at: 1000, display: "somethingelse", inputEnabled: false }
    * ]}
    * ```
    *
@@ -39,14 +39,14 @@ export class Schedule {
     if (this.phases) {
       this.phases.forEach((phase, i) => {
         const flags = Object.assign({}, phase);
-        delete flags.time;
+        delete flags.at;
 
         this.timers.delay(
           `phase-${i}`,
           () => {
             this.page.togglePhase(flags);
           },
-          phase.time
+          phase.at
         );
       });
     }

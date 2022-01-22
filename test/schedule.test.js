@@ -20,9 +20,9 @@ describe("schedule", () => {
   it("runs phases", async () => {
     schedule.setup({
       phases: [
-        { time: 0, foo: "foo0" },
-        { time: 100, foo: "foo1" },
-        { time: 200, foo: "foo2" },
+        { at: 0, foo: "foo0" },
+        { at: 100, foo: "foo1" },
+        { at: 200, foo: "foo2" },
       ],
     });
 
@@ -61,10 +61,10 @@ describe("schedule", () => {
     schedule.setup({
       timeout: 250,
       phases: [
-        { time: 100, foo: "foo1" },
-        { time: 200, foo: "foo2" },
-        { time: 300, foo: "foo3" },
-        { time: 400, foo: "foo4" },
+        { at: 100, foo: "foo1" },
+        { at: 200, foo: "foo2" },
+        { at: 300, foo: "foo3" },
+        { at: 400, foo: "foo4" },
       ],
     });
 
@@ -82,10 +82,10 @@ describe("schedule", () => {
 
     schedule.setup({
       phases: [
-        { time: 100, foo: "foo1" },
-        { time: 200, foo: "foo2" },
-        { time: 300, foo: "foo3" },
-        { time: 400, foo: "foo4" },
+        { at: 100, foo: "foo1" },
+        { at: 200, foo: "foo2" },
+        { at: 300, foo: "foo3" },
+        { at: 400, foo: "foo4" },
       ],
     });
 
