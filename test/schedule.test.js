@@ -49,7 +49,7 @@ describe("schedule", () => {
     schedule.start();
 
     detail = await pageEvent("ot.timeout");
-    expect(detail).to.be.null;
+    expect(detail).to.eq(100);
     expect(Date.now() - t0).to.be.within(100, 110);
   });
 

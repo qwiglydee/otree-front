@@ -35,6 +35,7 @@ export class Page {
     });
 
     this.resetPhase();
+    this.emitReset();
   }
 
   /**

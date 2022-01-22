@@ -4,6 +4,27 @@ import { Changes } from "../src/utils/changes";
 
 import { Page } from "../src/page";
 import { Game } from "../src/game";
+import { sleep } from "../src/utils/timers";
+
+function spy(obj, methodname, fn) {
+  let spied = {
+    count: 0,
+  };
+  let orig = fn || obj[methodname];
+  obj[methodname] = function () {
+    spied.count++;
+    spied.args = Array.from(arguments);
+    return orig.apply(this, arguments);
+  };
+  return spied;
+}
+
+function init() {
+  let body = document.createElement("body");
+  let page = new Page(body);
+  let game = new Game(page);
+  return { body, page, game };
+}
 
 describe("Game", () => {
   let body, page, game, detail;
@@ -24,367 +45,348 @@ describe("Game", () => {
   });
 
   it("setups", async () => {
-    game.setup({ foo: "Foo" });
-
+    game.setConfig({ foo: "Foo" });
     expect(game.config).to.eql({ foo: "Foo" });
     detail = await pageEvent("ot.update");
     expect(detail).to.eql(new Changes({ config: { foo: "Foo" } }));
   });
 
-  it("resets", async () => {
-    game.reset();
+  it("resets and loads trial", async () => {
+    await pageEvent("ot.reset"); // initial
 
-    expect(game.state).to.eql({});
+    let loadtrial = spy(game, "loadTrial", function () {});
+
+    game.resetTrial();
+
+    expect(game.trial).to.eql({});
     expect(game.status).to.eql({});
-    expect(game.result).to.be.undefined;
-    expect(game.error).to.be.undefined;
+    expect(game.feedback).to.be.undefined;
 
     detail = await pageEvent("ot.reset");
-    expect(detail).to.eql(["game", "status", "error", "result"]);
+    expect(detail).to.eql(["trial", "status", "feedback"]);
+
+    expect(loadtrial.args).to.eql([]);
   });
 
-  it("starts", async () => {
-    game.start();
-    detail = await pageEvent("ot.started");
+  it("sets and starts trial", async () => {
+    let starttrial = spy(game, "startTrial", function () {});
+
+    let trial = { foo: "Foo" };
+    game.setTrial(trial);
+    detail = await pageEvent("ot.update");
+    expect(detail).to.eql(new Changes({ trial }));
+
+    expect(starttrial.args).to.eql([trial]);
   });
 
-  it("completes", async () => {
-    game.complete({ foo: "Foo" });
-
-    detail = await pageEvent("ot.completed");
-    expect(detail).to.eql({ foo: "Foo" });
+  it("updates trial", async () => {
+    game.trial = { foo: "Foo", bar: "Bar" };
+    game.updateTrial({ bar: "Bar2", baz: "Baz" });
+    expect(game.trial).to.eql({ foo: "Foo", bar: "Bar2", baz: "Baz" });
 
     detail = await pageEvent("ot.update");
-    expect(detail).to.eql(new Changes({ result: { foo: "Foo" } }));
-
-    expect(game.result).to.eql({ foo: "Foo" });
+    expect(detail).to.eql(new Changes({ "trial.bar": "Bar2", "trial.baz": "Baz" }));
   });
 
-  it("sets status", async () => {
-    game.status = { foo: "Foo" };
-    game.setStatus({ bar: "Bar" });
+  it("updates status", async () => {
+    let onstatus = spy(game, "onStatus", function () {});
+
+    game.status = { foo: "Foo", bar: "Bar" };
+    game.updateStatus({ bar: "Bar2", baz: "Baz" });
+
+    expect(game.status).to.eql({ foo: "Foo", bar: "Bar2", baz: "Baz" });
+
+    detail = await pageEvent("ot.update");
+    expect(detail).to.eql(new Changes({ status: { bar: "Bar2", baz: "Baz" } }));
 
     detail = await pageEvent("ot.status");
-    expect(detail).to.eql({ bar: "Bar" });
+    expect(detail).to.eql({ bar: "Bar2", baz: "Baz" });
 
-    detail = await pageEvent("ot.update");
-    expect(detail).to.eql(new Changes({ status: { bar: "Bar" } }));
-
-    expect(game.status).to.eql({ bar: "Bar" });
+    expect(onstatus.args).to.eql([{ foo: "Foo", bar: "Bar2", baz: "Baz" }, { bar: "Bar2", baz: "Baz" }]);
   });
 
-  it("updates states", async () => {
-    game.state = { foo: "Foo" };
-    game.updateState({ bar: "Bar" });
-
-    detail = await pageEvent("ot.update");
-    expect(detail).to.eql(new Changes({ "game.bar": "Bar" }));
-    expect(game.state).to.eql({ foo: "Foo", bar: "Bar" });
+  it("emits started", async () => {
+    game.updateStatus({ trialStarted: true });
+    await pageEvent("ot.started");
   });
 
-  it("sets error", async () => {
-    game.setError("code", "message");
-    detail = await pageEvent("ot.error");
-    expect(detail).to.eql({ code: "code", message: "message" });
-
-    detail = await pageEvent("ot.update");
-    expect(detail).to.eql(new Changes({ error: { code: "code", message: "message" } }));
-
-    expect(game.error).to.eql({ code: "code", message: "message" });
+  it("emits completed", async () => {
+    game.updateStatus({ trialCompleted: true });
+    await pageEvent("ot.completed");
   });
 
-  it("clears error", async () => {
-    game.error = { code: "code", message: "message" };
-    game.clearError();
-    detail = await pageEvent("ot.error");
-    expect(detail).to.eq(null);
+  it("emits gameover", async () => {
+    game.updateStatus({ gameOver: true });
+    await pageEvent("ot.gameover");
+  });
+
+  it("sets feedback", async () => {
+    let onfeedback = spy(game, "onFeedback", function () {});
+
+    let feedback = { foo: "Foo" };
+
+    game.setFeedback(feedback);
+    expect(game.feedback).to.eql(feedback);
+
+    detail = await pageEvent("ot.update");
+    expect(detail).to.eql(new Changes({ feedback }));
+
+    expect(onfeedback.args).to.eql([feedback]);
+  });
+
+  it("clears feedback", async () => {
+    await pageEvent("ot.reset"); // initial
+
+    let onfeedback = spy(game, "onFeedback", function () {});
+
+    game.feedback = { foo: "Foo" };
+    game.clearFeedback();
+    expect(game.feedback).to.be.undefined;
 
     detail = await pageEvent("ot.reset");
-    expect(detail).to.eq("error");
+    expect(detail).to.eql(["feedback"]);
 
-    expect(game.error).to.be.undefined;
+    expect(onfeedback.args).to.be.undefined;
   });
 
-  describe("playing", () => {
-    it("plays", async () => {
-      let playing = game.play();
-      await pageEvent("ot.started");
+  it("sets progress", async () => {
+    let onprogress = spy(game, "onProgress", function () {});
 
-      game.complete({ foo: "Foo"});
-      await pageEvent("ot.completed");
+    let progress = { foo: "Foo" };
 
-      await playing;
-    });
+    game.setProgress(progress);
+    expect(game.progress).to.eql(progress);
+
+    detail = await pageEvent("ot.update");
+    expect(detail).to.eql(new Changes({ progress }));
+
+    expect(onprogress.args).to.eql([progress]);
   });
 
-  describe("iterating", () => {
-    let body, page, game, detail;
+  it("clears progress", async () => {
+    await pageEvent("ot.reset"); // initial
 
-    async function pageEvent(type) {
-      return (await oneEvent(body, type)).detail;
-    }
+    let onprogress = spy(game, "onProgress", function () {});
 
-    beforeEach(() => {
-      body = document.createElement("body");
-      page = new Page(body);
-      game = new Game(page);
-    });
+    game.progress = { foo: "Foo" };
+    game.resetProgress();
+    expect(game.progress).to.be.undefined;
 
-    it("increments iteration", async () => {
-      let running = game.playIterations(2, 0);
+    detail = await pageEvent("ot.reset");
+    expect(detail).to.eql(["progress"]);
 
-      await pageEvent("ot.started");
-      expect(game.iteration).to.eq(1);
-      game.complete({});
-
-      await pageEvent("ot.started");
-      expect(game.iteration).to.eq(2);
-      game.complete({});
-
-      await running;
-    });
-
-    it("iterates loop", async () => {
-      let counter = 0;
-      page.onEvent("ot.started", () => {
-        counter++;
-        game.complete({});
-      });
-
-      await game.playIterations(10, 0);
-
-      expect(counter).to.eql(10);
-    });
-
-    it("terminates loop", async () => {
-      let counter = 0;
-      page.onEvent("ot.started", () => {
-        counter++;
-        game.complete({});
-        if (counter == 5) game.stopIterations();
-      });
-
-      await game.playIterations(10, 0);
-
-      expect(counter).to.eql(5);
-    });
-
-    it("iterates infinite loop", async () => {
-      let counter = 0;
-      page.onEvent("ot.started", () => {
-        counter++;
-        game.complete({});
-        if (counter == 5) game.stopIterations();
-      });
-
-      await game.playIterations(null, 0);
-
-      expect(counter).to.eql(5);
-    });
-
-    it("makes pauses", async () => {
-      let running = game.playIterations(2, 200);
-
-      await pageEvent("ot.started");
-      game.complete({});
-
-      let t0 = Date.now();
-      await pageEvent("ot.started");
-      expect(Date.now() - t0).to.be.within(200, 210);
-    });
-
-    it("updates progress", async () => {
-      let progress;
-
-      page.onEvent("ot.update", (ev) => {
-        if (ev.detail.has("progress")) progress = ev.detail.get("progress");
-      });
-
-      let running = game.playIterations(3, 0);
-
-      // iter 1
-
-      await pageEvent("ot.reset");
-
-      expect(progress).to.eql({
-        total: 3,
-        current: 1,
-        completed: 0,
-        solved: 0,
-        failed: 0,
-      });
-
-      await pageEvent("ot.started");
-      game.complete({ success: true });
-      await pageEvent("ot.completed");
-
-      expect(progress).to.eql({
-        total: 3,
-        current: 1,
-        completed: 1,
-        solved: 1,
-        failed: 0,
-      });
-
-      // iter 2
-
-      await pageEvent("ot.reset");
-
-      expect(progress).to.eql({
-        total: 3,
-        current: 2,
-        completed: 1,
-        solved: 1,
-        failed: 0,
-      });
-
-      await pageEvent("ot.started");
-      game.complete({ success: false });
-      await pageEvent("ot.completed");
-
-      expect(progress).to.eql({
-        total: 3,
-        current: 2,
-        completed: 2,
-        solved: 1,
-        failed: 1,
-      });
-
-      // iter 3
-
-      await pageEvent("ot.reset");
-
-      expect(progress).to.eql({
-        total: 3,
-        current: 3,
-        completed: 2,
-        solved: 1,
-        failed: 1,
-      });
-
-      await pageEvent("ot.started");
-      game.complete({});
-      await pageEvent("ot.completed");
-
-      expect(progress).to.eql({
-        total: 3,
-        current: 3,
-        completed: 3,
-        solved: 1,
-        failed: 1,
-      });
-
-      let result = await running;
-
-      expect(result).to.eql(progress);
-    });
+    expect(onprogress.args).to.be.undefined;
   });
 
   describe("handling events", () => {
-    it("onStart", async () => {
-      let called;
-      game.onStart = function () {
-        called = Array.from(arguments);
-      };
+    it("onReady", async () => {
+      let onready = spy(game, "onReady", function () {});
 
-      await pageFire("ot.started");
-      expect(called).not.to.be.undefined;
-      expect(called).to.eql([null]);
+      await pageFire("ot.ready");
+
+      expect(onready.args).to.eql([]);
     });
 
-    it("onStatus", async () => {
-      let called;
-      game.onStatus = function () {
-        called = Array.from(arguments);
-      };
+    it("onInput", async () => {
+      let oninput = spy(game, "onInput", function () {});
 
-      await pageFire("ot.status", { foo: "Foo" });
+      await pageFire("ot.input", { foo: "Foo" });
 
-      expect(called).not.to.be.undefined;
-      expect(called).to.eql([{ foo: "Foo" }]);
+      expect(oninput.args).to.eql([{ foo: "Foo" }]);
     });
 
     it("onPhase", async () => {
       await pageEvent("ot.phase"); // initial;
 
-      let called;
-      game.onPhase = function () {
-        called = Array.from(arguments);
-      };
+      let onphase = spy(game, "onPhase", function () {});
 
       await pageFire("ot.phase", { foo: "Foo" });
 
-      expect(called).not.to.be.undefined;
-      expect(called).to.eql([{ foo: "Foo" }]);
+      expect(onphase.args).to.eql([{ foo: "Foo" }]);
     });
 
     it("onPhase ignores freezing", async () => {
       await pageEvent("ot.phase"); // initial;
-      page.resetPhase({ input: true });      
+
+      let onphase = spy(game, "onPhase", function () {});
+
+      page.togglePhase({ input: true });
       await pageEvent("ot.phase");
 
-      let called;
-      game.onPhase = function () {
-        called = Array.from(arguments);
-      };
+      expect(onphase.count).to.eq(1);
 
       page.freezeInputs();
       await pageEvent("ot.phase");
 
-      expect(called).to.be.undefined;
+      expect(onphase.count).to.eq(1);
 
       page.unfreezeInputs();
       await pageEvent("ot.phase");
 
-      expect(called).to.be.undefined;
-    });
-
-    it("onInput", async () => {
-      let called;
-      game.onInput = function () {
-        called = Array.from(arguments);
-      };
-
-      await pageFire("ot.input", { foo: "Foo" });
-
-      expect(called).not.to.be.undefined;
-      expect(called).to.eql([{ foo: "Foo" }]);
-    });
-
-    it("onError", async () => {
-      let called;
-      game.onError = function () {
-        called = Array.from(arguments);
-      };
-
-      await pageFire("ot.error", { foo: "Foo" });
-
-      expect(called).not.to.be.undefined;
-      expect(called).to.eql([{ foo: "Foo" }]);
+      expect(onphase.count).to.eq(1);
     });
 
     it("onTimeout", async () => {
-      let called;
-      game.onTimeout = function () {
-        called = Array.from(arguments);
-      };
+      let ontimeout = spy(game, "onTimeout", function () {});
 
-      await pageFire("ot.timeout");
+      await pageFire("ot.timeout", 1000);
 
-      expect(called).not.to.be.undefined;
-      expect(called).to.eql([null]);
+      expect(ontimeout.args).to.eql([1000]);
     });
 
-    it("onComplete", async () => {
-      let called;
-      game.onComplete = function () {
-        called = Array.from(arguments);
-      };
+    it("onStatus", async () => {
+      game.status = { foo: "Foo" };
 
-      await pageFire("ot.completed", { foo: "Foo" });
+      let onstatus = spy(game, "onStatus", function () {});
 
-      expect(called).not.to.be.undefined;
-      expect(called).to.eql([{ foo: "Foo" }]);
+      await pageFire("ot.status", { bar: "Bar" });
+
+      expect(onstatus.args).to.eql([{ foo: "Foo" }, { bar: "Bar" }]);
     });
+  });
+});
+
+describe("Game playing", () => {
+  // variables or events leak somehow
+
+  it("plays a trial async", async () => {
+    const { body, page, game } = init();
+    let iter = 0;
+
+    game.loadTrial = function () {
+      game.setTrial({ foo: "Foo" });
+    };
+
+    game.startTrial = async function (trial) {
+      game.updateStatus({ trialStarted: true });
+      await sleep(100);
+      game.updateStatus({ trialCompleted: true });
+    };
+
+    game.onStatus = function (status, changed) {
+      if (changed.trialCompleted) {
+        game.updateStatus({ gameOver: true });
+      }
+    };
+
+    let starttrial = spy(game, "startTrial");
+
+    const t0 = Date.now();
+    await game.playTrial();
+    const t1 = Date.now();
+
+    expect(starttrial.count).to.eq(1);
+    expect(starttrial.args).to.eql([{ foo: "Foo" }]);
+    expect(t1 - t0).to.be.within(100, 110);
+  });
+
+  it("plays a trial eventual", async () => {
+    const { body, page, game } = init();
+    async function pageEvent(type) {
+      return (await oneEvent(body, type)).detail;
+    }
+  
+    let iter = 0;
+
+    game.loadTrial = function () {
+      game.setTrial({ foo: "Foo" });
+    };
+
+    game.startTrial = async function (trial) {
+      game.updateStatus({ trialStarted: true });
+      await sleep(100);
+      game.updateStatus({ trialCompleted: true });
+    };
+
+    game.onStatus = function (status, changed) {
+      if (changed.trialCompleted) {
+        game.updateStatus({ gameOver: true });
+      }
+    };
+
+    game.playTrial();
+    const t0 = Date.now();
+    await pageEvent("ot.started");
+    await pageEvent("ot.completed");
+    const t1 = Date.now();
+
+    expect(t1 - t0).to.be.within(100, 110);
+  });
+
+  it("plays iterations async", async () => {
+    const { body, page, game } = init();
+    let iter = 0;
+
+    game.setConfig({ post_trial_pause: 200 });
+
+    game.loadTrial = async function () {
+      game.setTrial({ foo: "Foo" });
+    };
+
+    game.startTrial = async function (trial) {
+      iter++;
+      game.updateStatus({ trialStarted: true });
+      await sleep(100);
+      game.updateStatus({ trialCompleted: true });
+    };
+
+    game.onStatus = function (status, changed) {
+      if (changed.trialCompleted && iter == 5) {
+        game.updateStatus({ gameOver: true });
+      }
+    };
+
+    let starttrial = spy(game, "startTrial");
+
+    const t0 = Date.now();
+    await game.playIterations();
+    const t1 = Date.now();
+
+    expect(starttrial.count).to.eq(5);
+    expect(t1 - t0).to.be.within(1500, 1550);
+  });
+
+  it("plays iterations eventual", async () => {
+    const { body, page, game } = init();
+    async function pageEvent(type) {
+      return (await oneEvent(body, type)).detail;
+    }
+    let iter = 0;
+
+    game.setConfig({ post_trial_pause: 200 });
+
+    game.loadTrial = async function () {
+      game.setTrial({ foo: "Foo" });
+    };
+
+    game.startTrial = async function (trial) {
+      iter++;
+      game.updateStatus({ trialStarted: true });
+      await sleep(100);
+      game.updateStatus({ trialCompleted: true });
+    };
+
+    game.onStatus = function (status, changed) {
+      if (changed.trialCompleted && iter == 5) {
+        game.updateStatus({ gameOver: true });
+      }
+    };
+
+    game.playIterations();
+    const t0 = Date.now();
+    await pageEvent("ot.started");
+    await pageEvent("ot.completed");
+    await pageEvent("ot.started");
+    await pageEvent("ot.completed");
+    await pageEvent("ot.started");
+    await pageEvent("ot.completed");
+    await pageEvent("ot.started");
+    await pageEvent("ot.completed");
+    await pageEvent("ot.started");
+    await pageEvent("ot.completed");
+    await pageEvent("ot.gameover");
+    const t1 = Date.now();
+
+    expect(t1 - t0).to.be.within(1500-200, 1550-200);
   });
 });

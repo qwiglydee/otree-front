@@ -21,13 +21,22 @@ describe("Page", () => {
       page = new Page(body);
     });
 
+    it("resets initially", async () => {
+      detail = await pageEvent("ot.reset");
+      expect(detail).to.eql("*");
+    });
+
     it("resets", async () => {
+      await pageEvent("ot.reset"); // initial
+
       page.emitReset();
       detail = await pageEvent("ot.reset");
       expect(detail).to.eql("*");
     });
 
     it("resets custom vars", async () => {
+      await pageEvent("ot.reset"); // initial
+
       page.emitReset(["foo", "bar"]);
       detail = await pageEvent("ot.reset");
       expect(detail).to.eql(["foo", "bar"]);
