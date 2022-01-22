@@ -126,11 +126,12 @@ export class Page {
   /**
    * Emits user input.
    *
-   * @param {object} data
+   * @param {Strinn} name
+   * @param {Strinn} value
    * @fires Page.update
    */
-  emitInput(data) {
-    this.emitEvent("ot.input", data);
+  emitInput(name, value) {
+    this.emitEvent("ot.input", { name, value });
   }
 
   /**

@@ -10,9 +10,9 @@ const EVENT_DEFAULTS = {
   bubbles: true,
   cancelable: true,
 };
+
 describe("ot-input", () => {
   let page, body, elem, detail;
-
 
   async function pageEvent(type) {
     return (await oneEvent(body, type)).detail;
@@ -22,70 +22,82 @@ describe("ot-input", () => {
     return (await oneEvent(elem, type)).detail;
   }
 
-  describe("errors", () => {
-    it("invalid path", async () => {
-      elem = await fixture(`<input data-ot-input=".foo"></div>`, { parentNode: body });
-      expect(() => new Page(document.body)).to.throw();
-    });
-
-    it("invalid chars", async () => {
-      elem = await fixture(`<input data-ot-input="foo/bar"></div>`, { parentNode: body });
-      expect(() => new Page(document.body)).to.throw();
-    });
-
-    it("invalid expr for inputs", async () => {
-      elem = await fixture(`<input data-ot-input="foo=bar"></div>`);
-      expect(() => new Page(document.body)).to.throw();
-    });
-
-    it("invalid expr for button", async () => {
-      elem = await fixture(`<button data-ot-input="foo"></button>`);
-      expect(() => new Page(document.body)).to.throw();
-    });
-
-    it("invalid expr for custom", async () => {
-      elem = await fixture(`<div data-ot-click data-ot-input="foo"></div>`);
-      expect(() => new Page(document.body)).to.throw();
-    });
-  });
-
-  describe("real", () => {
+  describe("text input", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<input type="text" data-ot-input="game.fld"></div>`, { parentNode: body });
+      elem = await fixture(`<input type="text" data-ot-input name="foo"></div>`, { parentNode: body });
       page = new Page(body);
+    });
+
+    it("clears on reset", async () => {
+      elem.value="xxx";
+
+      page.emitReset();
+      await elementUpdated(elem);
+
+      expect(elem.value).to.eq("");
     });
 
     it("switches on phase", async () => {
       page.togglePhase({input: true});
       await elementUpdated(elem);
-      expect(elem).not.to.have.attr("disabled");
+      expect(elem.disabled).to.be.false;
       expect(elem).not.to.have.class("ot-disabled");
 
       page.togglePhase({input: false});
       await elementUpdated(elem);
-      expect(elem).to.have.attr("disabled");
+      expect(elem.disabled).to.be.true;
       expect(elem).to.have.class("ot-disabled");
     });
 
     it("triggers on change", async () => {
-      page.togglePhase({input: true});
+      page.resetPhase({ input: true});
       await elementUpdated(elem);
 
       elem.value = "Foo";
       elem.dispatchEvent(new InputEvent("change"));
 
       detail = await pageEvent("ot.input");
-      expect(detail).to.eql({ "game.fld": "Foo" });
+      expect(detail).to.eql({ name: "foo", value: "Foo" });
     });
 
-    it("triggers on enter");
+    it("triggers on enter", async () => {
+      page.resetPhase({ input: true});
+      await elementUpdated(elem);
+
+      elem.value = "Foo";
+      elem.dispatchEvent(new KeyboardEvent("keydown", { code: "Enter"}));
+
+      detail = await pageEvent("ot.input");
+      expect(detail).to.eql({ name: "foo", value: "Foo" });
+    });
   });
+
+  describe("text input no name", () => {
+    beforeEach(async () => {
+      body = document.createElement("body");
+      elem = await fixture(`<input type="text" data-ot-input></div>`, { parentNode: body });
+      page = new Page(body);
+    });
+
+    it("triggers on change", async () => {
+      page.resetPhase({ input: true});
+      await elementUpdated(elem);
+
+      elem.value = "Foo";
+      elem.dispatchEvent(new InputEvent("change"));
+
+      detail = await pageEvent("ot.input");
+      expect(detail).to.eql({ name:"", value: "Foo" });
+    });
+
+  })
+
 
   describe("button", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<button data-ot-input="game.fld=foo"></button>`, { parentNode: body });
+      elem = await fixture(`<button data-ot-input name="foo" value="Foo"></button>`, { parentNode: body });
       page = new Page(body);
     });
 
@@ -106,14 +118,14 @@ describe("ot-input", () => {
       await elementUpdated(elem);
       elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
       detail = await pageEvent("ot.input");
-      expect(detail).to.eql({ "game.fld": "foo" });
+      expect(detail).to.eql({ name: "foo", value: "Foo" });
     });
   });
 
   describe("custom", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div data-ot-click data-ot-touch data-ot-key="Space" data-ot-input="game.fld=foo"></div>`, {
+      elem = await fixture(`<div data-ot-click data-ot-touch data-ot-key="Space" data-ot-input  name="foo" value="Foo"></div>`, {
         parentNode: body,
       });
       page = new Page(body);
@@ -134,7 +146,7 @@ describe("ot-input", () => {
       await elementUpdated(elem);
       page.body.dispatchEvent(new KeyboardEvent("keydown", { ...EVENT_DEFAULTS, code: "Space" }));
       detail = await pageEvent("ot.input");
-      expect(detail).to.eql({ "game.fld": "foo" });
+      expect(detail).to.eql({ name: "foo", value: "Foo" });
     });
 
     it("triggers on touch", async () => {
@@ -142,7 +154,7 @@ describe("ot-input", () => {
       await elementUpdated(elem);
       elem.dispatchEvent(new TouchEvent("touchend", EVENT_DEFAULTS));
       detail = await pageEvent("ot.input");
-      expect(detail).to.eql({ "game.fld": "foo" });
+      expect(detail).to.eql({ name: "foo", value: "Foo" });
     });
 
     it("triggers on click", async () => {
@@ -150,11 +162,7 @@ describe("ot-input", () => {
       await elementUpdated(elem);
       elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
       detail = await pageEvent("ot.input");
-      expect(detail).to.eql({ "game.fld": "foo" });
+      expect(detail).to.eql({ name: "foo", value: "Foo" });
     });
-
-    it("errors frozen on key");
-    it("errors frozen on touch");
-    it("errors frozen on click");
   });
 });

@@ -4,7 +4,7 @@ import { toggleDisabled, isDisabled, isTextInput } from "../utils/dom";
 import { DirectiveBase, registerDirective } from "./base";
 
 /**
- * Directive `data-ot-input="field"` for real inputs: `<input>`, `<select>`, `<textarea>`.
+ * Directive `ot-input` for native inputs: `<input>`, `<select>`, `<textarea>`.
  * 
  * It triggers {@link Page.event:response} when value of the input changes.
  * For text inputs it triggers when `Enter` pressed.
@@ -19,14 +19,17 @@ class otRealInput extends DirectiveBase {
   }
 
   init() {
-    this.ref = this.param();
-    Ref.validate(this.ref);
   }
 
   setup() {
+    this.onEvent("ot.reset", this.onReset);
     this.onEvent("ot.phase", this.onPhase);
     this.onEvent("change", this.onChange, this.elem);
     if (isTextInput(this.elem)) this.onEvent("keydown", this.onKey, this.elem);
+  }
+
+  onReset(event, vars) {
+    this.elem.value=null;
   }
 
   onPhase(event, phase) {
@@ -37,7 +40,7 @@ class otRealInput extends DirectiveBase {
     let value = this.elem.value;
     if (value === "true") value = true;
     if (value === "false") value = false;
-    this.page.emitInput({ [this.ref]: value });
+    this.page.emitInput(this.elem.name, value);
   }
 
   onKey(event) {
@@ -85,16 +88,15 @@ class otCustomInput extends DirectiveBase {
   }
 
   init() {
-    const param = this.param();
-    const match = param.match(/^([\w.]+)(=(.+))$/);
-    if (!match) throw new Error(`Invalid expression for input: ${param}`);
+    this.inp_name = this.elem.getAttribute('name');
+    this.inp_value = this.elem.getAttribute('value');
 
-    this.ref = match[1];
-    Ref.validate(this.ref);
-    
-    this.val = match[3];
-    if (this.val === "true") this.val = true;
-    if (this.val === "false") this.val = false; 
+    if (this.inp_value === undefined) {
+      throw new Error("Missing value attribute for ot-input");
+    }
+
+    if (this.inp_value === "true") this.inp_value = true;
+    if (this.inp_value === "false") this.inp_value = false; 
 
     const dataset = this.elem.dataset;
     this.trigger = {
@@ -121,14 +123,14 @@ class otCustomInput extends DirectiveBase {
   onClick(event) {
     if (isDisabled(this.elem)) return;
     event.preventDefault();
-    this.page.emitInput({ [this.ref]: this.val });  
+    this.page.emitInput(this.inp_name, this.inp_value);  
   }
 
   onKey(event) {
     if (isDisabled(this.elem)) return;
     if (event.code != this.trigger.key) return;
     event.preventDefault();
-    this.page.emitInput({ [this.ref]: this.val });  
+    this.page.emitInput(this.inp_name, this.inp_value);  
   }
 }
 

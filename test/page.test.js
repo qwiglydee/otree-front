@@ -49,9 +49,9 @@ describe("Page", () => {
     });
 
     it("input", async () => {
-      page.emitInput({ foo: "Foo" });
+      page.emitInput('foo', "Foo");
       detail = await pageEvent("ot.input");
-      expect(detail).to.eql({ foo: "Foo" });
+      expect(detail).to.eql({ name: 'foo', value: "Foo" });
     });
 
     it("timeout", async () => {

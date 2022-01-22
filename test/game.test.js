@@ -190,9 +190,9 @@ describe("Game", () => {
     it("onInput", async () => {
       let oninput = spy(game, "onInput", function () {});
 
-      await pageFire("ot.input", { foo: "Foo" });
+      await pageFire("ot.input", { name: 'foo', value:"Foo" });
 
-      expect(oninput.args).to.eql([{ foo: "Foo" }]);
+      expect(oninput.args).to.eql(['foo', "Foo"]);
     });
 
     it("onPhase", async () => {

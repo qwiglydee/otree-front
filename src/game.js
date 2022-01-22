@@ -213,7 +213,7 @@ export class Game {
    * @type {Game~onInput}
    */
   set onInput(fn) {
-    this.page.onEvent("ot.input", (ev) => fn(ev.detail));
+    this.page.onEvent("ot.input", (ev) => fn(ev.detail.name, ev.detail.value));
   }
 
   /**
