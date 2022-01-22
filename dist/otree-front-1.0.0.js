@@ -1676,8 +1676,8 @@ const otree = {
 
 window.addEventListener('load', function() {
   otree.page = new Page(document.body);
-  otree.game = new Game(window.page);
-  otree.schedule = new Schedule(window.page);
+  otree.game = new Game(otree.page);
+  otree.schedule = new Schedule(otree.page);
 
   if (!window.main) {
     throw new Error("You need to define global `function main()` to make otree work");
