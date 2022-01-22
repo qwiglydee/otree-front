@@ -1,6 +1,6 @@
 import { setChild } from "../utils/dom";
 
-import { Directive, registerDirective } from "./base";
+import { DirectiveBase, registerDirective } from "./base";
 
 /**
  * Directive `data-ot-img="reference"`
@@ -10,7 +10,7 @@ import { Directive, registerDirective } from "./base";
  * 
  * @hideconstructor
  */
-export class otImg extends Directive {
+export class otImg extends DirectiveBase {
   get name() {
     return "img";
   }

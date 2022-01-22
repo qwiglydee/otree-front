@@ -1,5 +1,5 @@
 import { toggleDisplay } from "../utils/dom";
-import { Directive, registerDirective } from "./base";
+import { DirectiveBase, registerDirective } from "./base";
 
 /**
  * Directive `data-ot-display="phaseflag"`
@@ -9,7 +9,7 @@ import { Directive, registerDirective } from "./base";
  * 
  * @hideconstructor
  */
-class otDisplay extends Directive {
+class otDisplay extends DirectiveBase {
   get name() {
     return "display";
   }

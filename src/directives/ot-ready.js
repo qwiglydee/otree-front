@@ -1,6 +1,6 @@
 import { toggleDisplay, toggleDisabled, isDisabled } from "../utils/dom";
 
-import { Directive, registerDirective } from "./base";
+import { DirectiveBase, registerDirective } from "./base";
 
 /**
  * Directive `data-ot-ready`
@@ -9,7 +9,7 @@ import { Directive, registerDirective } from "./base";
  * 
  * @hideconstructor
  */
-class otReady extends Directive {
+class otReady extends DirectiveBase {
   get name() {
     return "ready";
   }

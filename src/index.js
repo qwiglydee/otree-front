@@ -3,7 +3,7 @@ import * as dom from "./utils/dom";
 import * as random from "./utils/random";
 import * as timers from "./utils/timers";
 import * as measurement from "./utils/measurement";
-import { Directive,  registerDirective } from "./directives/base";
+import { DirectiveBase,  registerDirective } from "./directives/base";
 
 // directives register themselves
 import "./directives/ot-ready";
@@ -21,7 +21,7 @@ import { Schedule } from "./schedule";
 
 export const otree = {
   dom, random, changes, timers, measurement, 
-  Directive, registerDirective
+  DirectiveBase, registerDirective
 }
 
 window.addEventListener('load', function() {

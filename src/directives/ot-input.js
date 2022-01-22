@@ -1,7 +1,7 @@
 import { Ref } from "../utils/changes";
 import { toggleDisabled, isDisabled, isTextInput } from "../utils/dom";
 
-import { Directive, registerDirective } from "./base";
+import { DirectiveBase, registerDirective } from "./base";
 
 /**
  * Directive `data-ot-input="field"` for real inputs: `<input>`, `<select>`, `<textarea>`.
@@ -13,7 +13,7 @@ import { Directive, registerDirective } from "./base";
  * 
  * @hideconstructor
  */
-class otRealInput extends Directive {
+class otRealInput extends DirectiveBase {
   get name() {
     return "input";
   }
@@ -79,7 +79,7 @@ registerDirective(
  * 
  * @hideconstructor
  */
-class otCustomInput extends Directive {
+class otCustomInput extends DirectiveBase {
   get name() {
     return "input";
   }

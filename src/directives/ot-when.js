@@ -1,7 +1,7 @@
 import { Ref } from "../utils/changes";
 import { toggleDisplay } from "../utils/dom";
 
-import { Directive, registerDirective } from "./base";
+import { DirectiveBase, registerDirective } from "./base";
 
 /**
  * Directive `data-ot-when="var"`, `data-ot-when="var==val", data-ot-when="var===val"`.
@@ -19,7 +19,7 @@ import { Directive, registerDirective } from "./base";
  * 
  * @hideconstructor
  */
-class otWhen extends Directive {
+class otWhen extends DirectiveBase {
   get name() {
     return "when";
   }

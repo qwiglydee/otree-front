@@ -1,6 +1,6 @@
 import { setClasses } from "../utils/dom";
 
-import { Directive, registerDirective } from "./base";
+import { DirectiveBase, registerDirective } from "./base";
 
 /**
  * Directive `data-ot-class="reference"`
@@ -8,7 +8,7 @@ import { Directive, registerDirective } from "./base";
  * It adds a class with a value from `{@link Page.event:update}`.
  * All other existing lasses are preserved. 
  */
-class otClass extends Directive {
+class otClass extends DirectiveBase {
   get name() {
     return "class";
   }

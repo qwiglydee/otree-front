@@ -10,7 +10,7 @@ export const registry = new Map();
  * The elements a searched by provided selector, which is something like `[data-ot-something]` but actually can be anything.
  * 
  * @param {string} selector a css selector for elements
- * @param {class} cls a class derived from {@link Directive}  
+ * @param {class} cls a class derived from {@link DirectiveBase}  
  */
 export function registerDirective(selector, cls) {
   registry.set(selector, cls);
@@ -21,7 +21,7 @@ export function registerDirective(selector, cls) {
  * 
  * Used by all built-in directives and can be used to create custom directives.
  */
-export class Directive {
+export class DirectiveBase {
   /** 
    * directive name
    * 

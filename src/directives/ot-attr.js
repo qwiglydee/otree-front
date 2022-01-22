@@ -1,6 +1,6 @@
 import { setAttr } from "../utils/dom";
 
-import { Directive, registerDirective } from "./base";
+import { DirectiveBase, registerDirective } from "./base";
 
 /**
  * Directives `data-ot-attr-something="reference"`
@@ -21,7 +21,7 @@ import { Directive, registerDirective } from "./base";
  * 
  * @hideconstructor
  */
-class otAttrBase extends Directive {
+class otAttrBase extends DirectiveBase {
   reset() {
     setAttr(this.elem, this.name, null);
   }

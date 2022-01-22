@@ -1,5 +1,5 @@
 import { setText } from "../utils/dom";
-import { Directive, registerDirective } from "./base";
+import { DirectiveBase, registerDirective } from "./base";
 
 /**
  * Directive `data-ot-text="reference"`
@@ -8,7 +8,7 @@ import { Directive, registerDirective } from "./base";
  * 
  * @hideconstructor
  */
-class otText extends Directive {
+class otText extends DirectiveBase {
   get name() {
     return "text";
   }
