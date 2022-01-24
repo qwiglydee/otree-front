@@ -220,6 +220,56 @@ export class Page {
   submit() {
     this.documentQuery("form").submit();
   }
+
+  /**
+   * A handler for {@link Page.ready}
+   *
+   * @type {Game~onReady}
+   */
+  set onReady(fn) {
+    this.onEvent("ot.ready", (ev) => fn());
+  }
+
+  /**
+   * A handler for {@link Page.input}
+   *
+   * @type {Page~onInput}
+   */
+  set onInput(fn) {
+    this.onEvent("ot.input", (ev) => fn(ev.detail.name, ev.detail.value));
+  }
+
+  /**
+   * A handler for {@link Page.update}
+   *
+   * @type {Page~onUpdate}
+   */
+  set onUpdate(fn) {
+    this.onEvent("ot.update", (ev) => fn(ev.detail));
+  }
+
+  /**
+   * A handler for {@link Page.phase}
+   *
+   * Does not get triggered on resetting and temporaty freezing/unfreezing/switching.
+   *
+   * @type {Page~onPhase}
+   */
+  set onPhase(fn) {
+    this.onEvent("ot.phase", (ev) => {
+      if (ev.detail._resetting || ev.detail._freezing || ev.detail._switching) return;
+      fn(ev.detail);
+    });
+  }
+
+  /**
+   * A handler for {@link Schedule.timeout}
+   *
+   * @type {Page~onTimeout}
+   */
+  set onTimeout(fn) {
+    this.onEvent("ot.timeout", (ev) => fn(ev.detail));
+  }
 }
 
 /**
