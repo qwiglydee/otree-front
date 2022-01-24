@@ -79,6 +79,18 @@ describe("Game", () => {
     expect(starttrial.args).to.eql([trial]);
   });
 
+  it("preloads images",  async () => {
+    const imgurl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQIW2NgAAIAAAUAAR4f7BQAAAAASUVORK5CYII=";
+    game.config.preload_media = { image: 'img' }
+
+    game.startTrial=function () {};
+  
+    await game.setTrial({ image: imgurl });
+
+    expect(game.trial.image).to.be.instanceOf(Image);
+    expect(game.trial.image.src).to.eq(imgurl);
+  });
+
   it("updates trial", async () => {
     game.trial = { foo: "Foo", bar: "Bar" };
     game.updateTrial({ bar: "Bar2", baz: "Baz" });
@@ -320,6 +332,6 @@ describe("Game playing", () => {
     await pageEvent("ot.gameover");
     const t1 = Date.now();
 
-    expect(t1 - t0).to.be.within(1500-200, 1550-200);
+    expect(t1 - t0).to.be.within(1500-200, 1600-200);
   });
 });
