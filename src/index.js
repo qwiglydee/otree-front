@@ -13,7 +13,7 @@ import "./directives/ot-class";
 import "./directives/ot-text";
 import "./directives/ot-img";
 import "./directives/ot-attr";
-import "./directives/ot-when";
+import "./directives/ot-if";
 
 import { Page } from "./page";
 import { Game } from "./game";
