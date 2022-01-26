@@ -1,6 +1,6 @@
 import { expect, aTimeout } from "@open-wc/testing";
 
-import * as measurement from "../src/utils/measurement";
+import * as measurement from "../../src/utils/measurement";
 
 describe("measurements", () => {
 
@@ -32,8 +32,8 @@ describe("measurements", () => {
     await aTimeout(300);
     let dur_bar = measurement.end("bar");
 
-    expect(dur_foo).to.be.within(300, 301); 
-    expect(dur_bar).to.be.within(500, 501); 
+    expect(dur_foo).to.be.within(300, 310); 
+    expect(dur_bar).to.be.within(500, 510); 
   });
 });
 
