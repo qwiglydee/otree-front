@@ -6,18 +6,6 @@
  * @module utils/changes/Ref 
  */
 
-const jspath_re = new RegExp(/^[a-zA-Z]\w+(\.\w+)*$/);
-
-/**
- * Validates syntax of a reference 
- * 
- * @param {string} ref
- * @throws {Error}
- */
-export function validate(ref) {
-  if (!ref || !jspath_re.exec(ref)) throw new Error(`Invalid ref: ${ref}`);
-}
-
 /**
  * Checks if references overlap 
  * 

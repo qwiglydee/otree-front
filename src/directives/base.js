@@ -1,3 +1,4 @@
+import { parseVar } from "../utils/expr";
 import { Ref } from "../utils/changes";
 
 /* map of selector => class */
@@ -78,7 +79,7 @@ export class DirectiveBase {
    */
   init() {
     this.ref = this.param();
-    Ref.validate(this.ref); 
+    parseVar(this.ref); 
   } 
 
   /**

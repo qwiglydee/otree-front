@@ -1,36 +1,8 @@
 import { expect } from "@open-wc/testing";
 
-import { Ref, Changes } from "../src/utils/changes";
+import { Ref, Changes } from "../../src/utils/changes";
 
 describe("refs", () => {
-
-  describe("validating", () => {
-    it("empty", () => {
-      expect(() => Ref.validate("")).to.throw;
-    });
-
-    it("dangling dots", () => {
-      expect(() => Ref.validate(".")).to.throw;
-      expect(() => Ref.validate("foo.bar.")).to.throw;
-      expect(() => Ref.validate(".bar.baz")).to.throw;
-    });
-
-    it("digits", () => {
-      expect(() => Ref.validate("1")).to.throw;
-      expect(() => Ref.validate("foo1")).not.to.throw;
-    });
-
-    it("invalid chars", () => {
-      expect(() => Ref.validate("foo/bar")).to.throw;
-      expect(() => Ref.validate(" foo bar ")).to.throw;
-    });
-
-    it("chains", () => {
-      expect(() => Ref.validate("foo")).not.to.throw;
-      expect(() => Ref.validate("foo.bar")).not.to.throw;
-      expect(() => Ref.validate("foo.bar.baz")).not.to.throw;
-    });
-  });
 
   describe("checking", () => {
     it("equal", () => {
