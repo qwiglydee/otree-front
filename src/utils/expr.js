@@ -54,7 +54,7 @@ export function evalCond(parsed, changes) {
 
   if (eq === undefined) return !!value;
   if (eq == "==") return value === val;
-  if (eq == "1=") return value !== val;
+  if (eq == "!=") return value !== val;
 }
 
 const ASSIGNEXPR = new RegExp(/^([\w.]+) = (.+)?$/);

@@ -165,6 +165,25 @@ describe("expressions", () => {
         });
       });
 
+      describe("`var != 'str'`", () => {
+        const parsed = parseCond("var != 'foo'");
+
+        it("bool", () => {
+          expect(evalCond(parsed, new Changes({ var: true }))).to.eq(true);
+          expect(evalCond(parsed, new Changes({ var: false }))).to.eq(true);
+        });
+
+        it("number", () => {
+          expect(evalCond(parsed, new Changes({ var: 1 }))).to.eq(true);
+          expect(evalCond(parsed, new Changes({ var: 0 }))).to.eq(true);
+        });
+
+        it("str", () => {
+          expect(evalCond(parsed, new Changes({ var: "foo" }))).to.eq(false);
+          expect(evalCond(parsed, new Changes({ var: "bar" }))).to.eq(true);
+        });
+      });
+
       describe("`var == number`", () => {
         const parsed = parseCond("var == 42");
 
@@ -181,6 +200,25 @@ describe("expressions", () => {
         it("str", () => {
           expect(evalCond(parsed, new Changes({ var: "42" }))).to.eq(false);
           expect(evalCond(parsed, new Changes({ var: "bar" }))).to.eq(false);
+        });
+      });
+
+      describe("`var != number`", () => {
+        const parsed = parseCond("var != 42");
+
+        it("bool", () => {
+          expect(evalCond(parsed, new Changes({ var: true }))).to.eq(true);
+          expect(evalCond(parsed, new Changes({ var: false }))).to.eq(true);
+        });
+
+        it("number", () => {
+          expect(evalCond(parsed, new Changes({ var: 42 }))).to.eq(false);
+          expect(evalCond(parsed, new Changes({ var: 1 }))).to.eq(true);
+        });
+
+        it("str", () => {
+          expect(evalCond(parsed, new Changes({ var: "42" }))).to.eq(true);
+          expect(evalCond(parsed, new Changes({ var: "bar" }))).to.eq(true);
         });
       });
 
