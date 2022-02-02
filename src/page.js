@@ -11,8 +11,6 @@ import { registry } from "./directives/base";
  * Installs all registered directives, found in html.
  *
  * *NB*: The installation happens only once, directives won't work in dynamically added html code.
- *
- * @property {Phase} phase set of flags indicating common state of directives, `{ display, inputEnabled }`
  */
 export class Page {
   /**
@@ -20,7 +18,6 @@ export class Page {
    */
   constructor(body) {
     this.body = body || document.body;
-    this.phase = {};
     this.init();
   }
 
@@ -34,7 +31,6 @@ export class Page {
       });
     });
 
-    this.resetPhase();
     this.emitReset();
   }
 
@@ -153,9 +149,7 @@ export class Page {
   /**
    * Temporary disables inputs.
    *
-   * Emits phase event, but doesn't affect current phase.
-   *
-   * @fires Page.phase
+   * @fires Page.freezing
    */
   freezeInputs() {
     this.emitEvent("ot.freezing", true);
@@ -164,52 +158,10 @@ export class Page {
   /**
    * Reenables inputs.
    *
-   * Emits phase event, but doesn't affect current phase.
-   * Inputs wont be reenabled, if a phase change happened and disabled inputs.
-   *
-   * @fires Page.phase
+   * @fires Page.freezing
    */
   unfreezeInputs() {
     this.emitEvent("ot.freezing", false);
-  }
-
-  /**
-   * Switches display directives.
-   *
-   * Emits phase event, but doesn't affect current phase.
-   *
-   * @param {String} name matching `ot-display="name"`
-   */
-  switchDisplay(name) {
-    this.emitEvent("ot.phase", { display: name, _switching: true });
-  }
-
-  /**
-   * Resets page phase.
-   *
-   * @param {Object} [flags] some additional initial flags
-   */
-  resetPhase(flags) {
-    let phase0 = { display: null, inputEnabled: false };
-    if (flags) {
-      Object.assign(phase0, flags);
-    }
-    this.phase = phase0;
-    this.emitEvent("ot.phase", { _resetting: true, ...phase0 });
-  }
-
-  /**
-   * Toggles page phase.
-   *
-   * The provided flags override existing, unaffected flags are preserved.
-   * I.e. `togglePhase({ inputEnabled: true })` keeps current value of `display` flag.
-   *
-   * @param {Phase} phase set of flags to change
-   * @fires Page.phase
-   */
-  togglePhase(phase) {
-    Object.assign(this.phase, phase);
-    this.emitEvent("ot.phase", phase); // NB: only changes are signalled
   }
 
   submit() {
@@ -244,20 +196,6 @@ export class Page {
   }
 
   /**
-   * A handler for {@link Page.phase}
-   *
-   * Does not get triggered on resetting and temporaty freezing/unfreezing/switching.
-   *
-   * @type {Page~onPhase}
-   */
-  set onPhase(fn) {
-    this.onEvent("ot.phase", (ev) => {
-      if (ev.detail._resetting || ev.detail._freezing || ev.detail._switching) return;
-      fn(ev.detail);
-    });
-  }
-
-  /**
    * A handler for {@link Schedule.timeout}
    *
    * @type {Page~onTimeout}
@@ -266,16 +204,6 @@ export class Page {
     this.onEvent("ot.timeout", (ev) => fn(ev.detail));
   }
 }
-
-/**
- * A page phase flags
- *
- * The set of fields can be extended by anything else needed for custom directives.
- *
- * @typedef {Object} Phase
- * @property {string} [display] to toggle `ot-display` directives
- * @property {bool} [inputEnabled] to enable/disable `ot-input` directives
- */
 
 /**
  * Indicates that a user started a game pressing 'Space' or something.
@@ -308,14 +236,6 @@ export class Page {
  * @event Page.input
  * @property {string} type `ot.input`
  * @property {object} detail an object like `{field: value}` corresponding to directive `ot-input="field=value"`
- */
-
-/**
- * Indicates a timed phase switching display, inputEnabled, or something else
- *
- * @event Page.phase
- * @property {string} type `ot.phase`
- * @property {object} detail an object like `{display: something, inputEnabled: bool, ...}`
  */
 
 /**

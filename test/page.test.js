@@ -207,7 +207,7 @@ describe("Page", () => {
       body = document.createElement("body");
       elem = await fixture(`<div></div>`, { parentNode: body });
       page = new Page(body);
-      await pageEvent("ot.phase"); // initial reset
+      await pageEvent("ot.reset"); // initial reset
     });
 
     it("onReady", async () => {
@@ -224,14 +224,6 @@ describe("Page", () => {
       await pageFire("ot.input", { name: "foo", value: "Foo" });
 
       expect(oninput.args).to.eql(["foo", "Foo"]);
-    });
-
-    it("onPhase", async () => {
-      let onphase = spy(page, "onPhase", function () {});
-
-      await pageFire("ot.phase", { foo: "Foo" });
-
-      expect(onphase.args).to.eql([{ foo: "Foo" }]);
     });
 
     it("onTimeout", async () => {

@@ -8,28 +8,35 @@ export class Schedule {
   constructor(page) {
     this.page = page;
     this.timers = new Timers();
-    this.phases = null;
+    this.phases = [];
     this.timeout = null;
   }
 
   /**
    * Setup schedule
    *
-   * The `phases` in config is a list of {@link Phase} augmented with `time` field indicating time in ms to emit phase events.
+   * The `phases` is a list of vars augmented with `at` field indicating time in ms to update the vars.
    * ```
-   * { phases: [
-   *  { at: 0, display: "something", }
-   *  { at: 1000, display: "somethingelse", inputEnabled: false }
-   * ]}
+   * [
+   *  { at: 0, phase: "something", ... }
+   *  { at: 1000, foo: "Foo", ... }
+   * }
    * ```
    *
    * The `timeout` in config is time in ms to emit timeout even t.
    *
-   * @param {Object} config an object with `{ phases, timeout }`
+   * @param {Object} phases list of phases
    */
-  setup(config) {
-    this.phases = config.phases;
-    this.timeout = config.timeout;
+  setup(phases) {
+    this.phases = phases;
+  }
+
+  at(time, vars) {
+    this.phases.push({ at: time, ...vars})
+  }
+
+  setTimeout(time) {
+    this.timeout = time;
   }
 
   /**
@@ -38,13 +45,13 @@ export class Schedule {
   start() {
     if (this.phases) {
       this.phases.forEach((phase, i) => {
-        const flags = Object.assign({}, phase);
-        delete flags.at;
+        let vars = Object.assign({}, phase);
+        delete vars.at;
 
         this.timers.delay(
           `phase-${i}`,
           () => {
-            this.page.togglePhase(flags);
+            this.page.emitUpdate(vars);
           },
           phase.at
         );

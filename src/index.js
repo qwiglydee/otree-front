@@ -7,7 +7,6 @@ import { DirectiveBase,  registerDirective } from "./directives/base";
 
 // directives register themselves
 import "./directives/ot-ready";
-import "./directives/ot-display";
 import "./directives/ot-input";
 import "./directives/ot-class";
 import "./directives/ot-text";
