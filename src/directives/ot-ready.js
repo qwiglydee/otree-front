@@ -10,24 +10,19 @@ import { DirectiveBase, registerDirective } from "./base";
  * @hideconstructor
  */
 class otReady extends DirectiveBase {
-  get name() {
-    return "ready";
-  }
-
   init() {
     this.trigger = {
-      click: this.elem.hasAttribute("ot-click"),
-      touch: this.elem.hasAttribute("ot-touch"),
-      key: this.elem.hasAttribute("ot-key") ?  this.elem.getAttribute("ot-key"): false,
-    }
-    this.disabled = false;
+      click: this.hasParam("click") || this.elem.tagName == "BUTTON",
+      touch: this.hasParam("touch"),
+      key: this.hasParam("key") ? this.getParam("key"): false,
+    }; 
   }
 
   setup() {
-    if (this.trigger.key) this.onEvent("keydown", this.onKey);
-    if (this.trigger.touch) this.onEvent("touchend", this.onClick, this.elem);
-    if (this.trigger.click) this.onEvent("click", this.onClick, this.elem);
-    this.onEvent('ot.ready', this.onStart);
+    if (this.trigger.key) this.onPageEvent("keydown", this.onKey);
+    if (this.trigger.touch) this.onElemEvent("touchend", this.onClick);
+    if (this.trigger.click) this.onElemEvent("click", this.onClick);
+    this.onPageEvent('ot.ready', this.onStart);
   }
 
   onKey(event) {

@@ -23,7 +23,7 @@ describe("ot-text", () => {
   describe("updating", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div ot-text="game.fld"></div>`, { parentNode: body });
+      elem = await fixture(`<div ot-text="obj.fld"></div>`, { parentNode: body });
       page = new Page(body);
     });
 
@@ -35,37 +35,37 @@ describe("ot-text", () => {
     });
 
     it("changes by fld", async () => {
-      page.emitUpdate(new Changes({ "game.fld": "foo" }));
+      page.emitUpdate(new Changes({ "obj.fld": "foo" }));
       await elementUpdated(elem);
       expect(elem).to.have.text("foo");
 
-      page.emitUpdate(new Changes({ "game.fld": "bar" }));
+      page.emitUpdate(new Changes({ "obj.fld": "bar" }));
       await elementUpdated(elem);
       expect(elem).to.have.text("bar");
     });
 
     it("changes by obj", async () => {
-      page.emitUpdate(new Changes({ game: { fld: "foo" } }));
+      page.emitUpdate(new Changes({ obj: { fld: "foo" } }));
       await elementUpdated(elem);
       expect(elem).to.have.text("foo");
 
-      page.emitUpdate(new Changes({ game: { fld: "bar" } }));
+      page.emitUpdate(new Changes({ obj: { fld: "bar" } }));
       await elementUpdated(elem);
       expect(elem).to.have.text("bar");
     });
 
     it("ignores unrelated fld", async () => {
-      page.emitUpdate(new Changes({ "game.fld": "foo" }));
+      page.emitUpdate(new Changes({ "obj.fld": "foo" }));
       await elementUpdated(elem);
       expect(elem).to.have.text("foo");
 
-      page.emitUpdate(new Changes({ "game.fld2": "bar" }));
+      page.emitUpdate(new Changes({ "obj.fld2": "bar" }));
       await elementUpdated(elem);
       expect(elem).to.have.text("foo");
     });
 
     it("ignores unrelated obj", async () => {
-      page.emitUpdate(new Changes({ game: { fld: "foo" } }));
+      page.emitUpdate(new Changes({ obj: { fld: "foo" } }));
       await elementUpdated(elem);
       expect(elem).to.have.text("foo");
 
@@ -75,31 +75,31 @@ describe("ot-text", () => {
     });
 
     it("clears by fld deletion", async () => {
-      page.emitUpdate(new Changes({ "game.fld": "foo" }));
+      page.emitUpdate(new Changes({ "obj.fld": "foo" }));
       await elementUpdated(elem);
       expect(elem).to.have.text("foo");
 
-      page.emitUpdate(new Changes({ "game.fld": undefined }));
+      page.emitUpdate(new Changes({ "obj.fld": undefined }));
       await elementUpdated(elem);
       expect(elem).to.have.text("");
     });
 
     it("clears by empty obj", async () => {
-      page.emitUpdate(new Changes({ game: { fld: "foo" } }));
+      page.emitUpdate(new Changes({ obj: { fld: "foo" } }));
       await elementUpdated(elem);
       expect(elem).to.have.text("foo");
 
-      page.emitUpdate(new Changes({ game: {} }));
+      page.emitUpdate(new Changes({ obj: {} }));
       await elementUpdated(elem);
       expect(elem).to.have.text("");
     });
 
     it("clears by obj deletion", async () => {
-      page.emitUpdate(new Changes({ game: { fld: "foo" } }));
+      page.emitUpdate(new Changes({ obj: { fld: "foo" } }));
       await elementUpdated(elem);
       expect(elem).to.have.text("foo");
 
-      page.emitUpdate(new Changes({ game: undefined }));
+      page.emitUpdate(new Changes({ obj: undefined }));
       await elementUpdated(elem);
       expect(elem).to.have.text("");
     });

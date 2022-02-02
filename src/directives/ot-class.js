@@ -1,34 +1,34 @@
+import { parseVar, evalVar, affecting } from "../utils/expr";
 import { setClasses } from "../utils/dom";
-
 import { DirectiveBase, registerDirective } from "./base";
 
 /**
  * Directive `ot-class="reference"`
- * 
+ *
  * It adds a class with a value from `{@link Page.event:update}`.
- * All other existing lasses are preserved. 
+ * All other existing lasses are preserved.
  */
 class otClass extends DirectiveBase {
-  get name() {
-    return "class";
-  }
-
   init() {
-    super.init();
+    this.var = parseVar(this.getParam("class"));
     this.defaults = Array.from(this.elem.classList);
   }
 
-  reset() {
-    setClasses(this.elem, this.defaults);
+  onReset(event, vars) {
+    if (affecting(this.var, event)) {
+      setClasses(this.elem, this.defaults);
+    }
   }
 
-  update(changes) {
-    let classes = this.defaults.slice();
-    let val = changes.pick(this.ref);
-    if (!!val) {
-      classes.push(val);
+  onUpdate(event,  changes) {
+    if (affecting(this.var, event)) {
+      let classes = this.defaults.slice();
+      let val = evalVar(this.var, changes);
+      if (!!val) {
+        classes.push(val);
+      }
+      setClasses(this.elem, classes);
     }
-    setClasses(this.elem, classes);
   }
 }
 

@@ -29,7 +29,7 @@ describe("ot-img", () => {
   describe("updating", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div ot-img="game.fld"></div>`, { parentNode: body });
+      elem = await fixture(`<div ot-img="obj.fld"></div>`, { parentNode: body });
       page = new Page(body);
     });
 
@@ -44,11 +44,11 @@ describe("ot-img", () => {
       page.emitReset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ "game.fld": foo_img });
+      page.emitUpdate({ "obj.fld": foo_img });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
 
-      page.emitUpdate({ "game.fld": bar_img });
+      page.emitUpdate({ "obj.fld": bar_img });
       await elementUpdated(elem);
       expect(elem).to.contain(bar_img);
     });
@@ -57,11 +57,11 @@ describe("ot-img", () => {
       page.emitReset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ game: { fld: foo_img } });
+      page.emitUpdate({ obj: { fld: foo_img } });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
 
-      page.emitUpdate({ game: { fld: bar_img } });
+      page.emitUpdate({ obj: { fld: bar_img } });
       await elementUpdated(elem);
       expect(elem).to.contain(bar_img);
     });
@@ -70,11 +70,11 @@ describe("ot-img", () => {
       page.emitReset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ "game.fld": foo_img });
+      page.emitUpdate({ "obj.fld": foo_img });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
 
-      page.emitUpdate({ "game.fld2": bar_img });
+      page.emitUpdate({ "obj.fld2": bar_img });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
     });
@@ -83,7 +83,7 @@ describe("ot-img", () => {
       page.emitReset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ game: { fld: foo_img } });
+      page.emitUpdate({ obj: { fld: foo_img } });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
 
@@ -96,11 +96,11 @@ describe("ot-img", () => {
       page.emitReset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ "game.fld": foo_img });
+      page.emitUpdate({ "obj.fld": foo_img });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
 
-      page.emitUpdate({ "game.fld": undefined });
+      page.emitUpdate({ "obj.fld": undefined });
       await elementUpdated(elem);
       expect(elem).to.be.empty;
     });
@@ -109,11 +109,11 @@ describe("ot-img", () => {
       page.emitReset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ game: { fld: foo_img } });
+      page.emitUpdate({ obj: { fld: foo_img } });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
 
-      page.emitUpdate({ game: {} });
+      page.emitUpdate({ obj: {} });
       await elementUpdated(elem);
       expect(elem).to.be.empty;
     });
@@ -122,11 +122,11 @@ describe("ot-img", () => {
       page.emitReset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ game: { fld: foo_img } });
+      page.emitUpdate({ obj: { fld: foo_img } });
       await elementUpdated(elem);
       expect(elem).to.contain(foo_img);
 
-      page.emitUpdate({ game: undefined });
+      page.emitUpdate({ obj: undefined });
       await elementUpdated(elem);
       expect(elem).to.be.empty;
     });

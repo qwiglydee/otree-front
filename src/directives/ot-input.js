@@ -1,10 +1,10 @@
-import { Ref } from "../utils/changes";
+import { parseVar, evalVar, parseAssign, evalAssign, affecting } from "../utils/expr";
 import { toggleDisabled, isDisabled, isTextInput } from "../utils/dom";
 
 import { DirectiveBase, registerDirective } from "./base";
 
 /**
- * Directive `ot-input` for native inputs: `<input>`, `<select>`, `<textarea>`.
+ * Directive `ot-input="var"` for native inputs: `<input>`, `<select>`, `<textarea>`.
  * 
  * It triggers {@link Page.event:response} when value of the input changes.
  * For text inputs it triggers when `Enter` pressed.
@@ -14,59 +14,48 @@ import { DirectiveBase, registerDirective } from "./base";
  * @hideconstructor
  */
 class otRealInput extends DirectiveBase {
-  get name() {
-    return "input";
-  }
-
   init() {
+    this.var = parseVar(this.getParam('input'));
   }
 
   setup() {
-    this.onEvent("ot.reset", this.onReset);
-    this.onEvent("ot.phase", this.onPhase);
-    this.onEvent("change", this.onChange, this.elem);
-    if (isTextInput(this.elem)) this.onEvent("keydown", this.onKey, this.elem);
+    this.onPageEvent("ot.reset", this.onReset);
+    this.onPageEvent("ot.update", this.onUpdate);
+    this.onElemEvent("change", this.onChange);
+    if (isTextInput(this.elem)) this.onElemEvent("keydown", this.onKey);
   }
 
   onReset(event, vars) {
-    this.elem.value=null;
+    if (affecting(this.var, event)) {
+      this.elem.value=null;
+    }
   }
 
-  onPhase(event, phase) {
-    toggleDisabled(this.elem, !phase.inputEnabled);
+  onUpdate(event, changes) {
+    if (affecting(this.var, event)) {
+      this.elem.value=evalVar(this.var, changes);
+    }
   }
 
   onChange(event) {
-    let value = this.elem.value;
-    if (value === "true") value = true;
-    if (value === "false") value = false;
-    this.page.emitInput(this.elem.name, value);
+    this.page.emitInput(this.var.ref, this.elem.value);
   }
 
   onKey(event) {
     if (event.code == "Enter") {
-      // enforce change event
-      setTimeout(() =>
-      this.elem.dispatchEvent(
-          new Event("change", {
-            view: window,
-            bubbles: false,
-            cancelable: true,
-          })
-        )
-      );
+      this.page.emitInput(this.var.ref, this.elem.value);
     }
   }
 }
 
 registerDirective(
-  "input[ot-input], select[ot-input], textarea[ot-input]",
+  "[ot-input]:is(input, select, textarea)",
   otRealInput
 );
 
 
 /**
- * Directive `ot-input` for custom inputs: any `<div>`, `<span>`, `<button>`, `<kbd>`.
+ * Directive `ot-input="var = val"` for custom inputs: any `<div>`, `<span>`, `<button>`, `<kbd>`.
  * 
  * The directive should be accompanied with method of triggering `ot-
  * 
@@ -83,57 +72,37 @@ registerDirective(
  * @hideconstructor
  */
 class otCustomInput extends DirectiveBase {
-  get name() {
-    return "input";
-  }
-
   init() {
-    this.inp_name = this.elem.getAttribute('name');
-    this.inp_value = this.elem.getAttribute('value');
-
-    if (this.inp_value === undefined) {
-      throw new Error("Missing value attribute for ot-input");
-    }
-
-    if (this.inp_value === "true") this.inp_value = true;
-    if (this.inp_value === "false") this.inp_value = false; 
+    this.ass = parseAssign(this.getParam('input'));
 
     this.trigger = {
-      click: this.elem.hasAttribute("ot-click"),
-      touch: this.elem.hasAttribute("ot-touch"),
-      key: this.elem.hasAttribute("ot-key") ?  this.elem.getAttribute("ot-key"): false,
-    }
-
-    if (this.elem.tagName == "BUTTON") this.trigger.click = true; 
+      click: this.hasParam("click") || this.elem.tagName == "BUTTON",
+      touch: this.hasParam("touch"),
+      key: this.hasParam("key") ? this.getParam("key"): false,
+    }; 
   }
 
   setup() {
-    this.onEvent("ot.phase", this.onPhase);
-    if (this.trigger.key) this.onEvent("keydown", this.onKey);
-    if (this.trigger.touch) this.onEvent("touchend", this.onClick, this.elem);
-    if (this.trigger.click) this.onEvent("click", this.onClick, this.elem);
-  }
-
-  onPhase(event, phase) {
-    if (!('inputEnabled' in phase)) return;
-    toggleDisabled(this.elem, !phase.inputEnabled);
+    if (this.trigger.key) this.onPageEvent("keydown", this.onKey);
+    if (this.trigger.touch) this.onElemEvent("touchend", this.onClick);
+    if (this.trigger.click) this.onElemEvent("click", this.onClick);
   }
 
   onClick(event) {
     if (isDisabled(this.elem)) return;
     event.preventDefault();
-    this.page.emitInput(this.inp_name, this.inp_value);  
+    this.page.emitInput(this.ass.ref, this.ass.val);  
   }
 
   onKey(event) {
     if (isDisabled(this.elem)) return;
     if (event.code != this.trigger.key) return;
     event.preventDefault();
-    this.page.emitInput(this.inp_name, this.inp_value);  
+    this.page.emitInput(this.ass.ref, this.ass.val);  
   }
 }
 
 registerDirective(
-  "div[ot-input], span[ot-input], button[ot-input], kbd[ot-input]",
+  "[ot-input]:not(input, select, textarea)",
   otCustomInput
 );

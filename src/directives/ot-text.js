@@ -1,24 +1,29 @@
+import { parseVar, evalVar, affecting } from "../utils/expr";
 import { setText } from "../utils/dom";
 import { DirectiveBase, registerDirective } from "./base";
 
 /**
  * Directive `ot-text="reference"`
- * 
+ *
  * It inserts text content from {@link Page.event:update}.
- * 
+ *
  * @hideconstructor
  */
 class otText extends DirectiveBase {
-  get name() {
-    return "text";
+  init() {
+    this.var = parseVar(this.getParam("text"));
   }
 
-  reset() {
-    setText(this.elem, null);
+  onReset(event, vars) {
+    if (affecting(this.var, event)) {
+      setText(this.elem, null);
+    }
   }
 
-  update(changes) {
-    setText(this.elem, changes.pick(this.ref)); 
+  onUpdate(event, changes) {
+    if (affecting(this.var, event)) {
+      setText(this.elem, evalVar(this.var, changes));
+    }
   }
 }
 

@@ -1,36 +1,25 @@
 import { expect } from "@open-wc/testing";
 
-import { parseVar, parseCond, evalCond } from "../../src/utils/expr";
+import { Changes } from "../../src/utils/changes";
+import { parseVar, evalVar, parseCond, evalCond, parseAssign, evalAssign } from "../../src/utils/expr";
 
 describe("expressions", () => {
-  describe("parsing", () => {
-    describe("references `var`", () => {
+  describe("variables", () => {
+    describe("parsing", () => {
       it("parses `var`", () => {
         let parsing = () => parseVar("var");
         expect(parsing).not.to.throw();
-        expect(parsing()).to.eq("var");
+        expect(parsing()).to.eql({ ref: "var" });
+      });
+
+      it("parses `obj.fld`", () => {
+        let parsing = () => parseVar("obj.fld");
+        expect(parsing).not.to.throw();
+        expect(parsing()).to.eql({ ref: "obj.fld" });
       });
 
       it("fails on padding spaces", () => {
         let parsing = () => parseVar(" var ");
-        expect(parsing).to.throw();
-      });
-
-      it("fails on cond expressions", () => {
-        let parsing = () => parseVar("var == 'val'");
-        expect(parsing).to.throw();
-      });
-    });
-
-    describe("references `obj.fld`", () => {
-      it("parses `obj.fld`", () => {
-        let parsing = () => parseVar("obj.fld");
-        expect(parsing).not.to.throw();
-        expect(parsing()).to.eq("obj.fld");
-      });
-
-      it("fails on padding spaces", () => {
-        let parsing = () => parseVar(" obj.fld ");
         expect(parsing).to.throw();
       });
 
@@ -44,53 +33,76 @@ describe("expressions", () => {
         expect(parsing).to.throw();
       });
 
-      it("fails on cond expressions", () => {
-        let parsing = () => parseVar("obj.fld == 'val'");
+      it("fails on conditionals", () => {
+        let parsing = () => parseVar("var == true");
+        expect(parsing).to.throw();
+      });
+
+      it("fails on assignments", () => {
+        let parsing = () => parseVar("var = true");
         expect(parsing).to.throw();
       });
     });
 
-    describe("conditionals `var`", () => {
+    describe("evaluating", () => {
+      it("`var`", () => {
+        let parsed = parseVar("var");
+        let changes = new Changes({ var: "Val" });
+        let result = evalVar(parsed, changes);
+        expect(result).to.eq("Val");
+      });
+
+      it("`obj.fld`", () => {
+        let parsed = parseVar("obj.fld");
+        let changes = new Changes({ "obj.fld": "Val" });
+        let result = evalVar(parsed, changes);
+        expect(result).to.eq("Val");
+      });
+    });
+  });
+
+  describe("conditonals", () => {
+    describe("parsing", () => {
       it("parses `var`", () => {
         let parsing = () => parseCond("var");
         expect(parsing).not.to.throw();
-        expect(parsing()).to.eql(["var", undefined, undefined]);
+        expect(parsing()).to.eql({ ref: "var", eq: undefined, val: undefined });
       });
 
       it("parses `var == 'str'`", () => {
         let parsing = () => parseCond("var == 'str'");
         expect(parsing).not.to.throw();
-        expect(parsing()).to.eql(["var", "==", "str"]);
+        expect(parsing()).to.eql({ ref: "var", eq: "==", val: "str" });
       });
 
       it("parses `var != 'str'`", () => {
         let parsing = () => parseCond("var != 'str'");
         expect(parsing).not.to.throw();
-        expect(parsing()).to.eql(["var", "!=", "str"]);
+        expect(parsing()).to.eql({ ref: "var", eq: "!=", val: "str" });
       });
 
       it("parses `var == number`", () => {
         let parsing = () => parseCond("var == 42");
         expect(parsing).not.to.throw();
-        expect(parsing()).to.eql(["var", "==", 42]);
+        expect(parsing()).to.eql({ ref: "var", eq: "==", val: 42 });
       });
 
       it("parses `var != number`", () => {
         let parsing = () => parseCond("var != 42");
         expect(parsing).not.to.throw();
-        expect(parsing()).to.eql(["var", "!=", 42]);
+        expect(parsing()).to.eql({ ref: "var", eq: "!=", val: 42 });
       });
 
       it("parses `var == true`", () => {
         let parsing = () => parseCond("var == true");
         expect(parsing).not.to.throw();
-        expect(parsing()).to.eql(["var", "==", true]);
+        expect(parsing()).to.eql({ ref: "var", eq: "==", val: true });
       });
 
       it("parses `var == false`", () => {
         let parsing = () => parseCond("var == false");
         expect(parsing).not.to.throw();
-        expect(parsing()).to.eql(["var", "==", false]);
+        expect(parsing()).to.eql({ ref: "var", eq: "==", val: false });
       });
 
       it("fails with invalid eq", () => {
@@ -103,7 +115,7 @@ describe("expressions", () => {
         expect(parsing).to.throw();
       });
 
-      it("fails without spaces", () => {
+      it("fails with no spaces", () => {
         let parsing = () => parseCond("var==false");
         expect(parsing).to.throw();
       });
@@ -114,166 +126,175 @@ describe("expressions", () => {
       });
     });
 
-    describe("conditionals `obj.fld`", () => {
-      it("parses `obj.fld`", () => {
-        let parsing = () => parseCond("obj.fld");
-        expect(parsing).not.to.throw();
-        expect(parsing()).to.eql(["obj.fld", undefined, undefined]);
+    describe("evaluating", () => {
+      describe("`var`", () => {
+        const parsed = parseCond("var");
+
+        it("bool", () => {
+          expect(evalCond(parsed, new Changes({ var: true }))).to.eq(true);
+          expect(evalCond(parsed, new Changes({ var: false }))).to.eq(false);
+        });
+
+        it("number", () => {
+          expect(evalCond(parsed, new Changes({ var: 1 }))).to.eq(true);
+          expect(evalCond(parsed, new Changes({ var: 0 }))).to.eq(false);
+        });
+
+        it("str", () => {
+          expect(evalCond(parsed, new Changes({ var: "foo" }))).to.eq(true);
+          expect(evalCond(parsed, new Changes({ var: "" }))).to.eq(false);
+        });
       });
 
-      it("parses `obj.fld == 'str'`", () => {
-        let parsing = () => parseCond("obj.fld == 'str'");
-        expect(parsing).not.to.throw();
-        expect(parsing()).to.eql(["obj.fld", "==", "str"]);
+      describe("`var == 'str'`", () => {
+        const parsed = parseCond("var == 'foo'");
+
+        it("bool", () => {
+          expect(evalCond(parsed, new Changes({ var: true }))).to.eq(false);
+          expect(evalCond(parsed, new Changes({ var: false }))).to.eq(false);
+        });
+
+        it("number", () => {
+          expect(evalCond(parsed, new Changes({ var: 1 }))).to.eq(false);
+          expect(evalCond(parsed, new Changes({ var: 0 }))).to.eq(false);
+        });
+
+        it("str", () => {
+          expect(evalCond(parsed, new Changes({ var: "foo" }))).to.eq(true);
+          expect(evalCond(parsed, new Changes({ var: "bar" }))).to.eq(false);
+        });
       });
 
-      it("parses `obj.fld != 'str'`", () => {
-        let parsing = () => parseCond("obj.fld != 'str'");
-        expect(parsing).not.to.throw();
-        expect(parsing()).to.eql(["obj.fld", "!=", "str"]);
+      describe("`var == number`", () => {
+        const parsed = parseCond("var == 42");
+
+        it("bool", () => {
+          expect(evalCond(parsed, new Changes({ var: true }))).to.eq(false);
+          expect(evalCond(parsed, new Changes({ var: false }))).to.eq(false);
+        });
+
+        it("number", () => {
+          expect(evalCond(parsed, new Changes({ var: 42 }))).to.eq(true);
+          expect(evalCond(parsed, new Changes({ var: 1 }))).to.eq(false);
+        });
+
+        it("str", () => {
+          expect(evalCond(parsed, new Changes({ var: "42" }))).to.eq(false);
+          expect(evalCond(parsed, new Changes({ var: "bar" }))).to.eq(false);
+        });
       });
 
-      it("parses `obj.fld == number`", () => {
-        let parsing = () => parseCond("obj.fld == 42");
-        expect(parsing).not.to.throw();
-        expect(parsing()).to.eql(["obj.fld", "==", 42]);
+      describe("var == true", () => {
+        const parsed = parseCond("var == true");
+
+        it("bool", () => {
+          expect(evalCond(parsed, new Changes({ var: true }))).to.eq(true);
+          expect(evalCond(parsed, new Changes({ var: false }))).to.eq(false);
+        });
+
+        it("number", () => {
+          expect(evalCond(parsed, new Changes({ var: 1 }))).to.eq(false);
+          expect(evalCond(parsed, new Changes({ var: 0 }))).to.eq(false);
+        });
+
+        it("str", () => {
+          expect(evalCond(parsed, new Changes({ var: "true" }))).to.eq(false);
+          expect(evalCond(parsed, new Changes({ var: "false" }))).to.eq(false);
+        });
       });
 
-      it("parses `obj.fld != number`", () => {
-        let parsing = () => parseCond("obj.fld != 42");
-        expect(parsing).not.to.throw();
-        expect(parsing()).to.eql(["obj.fld", "!=", 42]);
-      });
+      describe("`var == false`", () => {
+        const parsed = parseCond("var == false");
 
-      it("parses `obj.fld == true`", () => {
-        let parsing = () => parseCond("obj.fld == true");
-        expect(parsing).not.to.throw();
-        expect(parsing()).to.eql(["obj.fld", "==", true]);
-      });
+        it("bool", () => {
+          expect(evalCond(parsed, new Changes({ var: true }))).to.eq(false);
+          expect(evalCond(parsed, new Changes({ var: false }))).to.eq(true);
+        });
 
-      it("parses `obj.fld == false`", () => {
-        let parsing = () => parseCond("obj.fld == false");
-        expect(parsing).not.to.throw();
-        expect(parsing()).to.eql(["obj.fld", "==", false]);
-      });
+        it("number", () => {
+          expect(evalCond(parsed, new Changes({ var: 1 }))).to.eq(false);
+          expect(evalCond(parsed, new Changes({ var: 0 }))).to.eq(false);
+        });
 
-      it("fails with invalid eq", () => {
-        let parsing = () => parseCond("obj.fld = false");
-        expect(parsing).to.throw();
-      });
-
-      it("fails with padding spaces", () => {
-        let parsing = () => parseCond(" obj.fld == false ");
-        expect(parsing).to.throw();
-      });
-
-      it("fails without spaces", () => {
-        let parsing = () => parseCond("obj.fld==false");
-        expect(parsing).to.throw();
-      });
-
-      it("fails with nonconst val", () => {
-        let parsing = () => parseCond("obj.fld == foo");
-        expect(parsing).to.throw();
+        it("str", () => {
+          expect(evalCond(parsed, new Changes({ var: "true" }))).to.eq(false);
+          expect(evalCond(parsed, new Changes({ var: "false" }))).to.eq(false);
+        });
       });
     });
   });
 
-  describe("evaluating conditionals", () => {
-    describe("`var`", () => {
-      const [ref, eq, val] = parseCond("var");
-
-      it("bool", () => {
-        expect(evalCond(true, eq, val)).to.eq(true);
-        expect(evalCond(false, eq, val)).to.eq(false);
+  describe("assignments", () => {
+    describe("parsing", () => {
+      it("parses `var = 'str'`", () => {
+        let parsing = () => parseAssign("var = 'str'");
+        expect(parsing).not.to.throw();
+        expect(parsing()).to.eql({ ref: "var", val: "str" });
       });
 
-      it("number", () => {
-        expect(evalCond(1, eq, val)).to.eq(true);
-        expect(evalCond(0, eq, val)).to.eq(false);
+      it("parses `var = number`", () => {
+        let parsing = () => parseAssign("var = 42");
+        expect(parsing).not.to.throw();
+        expect(parsing()).to.eql({ ref: "var", val: 42 });
       });
 
-      it("str", () => {
-        expect(evalCond("foo", eq, val)).to.eq(true);
-        expect(evalCond("", eq, val)).to.eq(false);
-      });
-    });
-
-    describe("var == 'str'", () => {
-      const [ref, eq, val] = parseCond("var == 'foo'");
-
-      it("bool", () => {
-        expect(evalCond(true, eq, val)).to.eq(false);
-        expect(evalCond(false, eq, val)).to.eq(false);
+      it("parses `var = true`", () => {
+        let parsing = () => parseAssign("var = true");
+        expect(parsing).not.to.throw();
+        expect(parsing()).to.eql({ ref: "var", val: true });
       });
 
-      it("number", () => {
-        expect(evalCond(1, eq, val)).to.eq(false);
-        expect(evalCond(0, eq, val)).to.eq(false);
+      it("parses `var = false`", () => {
+        let parsing = () => parseAssign("var = false");
+        expect(parsing).not.to.throw();
+        expect(parsing()).to.eql({ ref: "var", val: false });
       });
 
-      it("str", () => {
-        expect(evalCond("foo", eq, val)).to.eq(true);
-        expect(evalCond("bar", eq, val)).to.eq(false);
-      });
-    });
-
-    describe("var == number", () => {
-      const [ref, eq, val] = parseCond("var == 42");
-
-      it("bool", () => {
-        expect(evalCond(true, eq, val)).to.eq(false);
-        expect(evalCond(false, eq, val)).to.eq(false);
+      it("fails with invalid eq", () => {
+        let parsing = () => parseAssign("var == false");
+        expect(parsing).to.throw();
       });
 
-      it("number", () => {
-        expect(evalCond(42, eq, val)).to.eq(true);
-        expect(evalCond(1, eq, val)).to.eq(false);
+      it("fails with padding spaces", () => {
+        let parsing = () => parseAssign(" var = false ");
+        expect(parsing).to.throw();
       });
 
-      it("str", () => {
-        expect(evalCond("42", eq, val)).to.eq(false);
-        expect(evalCond("bar", eq, val)).to.eq(false);
+      it("fails with no spaces", () => {
+        let parsing = () => parseAssign("var=false");
+        expect(parsing).to.throw();
+      });
+
+      it("fails with nonconst val", () => {
+        let parsing = () => parseAssign("var = foo");
+        expect(parsing).to.throw();
       });
     });
 
-    describe("var == true", () => {
-      const [ref, eq, val] = parseCond("var == true");
-
-      it("bool", () => {
-        expect(evalCond(true, eq, val)).to.eq(true);
-        expect(evalCond(false, eq, val)).to.eq(false);
+    describe("evaluating", () => {
+      it("evaluates var = 'str'", () => {
+        let parsed = parseAssign("var = 'str'");
+        let result = evalAssign(parsed);
+        expect(result).to.eql({ var: "str" });
       });
 
-      it("number", () => {
-        expect(evalCond(1, eq, val)).to.eq(false);
-        expect(evalCond(0, eq, val)).to.eq(false);
+      it("evaluates var = number", () => {
+        let parsed = parseAssign("var = 42");
+        let result = evalAssign(parsed);
+        expect(result).to.eql({ var: 42 });
       });
 
-      it("str", () => {
-        expect(evalCond("true", eq, val)).to.eq(false);
-        expect(evalCond("false", eq, val)).to.eq(false);
-      });
-    });
-
-    describe("var == false", () => {
-      const [ref, eq, val] = parseCond("var == false");
-
-      it("bool", () => {
-        expect(evalCond(true, eq, val)).to.eq(false);
-        expect(evalCond(false, eq, val)).to.eq(true);
+      it("evaluates var = true", () => {
+        let parsed = parseAssign("var = true");
+        let result = evalAssign(parsed);
+        expect(result).to.eql({ var: true });
       });
 
-      it("number", () => {
-        expect(evalCond(1, eq, val)).to.eq(false);
-        expect(evalCond(0, eq, val)).to.eq(false);
-      });
-
-      it("str", () => {
-        expect(evalCond("true", eq, val)).to.eq(false);
-        expect(evalCond("false", eq, val)).to.eq(false);
+      it("evaluates var = false", () => {
+        let parsed = parseAssign("var = false");
+        let result = evalAssign(parsed);
+        expect(result).to.eql({ var: false });
       });
     });
-
   });
 });

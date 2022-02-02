@@ -1,4 +1,4 @@
-import { parseCond, evalCond } from "../utils/expr";
+import { parseCond, evalCond, affecting } from "../utils/expr";
 import { toggleDisplay } from "../utils/dom";
 
 import { DirectiveBase, registerDirective } from "./base";
@@ -20,24 +20,20 @@ import { DirectiveBase, registerDirective } from "./base";
  * @hideconstructor
  */
 export class otIf extends DirectiveBase {
-  get name() {
-    return "if";
-  }
-
   init() {
-    const expr = this.param();
-    [this.ref, this.eq, this.val] = parseCond(expr);
+    this.cond = parseCond(this.getParam("if"));
   }
 
-  reset() {
-    toggleDisplay(this.elem, false);
+  onReset(event) {
+    if (affecting(this.cond, event)) {
+      toggleDisplay(this.elem, false);
+    }
   }
 
-  update(changes) {
-    let varval = changes.pick(this.ref);
-    let toggle = evalCond(varval, this.eq, this.val);
-
-    toggleDisplay(this.elem, toggle);
+  onUpdate(event, changes) {
+    if (affecting(this.cond, event)) {
+      toggleDisplay(this.elem, evalCond(this.cond, changes));
+    }
   }
 }
 

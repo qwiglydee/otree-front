@@ -21,10 +21,10 @@ describe("ot-input", () => {
     return (await oneEvent(elem, type)).detail;
   }
 
-  describe("textinputEnable", () => {
+  describe("text input", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<input type="text" ot-input name="foo"></div>`, { parentNode: body });
+      elem = await fixture(`<input type="text" ot-input="foo"></div>`, { parentNode: body });
       page = new Page(body);
     });
 
@@ -75,7 +75,7 @@ describe("ot-input", () => {
   describe("text input no name", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<input type="text" ot-input></div>`, { parentNode: body });
+      elem = await fixture(`<input type="text" ot-input="var"></div>`, { parentNode: body });
       page = new Page(body);
     });
 
@@ -87,14 +87,14 @@ describe("ot-input", () => {
       elem.dispatchEvent(new InputEvent("change"));
 
       detail = await pageEvent("ot.input");
-      expect(detail).to.eql({ name: "", value: "Foo" });
+      expect(detail).to.eql({ name: "var", value: "Foo" });
     });
   });
 
   describe("button", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<button ot-input name="foo" value="Foo"></button>`, {
+      elem = await fixture(`<button ot-input="foo = 'Foo'"></button>`, {
         parentNode: body,
       });
       page = new Page(body);
@@ -125,7 +125,7 @@ describe("ot-input", () => {
     beforeEach(async () => {
       body = document.createElement("body");
       elem = await fixture(
-        `<div ot-click ot-touch ot-key="Space" ot-input  name="foo" value="Foo"></div>`,
+        `<div ot-click ot-touch ot-key="Space" ot-input="foo = 'Foo'"></div>`,
         {
           parentNode: body,
         }

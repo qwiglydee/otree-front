@@ -15,7 +15,7 @@ class otDisplay extends DirectiveBase {
   }
 
   init() {
-    let param = this.param();
+    let param = this.getParam('display');
     const match = param.match(/^\w+(\|\w+)?$/);
     if (!match) throw new Error(`Invalid display phase: ${this.phase}`);
 
@@ -23,7 +23,7 @@ class otDisplay extends DirectiveBase {
   }
 
   setup() {
-    this.onEvent('ot.phase', this.onPhase);
+    this.onPageEvent('ot.phase', this.onPhase);
   }
   
   onPhase(event, phase) {

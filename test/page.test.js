@@ -41,7 +41,7 @@ describe("Page", () => {
 
     it("resets initially", async () => {
       detail = await pageEvent("ot.reset");
-      expect(detail).to.eql("*");
+      expect(detail).to.eql(null);
     });
 
     it("resets", async () => {
@@ -49,7 +49,7 @@ describe("Page", () => {
 
       page.emitReset();
       detail = await pageEvent("ot.reset");
-      expect(detail).to.eql("*");
+      expect(detail).to.eql(null);
     });
 
     it("resets custom vars", async () => {

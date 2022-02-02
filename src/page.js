@@ -115,12 +115,8 @@ export class Page {
    * @fires Page.reset
    */
   emitReset(vars) {
-    if (vars === undefined) {
-      this.emitEvent("ot.reset", "*");
-    } else {
-      if (!Array.isArray(vars)) vars = [vars];
-      this.emitEvent("ot.reset", vars);
-    }
+    if (vars !== undefined && !Array.isArray(vars)) vars = [vars];
+    this.emitEvent("ot.reset", vars);
   }
 
   /**
