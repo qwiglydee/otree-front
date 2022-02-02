@@ -76,6 +76,18 @@ describe("Page", () => {
       page.emitTimeout();
       await pageEvent("ot.timeout");
     });
+
+    it("freezes", async () => {
+      page.freezeInputs();
+      detail = await pageEvent("ot.freezing");
+      expect(detail).to.eq(true);
+    });
+
+    it("unfreezes", async () => {
+      page.unfreezeInputs();
+      detail = await pageEvent("ot.freezing");
+      expect(detail).to.eq(false);
+    });
   });
 
   describe("events", () => {
@@ -222,25 +234,6 @@ describe("Page", () => {
       expect(onphase.args).to.eql([{ foo: "Foo" }]);
     });
 
-    it("onPhase ignores freezing", async () => {
-      let onphase = spy(page, "onPhase", function () {});
-
-      page.togglePhase({ inputEnabled: true });
-      await pageEvent("ot.phase");
-
-      expect(onphase.count).to.eq(1);
-
-      page.freezeInputs();
-      await pageEvent("ot.phase");
-
-      expect(onphase.count).to.eq(1);
-
-      page.unfreezeInputs();
-      await pageEvent("ot.phase");
-
-      expect(onphase.count).to.eq(1);
-    });
-
     it("onTimeout", async () => {
       let ontimeout = spy(page, "onTimeout", function () {});
 
@@ -249,95 +242,4 @@ describe("Page", () => {
       expect(ontimeout.args).to.eql([1000]);
     });
   });
-
-  // describe("phases", () => {
-
-  //   beforeEach(async () => {
-  //     await pageEvent("ot.phase"); // initial reset
-  //   });
-
-  //   it("initializes", async () => {
-  //     page.init();
-  //     expect(page.phase).to.eql({ display: null, inputEnabled: false });
-  //   });
-
-  //   it("resets", async () => {
-  //     page.resetPhase();
-  //     detail = await pageEvent("ot.phase");
-  //     expect(detail).to.eql({ display: null, inputEnabled: false, _resetting: true });
-  //     expect(page.phase).to.eql({ display: null, inputEnabled: false });
-  //   });
-
-  //   it("resets custom flags", async () => {
-  //     page.resetPhase({ foo: "Foo", inputEnabled: true });
-  //     detail = await pageEvent("ot.phase");
-  //     expect(detail).to.eql({ display: null, inputEnabled: true, foo: "Foo", _resetting: true });
-  //     expect(page.phase).to.eql({ display: null, inputEnabled: true, foo: "Foo" });
-  //   });
-
-  //   it("toggles", async () => {
-  //     page.resetPhase();
-  //     await pageEvent("ot.phase");
-
-  //     page.togglePhase({ display: "foo", inputEnabled: false });
-  //     detail = await pageEvent("ot.phase");
-  //     expect(detail).to.eql({ display: "foo", inputEnabled: false });
-  //     expect(page.phase).to.eql({ display: "foo", inputEnabled: false });
-
-  //     page.togglePhase({ inputEnabled: true });
-  //     detail = await pageEvent("ot.phase");
-  //     expect(detail).to.eql({ inputEnabled: true });
-  //     expect(page.phase).to.eql({ display: "foo", inputEnabled: true });
-  //   });
-
-  //   it("switches display", async () => {
-  //     page.resetPhase();
-  //     await pageEvent("ot.phase");
-
-  //     page.switchDisplay("foo");
-  //     detail = await pageEvent("ot.phase");
-  //     expect(detail).to.eql({ display: "foo", _switching: true });
-  //     expect(page.phase).to.eql({ display: null, inputEnabled: false });
-  //   });
-
-  //   it("freezes/unfreezes inputs", async () => {
-  //     page.resetPhase({ inputEnabled: true });
-  //     await pageEvent("ot.phase");
-  //     expect(page.phase.inputEnabled).to.be.true;
-
-  //     page.freezeInputs();
-  //     detail = await pageEvent("ot.phase");
-  //     expect(detail).to.eql({ inputEnabled: false, _freezing: true });
-  //     expect(page.phase.inputEnabled).to.be.true;
-
-  //     page.unfreezeInputs();
-  //     detail = await pageEvent("ot.phase");
-  //     expect(detail).to.eql({ inputEnabled: true, _freezing: true });
-  //     expect(page.phase.inputEnabled).to.be.true;
-  //   });
-
-  //   it("doesn't unfreeze after phase change", async () => {
-  //     page.resetPhase({ inputEnabled: true });
-  //     await pageEvent("ot.phase");
-  //     expect(page.phase.inputEnabled).to.be.true;
-
-  //     page.freezeInputs();
-  //     detail = await pageEvent("ot.phase");
-  //     expect(detail).to.eql({ inputEnabled: false, _freezing: true });
-  //     expect(page.phase.inputEnabled).to.be.true;
-
-  //     page.togglePhase({ inputEnabled: false });
-  //     await pageEvent("ot.phase");
-  //     expect(page.phase.inputEnabled).to.be.false;
-
-  //     page.unfreezeInputs();
-  //     let emitted = false;
-  //     oneEvent(body, "ot.phase").then(() => {
-  //       emitted = true;
-  //     });
-  //     await aTimeout(1000);
-  //     expect(emitted).to.be.false;
-  //     expect(page.phase.inputEnabled).to.be.false;
-  //   });
-  // });
 });

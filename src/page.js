@@ -158,7 +158,7 @@ export class Page {
    * @fires Page.phase
    */
   freezeInputs() {
-    this.emitEvent("ot.phase", { inputEnabled: false, _freezing: true });
+    this.emitEvent("ot.freezing", true);
   }
 
   /**
@@ -170,8 +170,7 @@ export class Page {
    * @fires Page.phase
    */
   unfreezeInputs() {
-    if (!this.phase.inputEnabled) return;
-    this.emitEvent("ot.phase", { inputEnabled: true, _freezing: true });
+    this.emitEvent("ot.freezing", false);
   }
 
   /**

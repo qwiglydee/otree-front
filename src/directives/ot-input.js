@@ -1,37 +1,80 @@
-import { parseVar, evalVar, parseAssign, evalAssign, affecting } from "../utils/expr";
+import { parseVar, evalVar, parseAssign, parseCond, evalCond, affecting } from "../utils/expr";
 import { toggleDisabled, isDisabled, isTextInput } from "../utils/dom";
 
 import { DirectiveBase, registerDirective } from "./base";
 
+
+/**
+ * Base for input
+ * 
+ * handles `ot-enabled` and freezing.
+ */
+class otEnablable extends DirectiveBase {
+  init() {
+    if (this.hasParam('enabled')) {
+      this.cond = parseCond(this.getParam('enabled')); 
+      this.enabled = false; 
+    } else {
+      this.cond = null;
+      this.enabled = true; 
+    }
+  }
+
+  onReset(event, vars) {
+    if (!this.cond) {
+      this.enabled = true;
+    } else if(affecting(this.cond, event)) {
+      this.enabled = false;
+    }
+
+    toggleDisabled(this.elem, !this.enabled);
+  }
+
+  onUpdate(event, changes) {
+    if (this.cond && affecting(this.cond, event)) {
+      this.enabled = evalCond(this.cond, changes);
+      toggleDisabled(this.elem, !this.enabled);
+    }
+  }
+
+  onFreezing(event, frozen) {
+    toggleDisabled(this.elem, !this.enabled || frozen);
+  }
+}
+
 /**
  * Directive `ot-input="var"` for native inputs: `<input>`, `<select>`, `<textarea>`.
  * 
- * It triggers {@link Page.event:response} when value of the input changes.
+ * It triggers {@link Page.event:input} when value of the input changes.
  * For text inputs it triggers when `Enter` pressed.
- * 
- * The input gets disabled according to {@link Phase} flag `input` 
  * 
  * @hideconstructor
  */
-class otRealInput extends DirectiveBase {
+class otRealInput extends otEnablable {
   init() {
+    super.init();
     this.var = parseVar(this.getParam('input'));
   }
 
   setup() {
     this.onPageEvent("ot.reset", this.onReset);
     this.onPageEvent("ot.update", this.onUpdate);
+    this.onPageEvent("ot.freezing", this.onFreezing);
     this.onElemEvent("change", this.onChange);
     if (isTextInput(this.elem)) this.onElemEvent("keydown", this.onKey);
   }
 
   onReset(event, vars) {
+    super.onReset(event, vars);
+
     if (affecting(this.var, event)) {
       this.elem.value=null;
     }
   }
 
   onUpdate(event, changes) {
+    super.onUpdate(event, changes);
+
     if (affecting(this.var, event)) {
       this.elem.value=evalVar(this.var, changes);
     }
@@ -59,20 +102,21 @@ registerDirective(
  * 
  * The directive should be accompanied with method of triggering `ot-
  * 
- * It triggers {@link Page.event:response} by a configred trigger:
+ * It triggers {@link Page.event:input} by a configred trigger:
  * - `ot-click` to trigger on click
  * - `ot-touch` to trigger on touch
  * - `ot-key="keycode" to trigger on keypress
  * 
  * The list of available is at MDN: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code/code_values  
  * Basically, it is something like 'Enter', 'Space', 'Escape', or 'KeyQ' for "q" key.
- * 
- * The input gets disabled according to {@link Phase} flag `input` 
- * 
+* 
  * @hideconstructor
  */
-class otCustomInput extends DirectiveBase {
+class otCustomInput extends otEnablable {
+
   init() {
+    super.init();
+
     this.ass = parseAssign(this.getParam('input'));
 
     this.trigger = {
@@ -83,6 +127,9 @@ class otCustomInput extends DirectiveBase {
   }
 
   setup() {
+    this.onPageEvent("ot.reset", this.onReset);
+    this.onPageEvent("ot.update", this.onUpdate);
+    this.onPageEvent("ot.freezing", this.onFreezing);
     if (this.trigger.key) this.onPageEvent("keydown", this.onKey);
     if (this.trigger.touch) this.onElemEvent("touchend", this.onClick);
     if (this.trigger.click) this.onElemEvent("click", this.onClick);
