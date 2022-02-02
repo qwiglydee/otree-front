@@ -164,8 +164,23 @@ export class Page {
     this.emitEvent("ot.freezing", false);
   }
 
+
+  /**
+   * Force native inputs to emit values
+   *  
+   * @param {*} inpvar 
+   */
+  submitInputs(inpvar) {
+    this.body.querySelectorAll(`[ot-input="${inpvar}"]`).forEach(inp => {
+      this.emitInput(inpvar, inp.value);
+    })
+  }
+
+  /**
+   * Force whole page to submit.
+   */
   submit() {
-    this.documentQuery("form").submit();
+    this.body.querySelector("form").submit();
   }
 
   /**

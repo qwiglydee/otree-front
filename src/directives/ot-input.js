@@ -60,8 +60,11 @@ class otRealInput extends otEnablable {
     this.onPageEvent("ot.reset", this.onReset);
     this.onPageEvent("ot.update", this.onUpdate);
     this.onPageEvent("ot.freezing", this.onFreezing);
-    this.onElemEvent("change", this.onChange);
-    if (isTextInput(this.elem)) this.onElemEvent("keydown", this.onKey);
+    if (isTextInput(this.elem)) {
+      this.onElemEvent("keydown", this.onKey);
+    } else {
+      this.onElemEvent("change", this.onChange);
+    }
   }
 
   onReset(event, vars) {
@@ -81,13 +84,17 @@ class otRealInput extends otEnablable {
   }
 
   onChange(event) {
-    this.page.emitInput(this.var.ref, this.elem.value);
+    this.submit();
   }
 
   onKey(event) {
     if (event.code == "Enter") {
-      this.page.emitInput(this.var.ref, this.elem.value);
+      this.submit();
     }
+  }
+
+  submit() {
+    this.page.emitInput(this.var.ref, this.elem.value);
   }
 }
 

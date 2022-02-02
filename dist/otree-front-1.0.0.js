@@ -1,3 +1,106 @@
+const VAREXPR = new RegExp(/^[a-zA-Z]\w+(\.\w+)*$/);
+
+function parseVar(expr) {
+  let match = VAREXPR.exec(expr);
+
+  if (!match) {
+    throw new Error(`Invalid expression for var: "${expr}"`);
+  }
+
+  let ref = match[0];
+  return { ref };
+}
+
+function evalVar(parsed, changes) {
+  const { ref } = parsed;
+
+  return changes.pick(ref);
+}
+
+
+const CONDEXPR = new RegExp(/^([\w.]+)( ([!=]=) (.+))?$/);
+
+function parseCond(expr) {
+  let match = CONDEXPR.exec(expr);
+
+  if (!match) {
+    throw new Error(`Invalid condition expression: "${expr}"`);
+  }
+
+  let varmatch = VAREXPR.exec(match[1]);
+  if (!varmatch) {
+    throw new Error(`Invalid variable in condition expression: "${expr}"`);
+  }
+
+  let [_0, ref, _2, eq, val] = match;
+
+  if (val) {
+    try {
+      val = JSON.parse(val.replaceAll("'", '"'));
+    } catch {
+      throw new Error(`Invalid value in condition expression: ${expr}`);
+    }
+  } else {
+    val = undefined;
+  }
+
+  return { ref, eq, val };
+}
+
+function evalCond(parsed, changes) {
+  const { ref, eq, val } = parsed;
+
+  let value = changes.pick(ref);
+
+  if (eq === undefined) return !!value;
+  if (eq == "==") return value === val;
+  if (eq == "1=") return value !== val;
+}
+
+const ASSIGNEXPR = new RegExp(/^([\w.]+) = (.+)?$/);
+
+function parseAssign(expr) {
+  let match = ASSIGNEXPR.exec(expr);
+
+  if (!match) {
+    throw new Error(`Invalid input expression: "${expr}"`);
+  }
+
+  let varmatch = VAREXPR.exec(match[1]);
+  if (!varmatch) {
+    throw new Error(`Invalid variable in input expression: "${expr}"`);
+  }
+
+  let [_0, ref, val] = match;
+
+  try {
+    val = JSON.parse(match[2].replaceAll("'", '"'));
+  } catch {
+    throw new Error(`Invalid value in assignment expression: ${expr}`);
+  }
+
+  return { ref, val };
+}
+
+/**
+ * Checks if an event affects an expression
+ *
+ * @param {Event} event
+ * @param {object} expr parsed expression containing ref to a var
+ */
+function affecting(parsed, event) {
+  switch (event.type) {
+    case "ot.reset":
+      let vars = event.detail;
+      return vars == undefined || vars.includes(parsed.ref);
+    case "ot.update":
+      let changes = event.detail;
+      return changes.affects(parsed.ref);
+    default:
+      return false;
+  }
+}
+
 /** 
  * Utils to handle references to game state vars and manage their updates.
  * 
@@ -5,18 +108,6 @@
  * 
  * @module utils/changes/Ref 
  */
-
-const jspath_re = new RegExp(/^[a-zA-Z]\w+(\.\w+)*$/);
-
-/**
- * Validates syntax of a reference 
- * 
- * @param {string} ref
- * @throws {Error}
- */
-function validate(ref) {
-  if (!ref || !jspath_re.exec(ref)) throw new Error(`Invalid ref: ${ref}`);
-}
 
 /**
  * Checks if references overlap 
@@ -93,46 +184,45 @@ function update(data, ref, value) {
 
 var ref = /*#__PURE__*/Object.freeze({
   __proto__: null,
-  validate: validate,
   includes: includes,
   strip: strip,
   extract: extract,
   update: update
 });
 
-/** 
+/**
  * Utils to handle changes of game state data
- * 
+ *
  * @module utils/changes
  */
 
 /**
  * A set of references to vars and their new values.
- * 
- * The references are in form `obj.field.subfield` and correspond to a game state.  
+ *
+ * The references are in form `obj.field.subfield` and correspond to a game state.
  */
 class Changes extends Map {
   /**
-   * @param {object} obj plain object describing changes 
-   * @param {string} [prefix] a prefix to add to all the top-level fields, as if there was an above-top object  
+   * @param {object} obj plain object describing changes
+   * @param {string} [prefix] a prefix to add to all the top-level fields, as if there was an above-top object
    */
-  
+
   constructor(obj, prefix) {
     let entries = [...Object.entries(obj)];
     if (prefix) {
       entries = entries.map(([k, v]) => [prefix + "." + k, v]);
-    } 
+    }
     super(entries);
-    this.forEach((v, k) => validate(k));
+    this.forEach((v, k) => parseVar(k));
   }
 
-  /** 
-   * Checks if the changeset contains referenced var 
-   * 
+  /**
+   * Checks if the changeset contains referenced var
+   *
    * Example:
    *   ```
    *   changes = new Changes({ 'obj.foo': { ... } })
-   *   changes.afects("obj.foo.bar") == true // becasue the `bar` is contained in `obj.foo` 
+   *   changes.afects("obj.foo.bar") == true // becasue the `bar` is contained in `obj.foo`
    *   ```
    * @param {string} ref
    */
@@ -140,10 +230,10 @@ class Changes extends Map {
     return [...this.keys()].some((key) => includes(key, ref$1));
   }
 
-  /** 
+  /**
    * Picks single value from changeset.
-   * 
-   * Example:  
+   *
+   * Example:
    *   ```
    *   changes = new Changes({ 'obj.foo': { bar: "Bar" } })
    *   changes.pick("obj.foo.bar") == "Bar"
@@ -164,22 +254,22 @@ class Changes extends Map {
     }
   }
 
-  /** 
+  /**
    * Apply changes
-   * 
+   *
    * Modify an obj by all the changes.
-   * 
+   *
    * Example:
    *    ```
-   *    obj = { obj: { foo: { bar: "xxx" } } } 
+   *    obj = { obj: { foo: { bar: "xxx" } } }
    *    changes = new Changes({ 'obj.foo': { bar: "Bar" } })
    *    changes.patch(obj)
-   * 
+   *
    *    obj == { obj: { foo: { bar: "Bar" } } }
    *    ```
-   * 
+   *
    * It works with arrays as well, when using indexes as subfields.
-   * 
+   *
    */
   patch(obj) {
     this.forEach((v, k) => {
@@ -461,127 +551,86 @@ var measurement = /*#__PURE__*/Object.freeze({
 /* map of selector => class */
 const registry = new Map();
 
-/** 
+/**
  * Registers a directive class.
- * 
+ *
  * The {@link Page} sets up all registered directives on all found elements in html.
  * The elements a searched by provided selector, which is something like `[ot-something]` but actually can be anything.
- * 
+ *
  * @param {string} selector a css selector for elements
- * @param {class} cls a class derived from {@link DirectiveBase}  
+ * @param {class} cls a class derived from {@link DirectiveBase}
  */
 function registerDirective(selector, cls) {
   registry.set(selector, cls);
 }
 
-/** 
+/**
  * Base class for directives.
- * 
+ *
  * Used by all built-in directives and can be used to create custom directives.
  */
 class DirectiveBase {
-  /** 
-   * directive name
-   * 
-   * like "foo" for `ot-foo`
-   * 
-   * should be redefined in derived classes 
-   */  
-  get name() {
-    return "foo";
+  /**
+   * Returns a value from attribute `ot-name`.
+   *
+   * @param {string} [name=this.name] the param to get
+   */
+  getParam(attr) {
+    return this.elem.getAttribute(`ot-${attr}`);
   }
 
-  /** 
-   * Returns a value from attribute `ot-name`.
-   * 
-   * @param {string} [name=this.name] the param to get 
-   */
-  param(attr) {
-    if (attr === undefined) attr = this.name; 
-    return this.elem.getAttribute(`ot-${attr}`)
+  hasParam(attr) {
+    return this.elem.hasAttribute(`ot-${attr}`);
   }
 
   /**
    * A directive instance is created for each matching element.
-   * 
-   * @param {Page} page 
-   * @param {HTMLElement} elem 
+   *
+   * @param {Page} page
+   * @param {HTMLElement} elem
    */
   constructor(page, elem) {
     this.page = page;
     this.elem = elem;
-    this.handlers = new Map();
+    // this.handlers = new Map();  // TODO: cleaning up when detached
     this.init();
   }
 
-  /** 
-   * Binds an event handler.
-   * 
-   * Shorcut for page.on, with the handler bound to `this` directive.
-   * 
+  /**
+   * Initializes directive.
+   *
+   * Use it to parse parameters from the element, and to init all the state.
+   */
+  init() {}
+
+  /**
+   * Binds an event handler for a global page event
+   *
    * @param {String} eventype
    * @param {Function} handler either `this.something` or a standalone function
-   * @param {HTMLElement} [target=page.body] either the element itself or the page 
-  */
-  onEvent(eventype, handler, target) {
-    this.page.onEvent(eventype, (event) => handler.bind(this)(event, event.detail), target);
+   */
+  onPageEvent(eventype, handler) {
+    let hnd = handler.bind(this);
+    this.page.onEvent(eventype, (event) => hnd(event, event.detail));
   }
 
-  /** 
-   * Initializes directive.
-   *  
-   * Use it to parse parameters from the element, and to init all the state.
-   * 
-   * Default implementation takes reference from corresponding attr and puts it into `this.ref`   
+  /**
+   * Binds an event handler for a element event
+   *
+   * @param {String} eventype
+   * @param {Function} handler either `this.something` or a standalone function
    */
-  init() {
-    this.ref = this.param();
-    validate(this.ref); 
-  } 
+  onElemEvent(eventype, handler) {
+    let hnd = handler.bind(this);
+    this.page.onEvent(eventype, (event) => hnd(event, event.detail), this.elem);
+  }
 
   /**
    * Sets up event handlers
-   * 
-   * Default implementation sets up handlers for `reset` and `update` events, 
-   * checking if `this.ref` is affected by event and calling `this.reset` or `this.update` 
    */
   setup() {
-    this.onEvent('ot.reset', this.onReset);
-    this.onEvent('ot.update', this.onUpdate);
-  }
-  
-  onReset(event, vars) {
-    if (vars == "*" || vars.some(topname => includes(topname, this.ref))) {
-      this.reset(vars);
-    }
-  }
-
-  /**
-   * Called in default imlementation when `reset` event affects `this.ref`.
-   * 
-   * Override to do something useful.
-   */
-  reset() {
-    // do something
-    throw new Error("Method not implemented");
-  }
-
-  onUpdate(event, changes) {
-    if (changes.affects(this.ref)) {
-      this.update(changes);
-    }
-  }
-
-  /**
-   * Called in default imlementation when `update` event affects `this.ref`.
-   * 
-   * Override to do something useful.
-   *  
-   * @param {Changes} changes 
-   */
-  update(changes) {
-    // do something
-    throw new Error("Method not implemented");
+    if (this.onReset) this.onPageEvent("ot.reset", this.onReset);
+    if (this.onUpdate) this.onPageEvent("ot.update", this.onUpdate);
   }
 }
 
@@ -593,24 +642,19 @@ class DirectiveBase {
  * @hideconstructor
  */
 class otReady extends DirectiveBase {
-  get name() {
-    return "ready";
-  }
-
   init() {
     this.trigger = {
-      click: this.elem.hasAttribute("ot-click"),
-      touch: this.elem.hasAttribute("ot-touch"),
-      key: this.elem.hasAttribute("ot-key") ?  this.elem.getAttribute("ot-key"): false,
-    };
-    this.disabled = false;
+      click: this.hasParam("click") || this.elem.tagName == "BUTTON",
+      touch: this.hasParam("touch"),
+      key: this.hasParam("key") ? this.getParam("key"): false,
+    }; 
   }
 
   setup() {
-    if (this.trigger.key) this.onEvent("keydown", this.onKey);
-    if (this.trigger.touch) this.onEvent("touchend", this.onClick, this.elem);
-    if (this.trigger.click) this.onEvent("click", this.onClick, this.elem);
-    this.onEvent('ot.ready', this.onStart);
+    if (this.trigger.key) this.onPageEvent("keydown", this.onKey);
+    if (this.trigger.touch) this.onElemEvent("touchend", this.onClick);
+    if (this.trigger.click) this.onElemEvent("click", this.onClick);
+    this.onPageEvent('ot.ready', this.onStart);
   }
 
   onKey(event) {
@@ -635,200 +679,189 @@ class otReady extends DirectiveBase {
 registerDirective("[ot-ready]", otReady);
 
 /**
- * Directive `ot-display="phaseflag"`
+ * Base for input
  * 
- * It shows/hides an element when {@link Phase} contains matching `display` field.
- * If the phase doesn't contain the field, it is ignored (i.e. phases toggling just `inputEnabled` do not affect the display). 
- * 
- * @hideconstructor
+ * handles `ot-enabled` and freezing.
  */
-class otDisplay extends DirectiveBase {
-  get name() {
-    return "display";
-  }
-
+class otEnablable extends DirectiveBase {
   init() {
-    let param = this.param();
-    const match = param.match(/^\w+(\|\w+)?$/);
-    if (!match) throw new Error(`Invalid display phase: ${this.phase}`);
-
-    this.phases = param.split('|');
-  }
-
-  setup() {
-    this.onEvent('ot.phase', this.onPhase);
-  }
-  
-  onPhase(event, phase) {
-    if (!('display' in phase)) return;
-    toggleDisplay(this.elem, this.phases.includes(phase.display));
-  }
-}
-
-registerDirective("[ot-display]", otDisplay);
-
-/**
- * Directive `ot-input` for native inputs: `<input>`, `<select>`, `<textarea>`.
- * 
- * It triggers {@link Page.event:response} when value of the input changes.
- * For text inputs it triggers when `Enter` pressed.
- * 
- * The input gets disabled according to {@link Phase} flag `input` 
- * 
- * @hideconstructor
- */
-class otRealInput extends DirectiveBase {
-  get name() {
-    return "input";
-  }
-
-  init() {
-  }
-
-  setup() {
-    this.onEvent("ot.reset", this.onReset);
-    this.onEvent("ot.phase", this.onPhase);
-    this.onEvent("change", this.onChange, this.elem);
-    if (isTextInput(this.elem)) this.onEvent("keydown", this.onKey, this.elem);
+    if (this.hasParam('enabled')) {
+      this.cond = parseCond(this.getParam('enabled')); 
+      this.enabled = false; 
+    } else {
+      this.cond = null;
+      this.enabled = true; 
+    }
   }
 
   onReset(event, vars) {
-    this.elem.value=null;
+    if (!this.cond) {
+      this.enabled = true;
+    } else if(affecting(this.cond, event)) {
+      this.enabled = false;
+    }
+
+    toggleDisabled(this.elem, !this.enabled);
   }
 
-  onPhase(event, phase) {
-    toggleDisabled(this.elem, !phase.inputEnabled);
+  onUpdate(event, changes) {
+    if (this.cond && affecting(this.cond, event)) {
+      this.enabled = evalCond(this.cond, changes);
+      toggleDisabled(this.elem, !this.enabled);
+    }
+  }
+
+  onFreezing(event, frozen) {
+    toggleDisabled(this.elem, !this.enabled || frozen);
+  }
+}
+
+/**
+ * Directive `ot-input="var"` for native inputs: `<input>`, `<select>`, `<textarea>`.
+ * 
+ * It triggers {@link Page.event:input} when value of the input changes.
+ * For text inputs it triggers when `Enter` pressed.
+ * 
+ * @hideconstructor
+ */
+class otRealInput extends otEnablable {
+  init() {
+    super.init();
+    this.var = parseVar(this.getParam('input'));
+  }
+
+  setup() {
+    this.onPageEvent("ot.reset", this.onReset);
+    this.onPageEvent("ot.update", this.onUpdate);
+    this.onPageEvent("ot.freezing", this.onFreezing);
+    if (isTextInput(this.elem)) {
+      this.onElemEvent("keydown", this.onKey);
+    } else {
+      this.onElemEvent("change", this.onChange);
+    }
+  }
+
+  onReset(event, vars) {
+    super.onReset(event, vars);
+
+    if (affecting(this.var, event)) {
+      this.elem.value=null;
+    }
+  }
+
+  onUpdate(event, changes) {
+    super.onUpdate(event, changes);
+
+    if (affecting(this.var, event)) {
+      this.elem.value=evalVar(this.var, changes);
+    }
   }
 
   onChange(event) {
-    let value = this.elem.value;
-    if (value === "true") value = true;
-    if (value === "false") value = false;
-    this.page.emitInput(this.elem.name, value);
+    this.submit();
   }
 
   onKey(event) {
     if (event.code == "Enter") {
-      // enforce change event
-      setTimeout(() =>
-      this.elem.dispatchEvent(
-          new Event("change", {
-            view: window,
-            bubbles: false,
-            cancelable: true,
-          })
-        )
-      );
+      this.submit();
     }
+  }
+
+  submit() {
+    this.page.emitInput(this.var.ref, this.elem.value);
   }
 }
 
 registerDirective(
-  "input[ot-input], select[ot-input], textarea[ot-input]",
+  "[ot-input]:is(input, select, textarea)",
   otRealInput
 );
 
 
 /**
- * Directive `ot-input` for custom inputs: any `<div>`, `<span>`, `<button>`, `<kbd>`.
+ * Directive `ot-input="var = val"` for custom inputs: any `<div>`, `<span>`, `<button>`, `<kbd>`.
  * 
  * The directive should be accompanied with method of triggering `ot-
  * 
- * It triggers {@link Page.event:response} by a configred trigger:
+ * It triggers {@link Page.event:input} by a configred trigger:
  * - `ot-click` to trigger on click
  * - `ot-touch` to trigger on touch
  * - `ot-key="keycode" to trigger on keypress
  * 
  * The list of available is at MDN: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code/code_values  
  * Basically, it is something like 'Enter', 'Space', 'Escape', or 'KeyQ' for "q" key.
- * 
- * The input gets disabled according to {@link Phase} flag `input` 
- * 
+* 
  * @hideconstructor
  */
-class otCustomInput extends DirectiveBase {
-  get name() {
-    return "input";
-  }
+class otCustomInput extends otEnablable {
 
   init() {
-    this.inp_name = this.elem.getAttribute('name');
-    this.inp_value = this.elem.getAttribute('value');
+    super.init();
 
-    if (this.inp_value === undefined) {
-      throw new Error("Missing value attribute for ot-input");
-    }
-
-    if (this.inp_value === "true") this.inp_value = true;
-    if (this.inp_value === "false") this.inp_value = false; 
+    this.ass = parseAssign(this.getParam('input'));
 
     this.trigger = {
-      click: this.elem.hasAttribute("ot-click"),
-      touch: this.elem.hasAttribute("ot-touch"),
-      key: this.elem.hasAttribute("ot-key") ?  this.elem.getAttribute("ot-key"): false,
-    };
-
-    if (this.elem.tagName == "BUTTON") this.trigger.click = true; 
+      click: this.hasParam("click") || this.elem.tagName == "BUTTON",
+      touch: this.hasParam("touch"),
+      key: this.hasParam("key") ? this.getParam("key"): false,
+    }; 
   }
 
   setup() {
-    this.onEvent("ot.phase", this.onPhase);
-    if (this.trigger.key) this.onEvent("keydown", this.onKey);
-    if (this.trigger.touch) this.onEvent("touchend", this.onClick, this.elem);
-    if (this.trigger.click) this.onEvent("click", this.onClick, this.elem);
-  }
-
-  onPhase(event, phase) {
-    if (!('inputEnabled' in phase)) return;
-    toggleDisabled(this.elem, !phase.inputEnabled);
+    this.onPageEvent("ot.reset", this.onReset);
+    this.onPageEvent("ot.update", this.onUpdate);
+    this.onPageEvent("ot.freezing", this.onFreezing);
+    if (this.trigger.key) this.onPageEvent("keydown", this.onKey);
+    if (this.trigger.touch) this.onElemEvent("touchend", this.onClick);
+    if (this.trigger.click) this.onElemEvent("click", this.onClick);
   }
 
   onClick(event) {
     if (isDisabled(this.elem)) return;
     event.preventDefault();
-    this.page.emitInput(this.inp_name, this.inp_value);  
+    this.page.emitInput(this.ass.ref, this.ass.val);  
   }
 
   onKey(event) {
     if (isDisabled(this.elem)) return;
     if (event.code != this.trigger.key) return;
     event.preventDefault();
-    this.page.emitInput(this.inp_name, this.inp_value);  
+    this.page.emitInput(this.ass.ref, this.ass.val);  
   }
 }
 
 registerDirective(
-  "div[ot-input], span[ot-input], button[ot-input], kbd[ot-input]",
+  "[ot-input]:not(input, select, textarea)",
   otCustomInput
 );
 
 /**
  * Directive `ot-class="reference"`
- * 
+ *
  * It adds a class with a value from `{@link Page.event:update}`.
- * All other existing lasses are preserved. 
+ * All other existing lasses are preserved.
  */
 class otClass extends DirectiveBase {
-  get name() {
-    return "class";
-  }
-
   init() {
-    super.init();
+    this.var = parseVar(this.getParam("class"));
     this.defaults = Array.from(this.elem.classList);
   }
 
-  reset() {
-    setClasses(this.elem, this.defaults);
+  onReset(event, vars) {
+    if (affecting(this.var, event)) {
+      setClasses(this.elem, this.defaults);
+    }
   }
 
-  update(changes) {
-    let classes = this.defaults.slice();
-    let val = changes.pick(this.ref);
-    if (!!val) {
-      classes.push(val);
+  onUpdate(event,  changes) {
+    if (affecting(this.var, event)) {
+      let classes = this.defaults.slice();
+      let val = evalVar(this.var, changes);
+      if (!!val) {
+        classes.push(val);
+      }
+      setClasses(this.elem, classes);
     }
-    setClasses(this.elem, classes);
   }
 }
 
@@ -836,22 +869,26 @@ registerDirective("[ot-class]", otClass);
 
 /**
  * Directive `ot-text="reference"`
- * 
+ *
  * It inserts text content from {@link Page.event:update}.
- * 
+ *
  * @hideconstructor
  */
 class otText extends DirectiveBase {
-  get name() {
-    return "text";
+  init() {
+    this.var = parseVar(this.getParam("text"));
   }
 
-  reset() {
-    setText(this.elem, null);
+  onReset(event, vars) {
+    if (affecting(this.var, event)) {
+      setText(this.elem, null);
+    }
   }
 
-  update(changes) {
-    setText(this.elem, changes.pick(this.ref)); 
+  onUpdate(event, changes) {
+    if (affecting(this.var, event)) {
+      setText(this.elem, evalVar(this.var, changes));
+    }
   }
 }
 
@@ -859,27 +896,31 @@ registerDirective("[ot-text]", otText);
 
 /**
  * Directive `ot-img="reference"`
- * 
+ *
  * It inserts image element from {@link Page.event:update} inside its host.
- * The value in the Changes should be an instance of created and pre-loaded Image element. 
- * 
+ * The value in the Changes should be an instance of created and pre-loaded Image element.
+ *
  * @hideconstructor
  */
 class otImg extends DirectiveBase {
-  get name() {
-    return "img";
+  init() {
+    this.var = parseVar(this.getParam("img"));
   }
 
-  reset() {
-    setChild(this.elem, null);
-  }
-
-  update(changes) {
-    let img = changes.pick(this.ref);
-    if (!!img && !(img instanceof Image)) {
-      throw new Error(`Invalid value for image: ${img}`);
+  onReset(event, vars) {
+    if (affecting(this.var, event)) {
+      setChild(this.elem, null);
     }
-    setChild(this.elem, img);
+  }
+
+  onUpdate(event, changes) {
+    if (affecting(this.var, event)) {
+      let img = evalVar(this.var, changes);
+      if (!!img && !(img instanceof Image)) {
+        throw new Error(`Invalid value for image: ${img}`);
+      }
+      setChild(this.elem, img);
+    }
   }
 }
 
@@ -889,8 +930,6 @@ registerDirective("[ot-img]", otImg);
  * Directives `ot-attr-something="reference"`
  * 
  * The allowed attributes are: 
- * - `disabled` 
- * - `hidden` 
  * - `height` 
  * - `width` 
  * - `min` 
@@ -905,16 +944,28 @@ registerDirective("[ot-img]", otImg);
  * @hideconstructor
  */
 class otAttrBase extends DirectiveBase {
-  reset() {
-    setAttr(this.elem, this.name, null);
+  get name() {
+    throw new Error("name getter should be defined");
   }
 
-  update(changes) {
-    setAttr(this.elem, this.name, changes.pick(this.ref));
+  init() {
+    this.var = parseVar(this.getParam(this.name));
+  }
+
+  onReset(event,  vars) {
+    if (affecting(this.var, event)) {
+      setAttr(this.elem, this.name, null);
+    }
+  }
+
+  onUpdate(event, changes) {
+    if (affecting(this.var, event)) {
+      setAttr(this.elem, this.name, evalVar(this.var, changes));
+    }
   }
 }
 
-const ALLOWED_ATTRIBS = ["disabled", "hidden", "height", "width", "min", "max", "low", "high", "optimum", "value"];
+const ALLOWED_ATTRIBS = ["height", "width", "min", "max", "low", "high", "optimum", "value"];
 
 // create subclass for each attr with static property
 // register them as `ot-something`
@@ -929,58 +980,38 @@ ALLOWED_ATTRIBS.forEach(attrname => {
 /**
  * Directive `ot-when="var"`, `ot-when="var==val", ot-when="var===val"`.
  *
- * It shows/hides host element on {@link Page.event:update}. 
- * 
- * The `var` is a page var reference like `game.feedback`, the `val` is a primitive json expression 
- * like "true" (boolean), "42" (number), "'foo'" (string). 
- * 
+ * It shows/hides host element on {@link Page.event:update}.
+ *
+ * The `var` is a page var reference like `game.feedback`, the `val` is a primitive json expression
+ * like "true" (boolean), "42" (number), "'foo'" (string).
+ *
  * For `ot-when="var"` element shows when the `var` is defined.
- * 
+ *
  * For `ot-when="var==val"` element shows when the `var` is defined and equal to the val.
- * 
+ *
  * For `ot-when="var===val"` element shows when the `var` is defined and strictly equal to the val.
- * 
+ *
  * @hideconstructor
  */
-class otWhen extends DirectiveBase {
-  get name() {
-    return "when";
+class otIf extends DirectiveBase {
+  init() {
+    this.cond = parseCond(this.getParam("if"));
   }
 
-  init() {
-    const when = this.param();
-    const match = when.match(/^([\w.]+)((===?)(.+))?$/);
-    if (!match) throw new Error(`Invalid expression for when: ${when}`);
-    
-    const [_0, ref$1, _2, eq, rhs] = match;
-
-    validate(ref$1);
-    this.ref = ref$1;
-    
-    let val = rhs ? JSON.parse(rhs.replaceAll("'", '"')) : null;
-
-    if (eq == '==') {
-      this.check = (v) => (v !== undefined) && v == val;
-    } else if (eq == '===') {
-      this.check = (v) => (v !== undefined) && v === val;
-    } else {
-      this.check = (v) => (v !== undefined);
+  onReset(event) {
+    if (affecting(this.cond, event)) {
+      toggleDisplay(this.elem, false);
     }
   }
 
-  reset() {
-    toggleDisplay(this.elem, false);
-  }
-
-  update(changes) {
-    let value = changes.pick(this.ref);
-    let toggle = this.check(value);
-
-    toggleDisplay(this.elem, toggle);
+  onUpdate(event, changes) {
+    if (affecting(this.cond, event)) {
+      toggleDisplay(this.elem, evalCond(this.cond, changes));
+    }
   }
 }
 
-registerDirective("[ot-when]", otWhen);
+registerDirective("[ot-if]", otIf);
 
 /** Main page.
  *
@@ -991,8 +1022,6 @@ registerDirective("[ot-when]", otWhen);
  * Installs all registered directives, found in html.
  *
  * *NB*: The installation happens only once, directives won't work in dynamically added html code.
- *
- * @property {Phase} phase set of flags indicating common state of directives, `{ display, inputEnabled }`
  */
 class Page {
   /**
@@ -1000,7 +1029,6 @@ class Page {
    */
   constructor(body) {
     this.body = body || document.body;
-    this.phase = {};
     this.init();
   }
 
@@ -1014,7 +1042,6 @@ class Page {
       });
     });
 
-    this.resetPhase();
     this.emitReset();
   }
 
@@ -1095,12 +1122,8 @@ class Page {
    * @fires Page.reset
    */
   emitReset(vars) {
-    if (vars === undefined) {
-      this.emitEvent("ot.reset", "*");
-    } else {
-      if (!Array.isArray(vars)) vars = [vars];
-      this.emitEvent("ot.reset", vars);
-    }
+    if (vars !== undefined && !Array.isArray(vars)) vars = [vars];
+    this.emitEvent("ot.reset", vars);
   }
 
   /**
@@ -1137,68 +1160,38 @@ class Page {
   /**
    * Temporary disables inputs.
    *
-   * Emits phase event, but doesn't affect current phase.
-   *
-   * @fires Page.phase
+   * @fires Page.freezing
    */
   freezeInputs() {
-    this.emitEvent("ot.phase", { inputEnabled: false, _freezing: true });
+    this.emitEvent("ot.freezing", true);
   }
 
   /**
    * Reenables inputs.
    *
-   * Emits phase event, but doesn't affect current phase.
-   * Inputs wont be reenabled, if a phase change happened and disabled inputs.
-   *
-   * @fires Page.phase
+   * @fires Page.freezing
    */
   unfreezeInputs() {
-    if (!this.phase.inputEnabled) return;
-    this.emitEvent("ot.phase", { inputEnabled: true, _freezing: true });
+    this.emitEvent("ot.freezing", false);
+  }
+
+
+  /**
+   * Force native inputs to emit values
+   *  
+   * @param {*} inpvar 
+   */
+  submitInputs(inpvar) {
+    this.body.querySelectorAll(`[ot-input="${inpvar}"]`).forEach(inp => {
+      this.emitInput(inpvar, inp.value);
+    });
   }
 
   /**
-   * Switches display directives.
-   *
-   * Emits phase event, but doesn't affect current phase.
-   *
-   * @param {String} name matching `ot-display="name"`
+   * Force whole page to submit.
    */
-  switchDisplay(name) {
-    this.emitEvent("ot.phase", { display: name, _switching: true });
-  }
-
-  /**
-   * Resets page phase.
-   *
-   * @param {Object} [flags] some additional initial flags
-   */
-  resetPhase(flags) {
-    let phase0 = { display: null, inputEnabled: false };
-    if (flags) {
-      Object.assign(phase0, flags);
-    }
-    this.phase = phase0;
-    this.emitEvent("ot.phase", { _resetting: true, ...phase0 });
-  }
-
-  /**
-   * Toggles page phase.
-   *
-   * The provided flags override existing, unaffected flags are preserved.
-   * I.e. `togglePhase({ inputEnabled: true })` keeps current value of `display` flag.
-   *
-   * @param {Phase} phase set of flags to change
-   * @fires Page.phase
-   */
-  togglePhase(phase) {
-    Object.assign(this.phase, phase);
-    this.emitEvent("ot.phase", phase); // NB: only changes are signalled
-  }
-
   submit() {
-    this.documentQuery("form").submit();
+    this.body.querySelector("form").submit();
   }
 
   /**
@@ -1229,20 +1222,6 @@ class Page {
   }
 
   /**
-   * A handler for {@link Page.phase}
-   *
-   * Does not get triggered on resetting and temporaty freezing/unfreezing/switching.
-   *
-   * @type {Page~onPhase}
-   */
-  set onPhase(fn) {
-    this.onEvent("ot.phase", (ev) => {
-      if (ev.detail._resetting || ev.detail._freezing || ev.detail._switching) return;
-      fn(ev.detail);
-    });
-  }
-
-  /**
    * A handler for {@link Schedule.timeout}
    *
    * @type {Page~onTimeout}
@@ -1251,16 +1230,6 @@ class Page {
     this.onEvent("ot.timeout", (ev) => fn(ev.detail));
   }
 }
-
-/**
- * A page phase flags
- *
- * The set of fields can be extended by anything else needed for custom directives.
- *
- * @typedef {Object} Phase
- * @property {string} [display] to toggle `ot-display` directives
- * @property {bool} [inputEnabled] to enable/disable `ot-input` directives
- */
 
 /**
  * Indicates that a user started a game pressing 'Space' or something.
@@ -1293,14 +1262,6 @@ class Page {
  * @event Page.input
  * @property {string} type `ot.input`
  * @property {object} detail an object like `{field: value}` corresponding to directive `ot-input="field=value"`
- */
-
-/**
- * Indicates a timed phase switching display, inputEnabled, or something else
- *
- * @event Page.phase
- * @property {string} type `ot.phase`
- * @property {object} detail an object like `{display: something, inputEnabled: bool, ...}`
  */
 
 /**
@@ -1558,28 +1519,35 @@ class Schedule {
   constructor(page) {
     this.page = page;
     this.timers = new Timers();
-    this.phases = null;
+    this.phases = [];
     this.timeout = null;
   }
 
   /**
    * Setup schedule
    *
-   * The `phases` in config is a list of {@link Phase} augmented with `time` field indicating time in ms to emit phase events.
+   * The `phases` is a list of vars augmented with `at` field indicating time in ms to update the vars.
    * ```
-   * { phases: [
-   *  { at: 0, display: "something", }
-   *  { at: 1000, display: "somethingelse", inputEnabled: false }
-   * ]}
+   * [
+   *  { at: 0, phase: "something", ... }
+   *  { at: 1000, foo: "Foo", ... }
+   * }
    * ```
    *
    * The `timeout` in config is time in ms to emit timeout even t.
    *
-   * @param {Object} config an object with `{ phases, timeout }`
+   * @param {Object} phases list of phases
    */
-  setup(config) {
-    this.phases = config.phases;
-    this.timeout = config.timeout;
+  setup(phases) {
+    this.phases = phases;
+  }
+
+  at(time, vars) {
+    this.phases.push({ at: time, ...vars});
+  }
+
+  setTimeout(time) {
+    this.timeout = time;
   }
 
   /**
@@ -1588,13 +1556,13 @@ class Schedule {
   start() {
     if (this.phases) {
       this.phases.forEach((phase, i) => {
-        const flags = Object.assign({}, phase);
-        delete flags.at;
+        let vars = Object.assign({}, phase);
+        delete vars.at;
 
         this.timers.delay(
           `phase-${i}`,
           () => {
-            this.page.togglePhase(flags);
+            this.page.emitUpdate(vars);
           },
           phase.at
         );
