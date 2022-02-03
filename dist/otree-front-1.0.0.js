@@ -91,8 +91,8 @@ function parseAssign(expr) {
 function affecting(parsed, event) {
   switch (event.type) {
     case "ot.reset":
-      let vars = event.detail;
-      return vars == undefined || vars.includes(parsed.ref);
+      let topvars = event.detail;
+      return topvars == null || topvars.some(v => includes(v, parsed.ref));
     case "ot.update":
       let changes = event.detail;
       return changes.affects(parsed.ref);

@@ -1,4 +1,4 @@
-import { expect, fixture, elementUpdated } from "@open-wc/testing";
+import { expect, fixture, elementUpdated, oneEvent } from "@open-wc/testing";
 
 import { toggleDisplay } from "../../src/utils/dom";
 import { Page } from "../../src/page";
@@ -8,11 +8,17 @@ import { otIf } from "../../src/directives/ot-if";
 
 describe("ot-if", () => {
   let body, elem, page;
-  describe('="var"', () => {
+
+  async function pageEvent(type) {
+    return (await oneEvent(body, type)).detail;
+  }
+
+  describe("var", () => {
     beforeEach(async () => {
       body = document.createElement("body");
       elem = await fixture(`<div ot-if="var"></div>`, { parentNode: body });
       page = new Page(body);
+      await pageEvent('ot.reset');
     });
 
     it("resets", async () => {
@@ -29,6 +35,13 @@ describe("ot-if", () => {
       expect(elem).not.to.be.displayed;
     });
 
+    it("not resets with 'othervar'", async () => {
+      toggleDisplay(elem, true);
+      page.reset(["othervar"]);
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+    });
+
     it("toggles", async () => {
       toggleDisplay(elem, false);
 
@@ -43,11 +56,12 @@ describe("ot-if", () => {
 
   });
 
-  describe('="obj.fld"', () => {
+  describe("obj.fld", () => {
     beforeEach(async () => {
       body = document.createElement("body");
       elem = await fixture(`<div ot-if="obj.fld"></div>`, { parentNode: body });
       page = new Page(body);
+      await pageEvent('ot.reset');
     });
 
     it("resets", async () => {
@@ -66,12 +80,28 @@ describe("ot-if", () => {
       expect(elem).not.to.be.displayed;
     });
 
+    it("not resets with 'otherobj'", async () => {
+      toggleDisplay(elem, true);
+
+      page.reset(["otherobj"]);
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+    });
+
     it("resets with 'obj.fld'", async () => {
       toggleDisplay(elem, true);
 
       page.reset(["obj.fld"]);
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
+    });
+
+    it("not resets with 'obj.otherfld'", async () => {
+      toggleDisplay(elem, true);
+
+      page.reset(["obj.otherfld"]);
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
     });
 
     it("toggles by obj", async () => {
@@ -107,11 +137,12 @@ describe("ot-if", () => {
     });
   });
 
-  describe('="var == val"', () => {
+  describe("var == val", () => {
     beforeEach(async () => {
       body = document.createElement("body");
       elem = await fixture(`<div ot-if="var == 'foo'"></div>`, { parentNode: body });
       page = new Page(body);
+      await pageEvent('ot.reset');
     });
 
     it("resets", async () => {
@@ -130,6 +161,14 @@ describe("ot-if", () => {
       expect(elem).not.to.be.displayed;
     });
 
+    it("not resets with 'othervar'", async () => {
+      toggleDisplay(elem, true);
+
+      page.reset(["othervar"]);
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+    });
+
     it("toggles", async () => {
       toggleDisplay(elem, false);
 
@@ -143,11 +182,12 @@ describe("ot-if", () => {
     });
   });
 
-  describe('="obj.fld == val"', () => {
+  describe("obj.fld == val", () => {
     beforeEach(async () => {
       body = document.createElement("body");
       elem = await fixture(`<div ot-if="obj.fld == 'foo'"></div>`, { parentNode: body });
       page = new Page(body);
+      await pageEvent('ot.reset');
     });
 
     it("resets", async () => {
@@ -166,12 +206,28 @@ describe("ot-if", () => {
       expect(elem).not.to.be.displayed;
     });
 
+    it("not resets with 'otherobj'", async () => {
+      toggleDisplay(elem, true);
+
+      page.reset(["otherobj"]);
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
+    });
+
     it("resets with 'obj.fld'", async () => {
       toggleDisplay(elem, true);
 
       page.reset(["obj.fld"]);
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
+    });
+
+    it("not resets with 'obj.otherfld'", async () => {
+      toggleDisplay(elem, true);
+
+      page.reset(["obj.otherfld"]);
+      await elementUpdated(elem);
+      expect(elem).to.be.displayed;
     });
 
     it("toggles by obj", async () => {

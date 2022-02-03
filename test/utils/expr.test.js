@@ -1,7 +1,7 @@
 import { expect } from "@open-wc/testing";
 
 import { Changes } from "../../src/utils/changes";
-import { parseVar, evalVar, parseCond, evalCond, parseAssign, evalAssign } from "../../src/utils/expr";
+import { parseVar, evalVar, parseCond, evalCond, parseAssign, evalAssign, affecting } from "../../src/utils/expr";
 
 describe("expressions", () => {
   describe("variables", () => {
@@ -58,6 +58,40 @@ describe("expressions", () => {
         let result = evalVar(parsed, changes);
         expect(result).to.eq("Val");
       });
+    });
+
+    describe("checking", () => {
+      it("resetting `var`", () => {
+        let parsed = parseVar("foo");
+        let event;
+
+        event = new CustomEvent("ot.reset", { detail: null });
+        expect(affecting(parsed, event)).to.be.true;
+
+        event = new CustomEvent("ot.reset", { detail: ['foo']});
+        expect(affecting(parsed, event)).to.be.true;
+
+        event = new CustomEvent("ot.reset", { detail: ['bar'] });
+        expect(affecting(parsed, event)).to.be.false;
+      });
+
+      it("resetting `obj.fld`", () => {
+        let parsed = parseVar("foo.fld");
+        let event;
+
+        event = new CustomEvent("ot.reset", { detail: null });
+        expect(affecting(parsed, event)).to.be.true;
+
+        event = new CustomEvent("ot.reset", { detail: ['foo.fld']});
+        expect(affecting(parsed, event)).to.be.true;
+
+        event = new CustomEvent("ot.reset", { detail: ['foo'] });
+        expect(affecting(parsed, event)).to.be.true;
+
+        event = new CustomEvent("ot.reset", { detail: ['bar'] });
+        expect(affecting(parsed, event)).to.be.false;
+      });
+
     });
   });
 
@@ -260,6 +294,41 @@ describe("expressions", () => {
         });
       });
     });
+
+    describe("checking", () => {
+      it("resetting `var`", () => {
+        let parsed = parseCond("foo == 'Foo'");
+        let event;
+
+        event = new CustomEvent("ot.reset", { detail: null });
+        expect(affecting(parsed, event)).to.be.true;
+
+        event = new CustomEvent("ot.reset", { detail: ['foo']});
+        expect(affecting(parsed, event)).to.be.true;
+
+        event = new CustomEvent("ot.reset", { detail: ['bar'] });
+        expect(affecting(parsed, event)).to.be.false;
+      });
+
+      it("resetting `obj.fld`", () => {
+        let parsed = parseCond("foo.fld == 'Foo'");
+        let event;
+
+        event = new CustomEvent("ot.reset", { detail: null });
+        expect(affecting(parsed, event)).to.be.true;
+
+        event = new CustomEvent("ot.reset", { detail: ['foo.fld']});
+        expect(affecting(parsed, event)).to.be.true;
+
+        event = new CustomEvent("ot.reset", { detail: ['foo'] });
+        expect(affecting(parsed, event)).to.be.true;
+
+        event = new CustomEvent("ot.reset", { detail: ['bar'] });
+        expect(affecting(parsed, event)).to.be.false;
+      });
+
+    });
+
   });
 
   describe("assignments", () => {
