@@ -104,6 +104,15 @@ registerDirective(
 );
 
 
+export function parseTriggers(elem) {
+  return {
+    click: elem.hasParam("click") || elem.elem.tagName == "BUTTON",
+    touch: elem.hasParam("touch"),
+    key: elem.hasParam("key") ? elem.getParam("key"): false,
+  }; 
+}
+
+
 /**
  * Directive `ot-input="var = val"` for custom inputs: any `<div>`, `<span>`, `<button>`, `<kbd>`.
  * 
@@ -154,16 +163,56 @@ class otCustomInput extends otEnablable {
   }
 }
 
-export function parseTriggers(elem) {
-  return {
-    click: elem.hasParam("click") || elem.elem.tagName == "BUTTON",
-    touch: elem.hasParam("touch"),
-    key: elem.hasParam("key") ? elem.getParam("key"): false,
-  }; 
-}
-
-
 registerDirective(
   "[ot-input]:not(input, select, textarea)",
   otCustomInput
+);
+
+
+
+/**
+ * Directive `ot-emit="eventtype"` emits custom event when triggered by ot-click/ot-touch/ot-key.
+ * 
+ * Respect ot-enabled and freezing the same way as ot-input
+ * 
+ * @hideconstructor
+ */
+class otCustomEmit extends otEnablable {
+
+  init() {
+    super.init();
+    this.evtype = this.getParam('emit');
+    this.trigger = parseTriggers(this)
+  }
+
+  setup() {
+    this.onEvent("ot.reset", this.onReset);
+    this.onEvent("ot.update", this.onUpdate);
+    this.onEvent("ot.freezing", this.onFreezing);
+    if (this.trigger.key) this.onEvent("keydown", this.onKey);
+    if (this.trigger.touch) this.onElemEvent("touchend", this.onClick);
+    if (this.trigger.click) this.onElemEvent("click", this.onClick);
+  }
+
+  onClick(event) {
+    if (isDisabled(this.elem)) return;
+    event.preventDefault();
+    this.submit();
+  }
+
+  onKey(event) {
+    if (isDisabled(this.elem)) return;
+    if (event.code != this.trigger.key) return;
+    event.preventDefault();
+    this.submit();
+  }
+
+  submit() {
+    this.page.emitEvent(this.evtype);
+  }
+}
+
+registerDirective(
+  "[ot-emit]",
+  otCustomEmit
 );
