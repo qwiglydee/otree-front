@@ -104,11 +104,11 @@ registerDirective(
 );
 
 
-export function parseTriggers(elem) {
+export function parseTriggers(directive) {
   return {
-    click: elem.hasParam("click") || elem.elem.tagName == "BUTTON",
-    touch: elem.hasParam("touch"),
-    key: elem.hasParam("key") ? elem.getParam("key"): false,
+    click: directive.hasParam("click") || directive.elem.tagName == "BUTTON",
+    touch: directive.hasParam("touch"),
+    key: directive.hasParam("key") ? directive.getParam("key"): false,
   }; 
 }
 
@@ -133,7 +133,7 @@ class otCustomInput extends otEnablable {
   init() {
     super.init();
     this.ass = parseAssign(this.getParam('input'));
-    this.trigger = parseTriggers(this)
+    this.trigger = parseTriggers(this);
   }
 
   setup() {
