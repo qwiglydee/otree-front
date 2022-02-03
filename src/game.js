@@ -78,7 +78,11 @@ export class Game {
         let mtype = this.config.preload_media[fld];
         switch (mtype) {
           case 'img':
-            this.trial[fld] = await loadImage(this.trial[fld]);
+            try {
+              this.trial[fld] = await loadImage(this.trial[fld]);
+            } catch {
+              throw new Error(`Failed to load media ${this.trial[fld]}`);
+            }
             break;
           default:
             throw new Error("Unsupported media type to preload");
