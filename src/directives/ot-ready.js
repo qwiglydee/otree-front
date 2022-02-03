@@ -19,10 +19,10 @@ class otReady extends DirectiveBase {
   }
 
   setup() {
-    if (this.trigger.key) this.onPageEvent("keydown", this.onKey);
+    if (this.trigger.key) this.onEvent("keydown", this.onKey);
     if (this.trigger.touch) this.onElemEvent("touchend", this.onClick);
     if (this.trigger.click) this.onElemEvent("click", this.onClick);
-    this.onPageEvent('ot.ready', this.onStart);
+    this.onEvent('ot.ready', this.onStart);
   }
 
   onKey(event) {

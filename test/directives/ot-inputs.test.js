@@ -34,7 +34,7 @@ describe("ot-input", () => {
         it("enabled on reset", async () => {
           toggleDisabled(elem, true);
 
-          page.emitReset();
+          page.reset();
           await pageEvent("ot.reset");
 
           expect(elem).not.to.match(":disabled");
@@ -74,7 +74,7 @@ describe("ot-input", () => {
 
             expect(elem).to.match(":disabled");
 
-            page.emitReset();
+            page.reset();
             await pageEvent("ot.reset");
 
             expect(elem).not.to.match(":disabled");
@@ -93,38 +93,38 @@ describe("ot-input", () => {
         });
 
         it("disabled on reset", async () => {
-          page.emitReset();
+          page.reset();
           await pageEvent("ot.reset");
 
           expect(elem).to.match(":disabled");
         });
 
         it("toggles on update", async () => {
-          page.emitUpdate({ phase: "input" });
+          page.update({ phase: "input" });
           await pageEvent("ot.update");
 
           expect(elem).not.to.match(":disabled");
 
-          page.emitUpdate({ phase: "noinput" });
+          page.update({ phase: "noinput" });
           await pageEvent("ot.update");
 
           expect(elem).to.match(":disabled");
         });
 
         it("ignores nonrelevant reset", async () => {
-          page.emitUpdate({ phase: "input" });
+          page.update({ phase: "input" });
           await pageEvent("ot.update");
 
           expect(elem).not.to.match(":disabled");
 
-          page.emitReset(["xxx"]);
+          page.reset(["xxx"]);
           await pageEvent("ot.reset");
 
           expect(elem).not.to.match(":disabled");
         });
 
         it("freezes/unfreezes when enabled", async () => {
-          page.emitUpdate({ phase: "input" });
+          page.update({ phase: "input" });
           await pageEvent("ot.update");
 
           expect(elem).not.to.match(":disabled");
@@ -141,7 +141,7 @@ describe("ot-input", () => {
         });
 
         it("freezes/unfreezes when disabled", async () => {
-          page.emitUpdate({ phase: "noinput" });
+          page.update({ phase: "noinput" });
           await pageEvent("ot.update");
 
           expect(elem).to.match(":disabled");
@@ -171,7 +171,7 @@ describe("ot-input", () => {
         it("enabled on reset", async () => {
           toggleDisabled(elem, true);
 
-          page.emitReset();
+          page.reset();
           await pageEvent("ot.reset");
 
           expect(elem).not.to.have.class('ot-disabled');
@@ -211,7 +211,7 @@ describe("ot-input", () => {
 
             expect(elem).to.have.class('ot-disabled');
 
-            page.emitReset();
+            page.reset();
             await pageEvent("ot.reset");
 
             expect(elem).not.to.have.class('ot-disabled');
@@ -230,38 +230,38 @@ describe("ot-input", () => {
         });
 
         it("disabled on reset", async () => {
-          page.emitReset();
+          page.reset();
           await pageEvent("ot.reset");
 
           expect(elem).to.have.class('ot-disabled');
         });
 
         it("toggles on update", async () => {
-          page.emitUpdate({ phase: "input" });
+          page.update({ phase: "input" });
           await pageEvent("ot.update");
 
           expect(elem).not.to.have.class('ot-disabled');
 
-          page.emitUpdate({ phase: "noinput" });
+          page.update({ phase: "noinput" });
           await pageEvent("ot.update");
 
           expect(elem).to.have.class('ot-disabled');
         });
 
         it("ignores nonrelevant reset", async () => {
-          page.emitUpdate({ phase: "input" });
+          page.update({ phase: "input" });
           await pageEvent("ot.update");
 
           expect(elem).not.to.have.class('ot-disabled');
 
-          page.emitReset(["xxx"]);
+          page.reset(["xxx"]);
           await pageEvent("ot.reset");
 
           expect(elem).not.to.have.class('ot-disabled');
         });
 
         it("freezes/unfreezes when enabled", async () => {
-          page.emitUpdate({ phase: "input" });
+          page.update({ phase: "input" });
           await pageEvent("ot.update");
 
           expect(elem).not.to.have.class('ot-disabled');
@@ -278,7 +278,7 @@ describe("ot-input", () => {
         });
 
         it("freezes/unfreezes when disabled", async () => {
-          page.emitUpdate({ phase: "noinput" });
+          page.update({ phase: "noinput" });
           await pageEvent("ot.update");
 
           expect(elem).to.have.class('ot-disabled');
@@ -307,7 +307,7 @@ describe("ot-input", () => {
     it("resets", async () => {
       elem.value = "xxx";
 
-      page.emitReset();
+      page.reset();
       await elementUpdated(elem);
 
       expect(elem.value).to.eq("");
@@ -316,7 +316,7 @@ describe("ot-input", () => {
     it("updates", async () => {
       elem.value = "xxx";
 
-      page.emitUpdate({foo: "Foo"});
+      page.update({foo: "Foo"});
       await elementUpdated(elem);
 
       expect(elem.value).to.eq("Foo");

@@ -57,9 +57,9 @@ class otRealInput extends otEnablable {
   }
 
   setup() {
-    this.onPageEvent("ot.reset", this.onReset);
-    this.onPageEvent("ot.update", this.onUpdate);
-    this.onPageEvent("ot.freezing", this.onFreezing);
+    this.onEvent("ot.reset", this.onReset);
+    this.onEvent("ot.update", this.onUpdate);
+    this.onEvent("ot.freezing", this.onFreezing);
     if (isTextInput(this.elem)) {
       this.onElemEvent("keydown", this.onKey);
     } else {
@@ -94,7 +94,7 @@ class otRealInput extends otEnablable {
   }
 
   submit() {
-    this.page.emitInput(this.var.ref, this.elem.value);
+    this.page.emitEvent('ot.input', {name: this.var.ref, value: this.elem.value});
   }
 }
 
@@ -123,21 +123,15 @@ class otCustomInput extends otEnablable {
 
   init() {
     super.init();
-
     this.ass = parseAssign(this.getParam('input'));
-
-    this.trigger = {
-      click: this.hasParam("click") || this.elem.tagName == "BUTTON",
-      touch: this.hasParam("touch"),
-      key: this.hasParam("key") ? this.getParam("key"): false,
-    }; 
+    this.trigger = parseTriggers(this)
   }
 
   setup() {
-    this.onPageEvent("ot.reset", this.onReset);
-    this.onPageEvent("ot.update", this.onUpdate);
-    this.onPageEvent("ot.freezing", this.onFreezing);
-    if (this.trigger.key) this.onPageEvent("keydown", this.onKey);
+    this.onEvent("ot.reset", this.onReset);
+    this.onEvent("ot.update", this.onUpdate);
+    this.onEvent("ot.freezing", this.onFreezing);
+    if (this.trigger.key) this.onEvent("keydown", this.onKey);
     if (this.trigger.touch) this.onElemEvent("touchend", this.onClick);
     if (this.trigger.click) this.onElemEvent("click", this.onClick);
   }
@@ -145,16 +139,29 @@ class otCustomInput extends otEnablable {
   onClick(event) {
     if (isDisabled(this.elem)) return;
     event.preventDefault();
-    this.page.emitInput(this.ass.ref, this.ass.val);  
+    this.submit();
   }
 
   onKey(event) {
     if (isDisabled(this.elem)) return;
     if (event.code != this.trigger.key) return;
     event.preventDefault();
-    this.page.emitInput(this.ass.ref, this.ass.val);  
+    this.submit();
+  }
+
+  submit() {
+    this.page.emitEvent('ot.input', {name: this.ass.ref, value: this.ass.val});
   }
 }
+
+export function parseTriggers(elem) {
+  return {
+    click: elem.hasParam("click") || elem.elem.tagName == "BUTTON",
+    touch: elem.hasParam("touch"),
+    key: elem.hasParam("key") ? elem.getParam("key"): false,
+  }; 
+}
+
 
 registerDirective(
   "[ot-input]:not(input, select, textarea)",

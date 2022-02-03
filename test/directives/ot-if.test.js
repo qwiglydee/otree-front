@@ -17,14 +17,14 @@ describe("ot-if", () => {
 
     it("resets", async () => {
       toggleDisplay(elem, true);
-      page.emitReset();
+      page.reset();
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
 
     it("resets with 'var'", async () => {
       toggleDisplay(elem, true);
-      page.emitReset(["var"]);
+      page.reset(["var"]);
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -32,11 +32,11 @@ describe("ot-if", () => {
     it("toggles", async () => {
       toggleDisplay(elem, false);
 
-      page.emitUpdate({ var: true });
+      page.update({ var: true });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
 
-      page.emitUpdate({ var: false });
+      page.update({ var: false });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -53,7 +53,7 @@ describe("ot-if", () => {
     it("resets", async () => {
       toggleDisplay(elem, true);
 
-      page.emitReset();
+      page.reset();
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -61,7 +61,7 @@ describe("ot-if", () => {
     it("resets with 'obj'", async () => {
       toggleDisplay(elem, true);
 
-      page.emitReset(["obj"]);
+      page.reset(["obj"]);
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -69,7 +69,7 @@ describe("ot-if", () => {
     it("resets with 'obj.fld'", async () => {
       toggleDisplay(elem, true);
 
-      page.emitReset(["obj.fld"]);
+      page.reset(["obj.fld"]);
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -77,11 +77,11 @@ describe("ot-if", () => {
     it("toggles by obj", async () => {
       toggleDisplay(elem, false);
 
-      page.emitUpdate({ obj: { fld: true } });
+      page.update({ obj: { fld: true } });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
 
-      page.emitUpdate({ obj: { fld: false } });
+      page.update({ obj: { fld: false } });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -89,11 +89,11 @@ describe("ot-if", () => {
     it("toggles by obj.fld", async () => {
       toggleDisplay(elem, false);
 
-      page.emitUpdate({ "obj.fld": true });
+      page.update({ "obj.fld": true });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
 
-      page.emitUpdate({ "obj.fld": false });
+      page.update({ "obj.fld": false });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -101,7 +101,7 @@ describe("ot-if", () => {
     it("toggles by missing fld", async () => {
       toggleDisplay(elem, true);
 
-      page.emitUpdate({ obj: {} });
+      page.update({ obj: {} });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -117,7 +117,7 @@ describe("ot-if", () => {
     it("resets", async () => {
       toggleDisplay(elem, true);
 
-      page.emitReset();
+      page.reset();
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -125,7 +125,7 @@ describe("ot-if", () => {
     it("resets with 'var'", async () => {
       toggleDisplay(elem, true);
 
-      page.emitReset(["var"]);
+      page.reset(["var"]);
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -133,11 +133,11 @@ describe("ot-if", () => {
     it("toggles", async () => {
       toggleDisplay(elem, false);
 
-      page.emitUpdate({ var: "foo" });
+      page.update({ var: "foo" });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
 
-      page.emitUpdate({ var: "bar" });
+      page.update({ var: "bar" });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -153,7 +153,7 @@ describe("ot-if", () => {
     it("resets", async () => {
       toggleDisplay(elem, true);
 
-      page.emitReset();
+      page.reset();
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -161,7 +161,7 @@ describe("ot-if", () => {
     it("resets with 'obj'", async () => {
       toggleDisplay(elem, true);
 
-      page.emitReset(["obj"]);
+      page.reset(["obj"]);
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -169,7 +169,7 @@ describe("ot-if", () => {
     it("resets with 'obj.fld'", async () => {
       toggleDisplay(elem, true);
 
-      page.emitReset(["obj.fld"]);
+      page.reset(["obj.fld"]);
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -177,11 +177,11 @@ describe("ot-if", () => {
     it("toggles by obj", async () => {
       toggleDisplay(elem, false);
 
-      page.emitUpdate({ obj: { fld: "foo" } });
+      page.update({ obj: { fld: "foo" } });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
 
-      page.emitUpdate({ obj: { fld: "bar" } });
+      page.update({ obj: { fld: "bar" } });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -189,11 +189,11 @@ describe("ot-if", () => {
     it("toggles by obj.fld", async () => {
       toggleDisplay(elem, false);
 
-      page.emitUpdate({ "obj.fld": "foo" });
+      page.update({ "obj.fld": "foo" });
       await elementUpdated(elem);
       expect(elem).to.be.displayed;
 
-      page.emitUpdate({ "obj.fld": "var" });
+      page.update({ "obj.fld": "var" });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });
@@ -201,7 +201,7 @@ describe("ot-if", () => {
     it("toggles by missing fld", async () => {
       toggleDisplay(elem, true);
 
-      page.emitUpdate({ obj: {} });
+      page.update({ obj: {} });
       await elementUpdated(elem);
       expect(elem).not.to.be.displayed;
     });

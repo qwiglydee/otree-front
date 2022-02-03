@@ -40,7 +40,7 @@ export class Game {
    */
   setConfig(config) {
     this.config = config;
-    this.page.emitUpdate({ config });
+    this.page.update({ config });
   }
 
   /**
@@ -57,7 +57,7 @@ export class Game {
     this.trial = {};
     this.status = {};
     this.feedback = undefined;
-    this.page.emitReset(["trial", "status", "feedback"]);
+    this.page.reset(["trial", "status", "feedback"]);
     this.loadTrial();
   }
 
@@ -86,7 +86,7 @@ export class Game {
       }
     }
 
-    this.page.emitUpdate({ trial });
+    this.page.update({ trial });
     await this.page.waitForEvent("ot.update"); // make sure the hook is called after page update
     this.startTrial(this.trial);
   }
@@ -101,7 +101,7 @@ export class Game {
    */
   updateTrial(changes) {
     new Changes(changes).patch(this.trial);
-    this.page.emitUpdate(new Changes(changes, "trial"));
+    this.page.update(new Changes(changes, "trial"));
   }
 
   /**
@@ -116,7 +116,7 @@ export class Game {
   updateStatus(changes) {
     let status = this.status;
     Object.assign(status, changes);
-    this.page.emitUpdate({ status: changes });
+    this.page.update({ status: changes });
     this.page.emitEvent("ot.status", changes);
     if (changes.trialStarted) {
       this.page.emitEvent("ot.started");
@@ -140,7 +140,7 @@ export class Game {
    */
   setFeedback(feedback) {
     this.feedback = feedback;
-    this.page.emitUpdate({ feedback });
+    this.page.update({ feedback });
     this.onFeedback(this.feedback);
   }
 
@@ -151,7 +151,7 @@ export class Game {
    */
   clearFeedback() {
     this.feedback = undefined;
-    this.page.emitReset("feedback");
+    this.page.reset("feedback");
   }
 
   /**
@@ -165,7 +165,7 @@ export class Game {
    */
   setProgress(progress) {
     this.progress = progress;
-    this.page.emitUpdate({ progress });
+    this.page.update({ progress });
     this.onProgress(this.progress);
   }
 
@@ -176,7 +176,7 @@ export class Game {
    */
   resetProgress() {
     this.progress = undefined;
-    this.page.emitReset("progress");
+    this.page.reset("progress");
   }
 
   /**

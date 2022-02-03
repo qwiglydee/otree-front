@@ -51,7 +51,7 @@ export class Schedule {
         this.timers.delay(
           `phase-${i}`,
           () => {
-            this.page.emitUpdate(vars);
+            this.page.update(vars);
           },
           phase.at
         );
@@ -63,7 +63,7 @@ export class Schedule {
         `timeout`,
         () => {
           this.stop();
-          this.page.emitTimeout(this.timeout);
+          this.page.timeout(this.timeout);
         },
         this.timeout
       );

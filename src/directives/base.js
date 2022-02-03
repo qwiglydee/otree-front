@@ -62,9 +62,8 @@ export class DirectiveBase {
    * @param {String} eventype
    * @param {Function} handler either `this.something` or a standalone function
    */
-  onPageEvent(eventype, handler) {
-    let hnd = handler.bind(this);
-    this.page.onEvent(eventype, (event) => hnd(event, event.detail));
+  onEvent(eventype, handler) {
+    this.page.onEvent(eventype, handler.bind(this));
   }
 
   /**
@@ -74,15 +73,14 @@ export class DirectiveBase {
    * @param {Function} handler either `this.something` or a standalone function
    */
   onElemEvent(eventype, handler) {
-    let hnd = handler.bind(this);
-    this.page.onEvent(eventype, (event) => hnd(event, event.detail), this.elem);
+    this.page.onElemEvent(this.elem, eventype, handler.bind(this));
   }
 
   /**
    * Sets up event handlers
    */
   setup() {
-    if (this.onReset) this.onPageEvent("ot.reset", this.onReset);
-    if (this.onUpdate) this.onPageEvent("ot.update", this.onUpdate);
+    if (this.onReset) this.onEvent("ot.reset", this.onReset);
+    if (this.onUpdate) this.onEvent("ot.update", this.onUpdate);
   }
 }

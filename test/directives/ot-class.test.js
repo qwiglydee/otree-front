@@ -29,98 +29,98 @@ describe("ot-class", () => {
 
     it("resets", async () => {
       setClasses(elem, ['cls1', 'foo', 'bar'])
-      page.emitReset();
+      page.reset();
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2"]);
     });
 
     it("changes by fld", async () => {
-      page.emitReset();
+      page.reset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ "game.fld": "foo" });
+      page.update({ "game.fld": "foo" });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
 
-      page.emitUpdate({ "game.fld": "bar" });
+      page.update({ "game.fld": "bar" });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "bar"]);
     });
 
     it("changes by obj", async () => {
-      page.emitReset();
+      page.reset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ game: { fld: "foo" } });
+      page.update({ game: { fld: "foo" } });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
 
-      page.emitUpdate({ game: { fld: "bar" } });
+      page.update({ game: { fld: "bar" } });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "bar"]);
     });
 
     it("ignores unrelated fld", async () => {
-      page.emitReset();
+      page.reset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ "game.fld": "foo" });
+      page.update({ "game.fld": "foo" });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
 
-      page.emitUpdate({ "game.fld2": "bar" });
+      page.update({ "game.fld2": "bar" });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
     });
 
     it("ignores unrelated obj", async () => {
-      page.emitReset();
+      page.reset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ game: { fld: "foo" } });
+      page.update({ game: { fld: "foo" } });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
 
-      page.emitUpdate({ obj2: { fld: "bar" } });
+      page.update({ obj2: { fld: "bar" } });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
     });
 
     it("clears by fld deletion", async () => {
-      page.emitReset();
+      page.reset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ "game.fld": "foo" });
+      page.update({ "game.fld": "foo" });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
 
-      page.emitUpdate({ "game.fld": undefined });
+      page.update({ "game.fld": undefined });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2"]);
     });
 
     it("clears by empty obj", async () => {
-      page.emitReset();
+      page.reset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ game: { fld: "foo" } });
+      page.update({ game: { fld: "foo" } });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
 
-      page.emitUpdate({ game: {} });
+      page.update({ game: {} });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2"]);
     });
 
     it("clears by obj deletion", async () => {
-      page.emitReset();
+      page.reset();
       await elementUpdated(elem);
 
-      page.emitUpdate({ game: { fld: "foo" } });
+      page.update({ game: { fld: "foo" } });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
 
-      page.emitUpdate({ game: undefined });
+      page.update({ game: undefined });
       await elementUpdated(elem);
       expect([...elem.classList]).to.eql(["cls1", "cls2"]);
     });

@@ -31,29 +31,28 @@ export class Page {
       });
     });
 
-    this.emitReset();
+    this.reset();
   }
 
   /**
-   * Binds an event handler
+   * Binds an event handler to page
    *
    * @param {String} type type of an event
-   * @param {Function} handler
-   * @param {HTMLElement} [target=page.body] an element to bind handler, instead of the page itself
+   * @param {Function} handler getting parameters (event, data)
    */
-  onEvent(type, handler, target) {
-    (target || this.body).addEventListener(type, handler);
+  onEvent(type, handler) {
+    this.body.addEventListener(type, (ev) => handler(ev, ev.detail));
   }
 
   /**
-   * Removes event hanfler
+   * Binds an event handler to an element
    *
+   * @param {HTMLElement} elem an element
    * @param {String} type type of an event
-   * @param {Function} handler, previously binded to an event
-   * @param {HTMLElement} [target=page.body]
+   * @param {Function} handler getting parameters (event, data)
    */
-  offEvent(type, handler, target) {
-    (target || this.body).removeEventListener(type, handler);
+  onElemEvent(elem, type, handler) {
+    elem.addEventListener(type, (ev) => handler(ev, ev.detail));
   }
 
   /**
@@ -72,11 +71,10 @@ export class Page {
    *    await waiting; // suspend for an event happend since the 'waiting' created
    *
    * @param {String} type of the event
-   * @param {HTMLElement} [target=page.body]
    * @returns {Promise} resolved when event emitd
    */
-  waitForEvent(type, target) {
-    target = target || this.body;
+  waitForEvent(type) {
+    let target = this.body;
     return new Promise((resolve) => {
       function listener(event) {
         resolve(event);
@@ -94,45 +92,45 @@ export class Page {
    *
    * @param {String} type type of the event
    * @param {Object} detail any data to attach to the event
-   * @param {HTMLElement} [target=page.body] an alternate element to emit at
    */
-  emitEvent(type, detail, target) {
-    // console.debug("firing", type, detail);
-    const event = new CustomEvent(type, { detail });
-    target = target || this.body;
+  emitEvent(type, detail) {
     // NB: queueing a task like a normal event, instead of dispatching synchronously
-    setTimeout(() => target.dispatchEvent(event));
+    setTimeout(() => this.body.dispatchEvent(new CustomEvent(type, { detail })));
   }
 
   /**
-   * Emits page reset.
+   * Emits an event on an element
+   *
+   * The event is always a `CustomEvent`.
+   * To emit built-in events, use built-in `target.dispatchEvent(event)`.
+   *
+   * @param {HTMLElement} [target=page.body] an alternate element to emit at
+   * @param {String} type type of the event
+   * @param {Object} detail any data to attach to the event
+   */
+  emitElemEvent(elem, type, detail) {
+    // NB: queueing a task like a normal event, instead of dispatching synchronously
+    setTimeout(() => elem.dispatchEvent(new CustomEvent(type, { detail })));
+  }
+
+  /**
+   * Signals reset of some page vars.
    *
    * @param {string[]} [vars] list of vars being reset, by default only ['game']
    * @fires Page.reset
    */
-  emitReset(vars) {
+  reset(vars) {
     if (vars !== undefined && !Array.isArray(vars)) vars = [vars];
     this.emitEvent("ot.reset", vars);
   }
 
   /**
-   * Emits user input.
-   *
-   * @param {Strinn} name
-   * @param {Strinn} value
-   * @fires Page.update
-   */
-  emitInput(name, value) {
-    this.emitEvent("ot.input", { name, value });
-  }
-
-  /**
-   * Emits update.
+   * Signals changes of some page vars 
    *
    * @param {object|Changes} changes
    * @fires Page.update
    */
-  emitUpdate(changes) {
+  update(changes) {
     if (!(changes instanceof Changes)) changes = new Changes(changes);
     this.emitEvent("ot.update", changes);
   }
@@ -142,7 +140,7 @@ export class Page {
    *
    * @fires Schedule.timeout
    */
-  emitTimeout(time) {
+  timeout(time) {
     this.emitEvent("ot.timeout", time);
   }
 
@@ -172,7 +170,7 @@ export class Page {
    */
   submitInputs(inpvar) {
     this.body.querySelectorAll(`[ot-input="${inpvar}"]`).forEach(inp => {
-      this.emitInput(inpvar, inp.value);
+      this.emitEvent('ot.input', {name: inpvar, value: inp.value});
     })
   }
 
@@ -181,15 +179,6 @@ export class Page {
    */
   submit() {
     this.body.querySelector("form").submit();
-  }
-
-  /**
-   * A handler for {@link Page.ready}
-   *
-   * @type {Game~onReady}
-   */
-  set onReady(fn) {
-    this.onEvent("ot.ready", (ev) => fn());
   }
 
   /**

@@ -29,77 +29,77 @@ describe("ot-text", () => {
 
     it("resets", async () => {
       setText(elem, "xxx");
-      page.emitReset();
+      page.reset();
       await elementUpdated(elem);
       expect(elem).to.have.text("");
     });
 
     it("changes by fld", async () => {
-      page.emitUpdate(new Changes({ "obj.fld": "foo" }));
+      page.update(new Changes({ "obj.fld": "foo" }));
       await elementUpdated(elem);
       expect(elem).to.have.text("foo");
 
-      page.emitUpdate(new Changes({ "obj.fld": "bar" }));
+      page.update(new Changes({ "obj.fld": "bar" }));
       await elementUpdated(elem);
       expect(elem).to.have.text("bar");
     });
 
     it("changes by obj", async () => {
-      page.emitUpdate(new Changes({ obj: { fld: "foo" } }));
+      page.update(new Changes({ obj: { fld: "foo" } }));
       await elementUpdated(elem);
       expect(elem).to.have.text("foo");
 
-      page.emitUpdate(new Changes({ obj: { fld: "bar" } }));
+      page.update(new Changes({ obj: { fld: "bar" } }));
       await elementUpdated(elem);
       expect(elem).to.have.text("bar");
     });
 
     it("ignores unrelated fld", async () => {
-      page.emitUpdate(new Changes({ "obj.fld": "foo" }));
+      page.update(new Changes({ "obj.fld": "foo" }));
       await elementUpdated(elem);
       expect(elem).to.have.text("foo");
 
-      page.emitUpdate(new Changes({ "obj.fld2": "bar" }));
+      page.update(new Changes({ "obj.fld2": "bar" }));
       await elementUpdated(elem);
       expect(elem).to.have.text("foo");
     });
 
     it("ignores unrelated obj", async () => {
-      page.emitUpdate(new Changes({ obj: { fld: "foo" } }));
+      page.update(new Changes({ obj: { fld: "foo" } }));
       await elementUpdated(elem);
       expect(elem).to.have.text("foo");
 
-      page.emitUpdate(new Changes({ obj2: { fld: "bar" } }));
+      page.update(new Changes({ obj2: { fld: "bar" } }));
       await elementUpdated(elem);
       expect(elem).to.have.text("foo");
     });
 
     it("clears by fld deletion", async () => {
-      page.emitUpdate(new Changes({ "obj.fld": "foo" }));
+      page.update(new Changes({ "obj.fld": "foo" }));
       await elementUpdated(elem);
       expect(elem).to.have.text("foo");
 
-      page.emitUpdate(new Changes({ "obj.fld": undefined }));
+      page.update(new Changes({ "obj.fld": undefined }));
       await elementUpdated(elem);
       expect(elem).to.have.text("");
     });
 
     it("clears by empty obj", async () => {
-      page.emitUpdate(new Changes({ obj: { fld: "foo" } }));
+      page.update(new Changes({ obj: { fld: "foo" } }));
       await elementUpdated(elem);
       expect(elem).to.have.text("foo");
 
-      page.emitUpdate(new Changes({ obj: {} }));
+      page.update(new Changes({ obj: {} }));
       await elementUpdated(elem);
       expect(elem).to.have.text("");
     });
 
     it("clears by obj deletion", async () => {
-      page.emitUpdate(new Changes({ obj: { fld: "foo" } }));
+      page.update(new Changes({ obj: { fld: "foo" } }));
       await elementUpdated(elem);
       expect(elem).to.have.text("foo");
 
-      page.emitUpdate(new Changes({ obj: undefined }));
+      page.update(new Changes({ obj: undefined }));
       await elementUpdated(elem);
       expect(elem).to.have.text("");
     });
