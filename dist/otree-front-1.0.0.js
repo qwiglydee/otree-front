@@ -1,3 +1,92 @@
+/** 
+ * Utils to handle references to game state vars and manage their updates.
+ * 
+ * The references are just strings in form `obj.field.subfield`
+ * 
+ * @module utils/changes/Ref 
+ */
+
+/**
+ * Checks if references overlap 
+ * 
+ * Example: `Ref.includes("foo.bar", "foo.bar.baz")`
+ * 
+ * @param {string} parentref reference to parent object
+ * @param {string} nestedref reference to nested field
+ * @returns {boolean}
+ */
+function includes(parentref, nestedref) {
+  return parentref == nestedref || nestedref.startsWith(parentref + ".");
+}
+
+/**
+ * Strips common part of nested ref, making it local to parent
+ *
+ * Example: `Ref.strip("foo.bar", "foo.bar.baz") == "baz"`
+ * 
+ * @param {string} parentref reference to parent object
+ * @param {string} nestedref reference to nested field
+ * @returns {boolean}
+ */
+function strip(parentref, nestedref) {
+  if (parentref == nestedref) {
+    return "";
+  } else if (nestedref.startsWith(parentref + ".")) {
+    return nestedref.slice(parentref.length + 1);
+  } else {
+    throw new Error(`Incompatible refs: ${parentref} / ${nestedref}`);
+  }
+}
+
+/**
+ * Extract a value from object by a ref
+ * 
+ * Example: `Ref.extract({ foo: { bar: "Bar" } }, "foo.bar") == "Bar"`
+ * 
+ * @param {object} data 
+ * @param {string} ref 
+ * @returns {boolean}
+ */
+function extract(data, ref) {
+  return ref.split(".").reduce((o, k) => (o && k in o ? o[k] : undefined), data);
+}
+
+/**
+ * Sets a value in object by ref.
+ * The original object is modified in place
+ * 
+ * Example: `Ref.update({foo: {bar: "Bar0" } }, "foo.bar", "Bar1") → {foo: {bar: "Bar1" } }`
+ * 
+ * @param {object} data 
+ * @param {ref} ref 
+ * @param {*} value 
+ */
+function update(data, ref, value) {
+  function ins(obj, key) {
+    return (obj[key] = {});
+  }
+
+  const path = ref.split("."),
+    objpath = path.slice(0, -1),
+    fld = path[path.length - 1];
+
+  let obj = objpath.reduce((o, k) => (k in o ? o[k] : ins(o, k)), data);
+  if (obj === undefined) throw new Error(`Incompatible ref ${ref}`);
+  if (value === undefined) {
+    delete obj[fld];
+  } else {
+    obj[fld] = value;
+  }
+}
+
+var ref = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  includes: includes,
+  strip: strip,
+  extract: extract,
+  update: update
+});
+
 const VAREXPR = new RegExp(/^[a-zA-Z]\w+(\.\w+)*$/);
 
 function parseVar(expr) {
@@ -100,95 +189,6 @@ function affecting(parsed, event) {
       return false;
   }
 }
-
-/** 
- * Utils to handle references to game state vars and manage their updates.
- * 
- * The references are just strings in form `obj.field.subfield`
- * 
- * @module utils/changes/Ref 
- */
-
-/**
- * Checks if references overlap 
- * 
- * Example: `Ref.includes("foo.bar", "foo.bar.baz")`
- * 
- * @param {string} parentref reference to parent object
- * @param {string} nestedref reference to nested field
- * @returns {boolean}
- */
-function includes(parentref, nestedref) {
-  return parentref == nestedref || nestedref.startsWith(parentref + ".");
-}
-
-/**
- * Strips common part of nested ref, making it local to parent
- *
- * Example: `Ref.strip("foo.bar", "foo.bar.baz") == "baz"`
- * 
- * @param {string} parentref reference to parent object
- * @param {string} nestedref reference to nested field
- * @returns {boolean}
- */
-function strip(parentref, nestedref) {
-  if (parentref == nestedref) {
-    return "";
-  } else if (nestedref.startsWith(parentref + ".")) {
-    return nestedref.slice(parentref.length + 1);
-  } else {
-    throw new Error(`Incompatible refs: ${parentref} / ${nestedref}`);
-  }
-}
-
-/**
- * Extract a value from object by a ref
- * 
- * Example: `Ref.extract({ foo: { bar: "Bar" } }, "foo.bar") == "Bar"`
- * 
- * @param {object} data 
- * @param {string} ref 
- * @returns {boolean}
- */
-function extract(data, ref) {
-  return ref.split(".").reduce((o, k) => (o && k in o ? o[k] : undefined), data);
-}
-
-/**
- * Sets a value in object by ref.
- * The original object is modified in place
- * 
- * Example: `Ref.update({foo: {bar: "Bar0" } }, "foo.bar", "Bar1") → {foo: {bar: "Bar1" } }`
- * 
- * @param {object} data 
- * @param {ref} ref 
- * @param {*} value 
- */
-function update(data, ref, value) {
-  function ins(obj, key) {
-    return (obj[key] = {});
-  }
-
-  const path = ref.split("."),
-    objpath = path.slice(0, -1),
-    fld = path[path.length - 1];
-
-  let obj = objpath.reduce((o, k) => (k in o ? o[k] : ins(o, k)), data);
-  if (obj === undefined) throw new Error(`Incompatible ref ${ref}`);
-  if (value === undefined) {
-    delete obj[fld];
-  } else {
-    obj[fld] = value;
-  }
-}
-
-var ref = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  includes: includes,
-  strip: strip,
-  extract: extract,
-  update: update
-});
 
 /**
  * Utils to handle changes of game state data
@@ -509,6 +509,34 @@ var timers = /*#__PURE__*/Object.freeze({
   delay: delay,
   cancel: cancel,
   Timers: Timers
+});
+
+/**
+ * Preloading media accorfing to media_fields config of form: `{ field: 'image' }`.
+ * Only images supported for now
+ * 
+ * @param {*} trial 
+ * @param {*} media_fields 
+ */
+async function preloadMedia(trial, media_fields) {
+  for (let [fld, mediatype] of Object.entries(media_fields)) {
+    switch (mediatype) {
+      case 'image':
+        try {
+          trial[fld] = await loadImage(trial[fld]);
+        } catch {
+          throw new Error(`Failed to load media ${trial[fld]}`);
+        }
+        break;
+      default:
+        throw new Error("Unsupported media type to preload");
+    }      
+  }  
+}
+
+var trials = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  preloadMedia: preloadMedia
 });
 
 /**
@@ -1341,21 +1369,8 @@ class Game {
   async setTrial(trial) {
     this.trial = trial;
 
-    if (this.config.preload_media) {
-      for(let fld in this.config.preload_media) {
-        let mtype = this.config.preload_media[fld];
-        switch (mtype) {
-          case 'img':
-            try {
-              this.trial[fld] = await loadImage(this.trial[fld]);
-            } catch {
-              throw new Error(`Failed to load media ${this.trial[fld]}`);
-            }
-            break;
-          default:
-            throw new Error("Unsupported media type to preload");
-        }
-      }
+    if (this.config.media_fields) {
+      await preloadMedia(trial, this.config.media_fields);
     }
 
     this.page.update({ trial });
@@ -1592,15 +1607,15 @@ class Schedule {
   }
 }
 
-const otree = {
-  dom, random, changes, timers, measurement, 
-  DirectiveBase, registerDirective
-};
+if (window.otree === undefined) {
+  window.otree = {};
+}
+
 
 window.addEventListener('load', function() {
-  otree.page = new Page(document.body);
-  otree.game = new Game(otree.page);
-  otree.schedule = new Schedule(otree.page);
+  window.otree.page = new Page(document.body);
+  window.otree.game = new Game(otree.page);
+  window.otree.schedule = new Schedule(otree.page);
 
   if (!window.main) {
     throw new Error("You need to define global `function main()` to make otree work");
@@ -1608,6 +1623,12 @@ window.addEventListener('load', function() {
   window.main();
 });
 
-window.otree = otree;
-
-export { otree };
+Object.assign(window.otree, {
+  utils: {
+    dom, random, timers, measurement, 
+    changes, trials
+  },
+  directives: {
+    DirectiveBase, registerDirective
+  }
+});
