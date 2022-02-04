@@ -2,6 +2,7 @@ import * as changes from "./utils/changes";
 import * as dom from "./utils/dom";
 import * as random from "./utils/random";
 import * as timers from "./utils/timers";
+import * as trials from "./utils/trials";
 import * as measurement from "./utils/measurement";
 import { DirectiveBase,  registerDirective } from "./directives/base";
 
@@ -17,15 +18,16 @@ import { Page } from "./page";
 import { Game } from "./game";
 import { Schedule } from "./schedule";
 
-export const otree = {
-  dom, random, changes, timers, measurement, 
-  DirectiveBase, registerDirective
+
+if (window.otree === undefined) {
+  window.otree = {};
 }
 
+
 window.addEventListener('load', function() {
-  otree.page = new Page(document.body);
-  otree.game = new Game(otree.page);
-  otree.schedule = new Schedule(otree.page);
+  window.otree.page = new Page(document.body);
+  window.otree.game = new Game(otree.page);
+  window.otree.schedule = new Schedule(otree.page);
 
   if (!window.main) {
     throw new Error("You need to define global `function main()` to make otree work");
@@ -33,6 +35,12 @@ window.addEventListener('load', function() {
   window.main();
 });
 
-window.otree = otree;
-
-
+Object.assign(window.otree, {
+  utils: {
+    dom, random, timers, measurement, 
+    changes, trials
+  },
+  directives: {
+    DirectiveBase, registerDirective
+  }
+});
