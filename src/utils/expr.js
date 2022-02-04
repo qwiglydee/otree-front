@@ -1,4 +1,4 @@
-import { Ref } from "./changes";
+import { includes as ref_includes } from "./ref";
 
 const VAREXPR = new RegExp(/^[a-zA-Z]\w+(\.\w+)*$/);
 
@@ -98,7 +98,7 @@ export function affecting(parsed, event) {
   switch (event.type) {
     case "ot.reset":
       let topvars = event.detail;
-      return topvars == null || topvars.some(v => Ref.includes(v, parsed.ref));
+      return topvars == null || topvars.some(v => ref_includes(v, parsed.ref));
     case "ot.update":
       let changes = event.detail;
       return changes.affects(parsed.ref);
