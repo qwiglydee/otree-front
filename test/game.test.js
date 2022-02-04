@@ -81,7 +81,7 @@ describe("Game", () => {
 
   it("preloads images",  async () => {
     const imgurl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQIW2NgAAIAAAUAAR4f7BQAAAAASUVORK5CYII=";
-    game.config.preload_media = { image: 'img' }
+    game.config.media_fields = { image: 'image' }
 
     game.startTrial=function () {};
   

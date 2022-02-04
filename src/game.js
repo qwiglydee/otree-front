@@ -1,4 +1,4 @@
-import { loadImage } from "../src/utils/dom";
+import { preloadMedia } from "../src/utils/trials";
 import { sleep } from "../src/utils/timers";
 import { Changes } from "../src/utils/changes";
 
@@ -73,21 +73,8 @@ export class Game {
   async setTrial(trial) {
     this.trial = trial;
 
-    if (this.config.preload_media) {
-      for(let fld in this.config.preload_media) {
-        let mtype = this.config.preload_media[fld];
-        switch (mtype) {
-          case 'img':
-            try {
-              this.trial[fld] = await loadImage(this.trial[fld]);
-            } catch {
-              throw new Error(`Failed to load media ${this.trial[fld]}`);
-            }
-            break;
-          default:
-            throw new Error("Unsupported media type to preload");
-        }
-      }
+    if (this.config.media_fields) {
+      preloadMedia(trial, this.config.media_fields)
     }
 
     this.page.update({ trial });
