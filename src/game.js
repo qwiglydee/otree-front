@@ -74,7 +74,7 @@ export class Game {
     this.trial = trial;
 
     if (this.config.media_fields) {
-      preloadMedia(trial, this.config.media_fields)
+      await preloadMedia(trial, this.config.media_fields);
     }
 
     this.page.update({ trial });
