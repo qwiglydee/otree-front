@@ -5,9 +5,7 @@
  */
 
 import { parseVar } from "../utils/expr";
-import * as Ref from "./ref";
-
-export { Ref };
+import * as ref from "./ref";
 
 /**
  * A set of references to vars and their new values.
@@ -17,53 +15,82 @@ export { Ref };
 export class Changes extends Map {
   /**
    * @param {object} obj plain object describing changes
-   * @param {string} [prefix] a prefix to add to all the top-level fields, as if there was an above-top object
    */
 
-  constructor(obj, prefix) {
-    let entries = [...Object.entries(obj)];
-    if (prefix) {
-      entries = entries.map(([k, v]) => [prefix + "." + k, v]);
+  constructor(obj) {
+    if (obj) {
+      super(Array.from(Object.entries(obj)));
+    } else {
+      super();
     }
-    super(entries);
+    // validate keys
     this.forEach((v, k) => parseVar(k));
   }
 
-  /**
-   * Checks if the changeset contains referenced var
-   *
-   * Example:
-   *   ```
-   *   changes = new Changes({ 'obj.foo': { ... } })
-   *   changes.afects("obj.foo.bar") == true // becasue the `bar` is contained in `obj.foo`
-   *   ```
-   * @param {string} ref
-   */
-  affects(ref) {
-    return [...this.keys()].some((key) => Ref.includes(key, ref));
+  prefix(pref) {
+    let prefixed = new Changes();
+    for(let [k, v] of this.entries()) {
+      prefixed.set(`${pref}.${k}`, v);
+    }
+    return prefixed;
   }
 
   /**
-   * Picks single value from changeset.
+   * Checks if the changeset affects a var or a subvar
    *
-   * Example:
-   *   ```
-   *   changes = new Changes({ 'obj.foo': { bar: "Bar" } })
-   *   changes.pick("obj.foo.bar") == "Bar"
-   *   ```
+   * ```
+   * let changes = new Changes({ 'foo.bar': something });
+   * expect(changes.affect("foo.bar")).to.be.true;
+   * expect(changes.affect("foo.bar.anything")).to.be.true;
+   * expect(changes.affect("foo.*")).to.be.true;
+   *
+   * @param {*} fld
    */
-  pick(ref) {
-    let affecting = [...this.keys()].filter((key) => Ref.includes(key, ref));
-    if (affecting.length == 0) return undefined;
-    if (affecting.length != 1) throw new Error(`Incompatible changeset for ${ref}`);
-    affecting = affecting[0];
-
-    let value = this.get(affecting);
-
-    if (affecting == ref) {
-      return value;
+  affects(fld) {
+    if (fld.endsWith(".*")) {
+      let top = fld.slice(0, -2);
+      return this.has(top) || Array.from(this.keys()).some((key) => ref.isparentRef(top, key));
     } else {
-      return Ref.extract(value, Ref.strip(affecting, ref));
+      return this.has(fld) || Array.from(this.keys()).some((key) => ref.isparentRef(key, fld));
+    }
+  }
+
+  /**
+   * Picks single value from changeset, tracking reference across keys or nested objects.
+   *
+   * ```
+   * let change = new Changes({ 'foo.bar': { baz: "Baz"} })
+   * expect(change.pick('foo')).to.be.eq({ 'bar': { 'baz': "Baz" }})
+   * expect(change.pick('foo.bar')).to.be.eq({ 'baz': "Baz" })
+   * ```
+   *
+   */
+  pick(fld) {
+    if (this.has(fld)) {
+      return this.get(fld);
+    }
+    // console.debug("picking", fld, "from", Array.from(this.keys()));
+
+    // fld.subfld: something
+    let nesting = Array.from(this.keys()).filter((k) => ref.isparentRef(fld, k));
+    // console.debug("nesting", nesting);
+    if (nesting.length) {
+      let result = {};
+      for (let k of nesting) {
+        let subfld = ref.getsubRef(fld, k);
+        result[subfld] = this.get(k);
+      }
+      return result;
+    }
+
+    // fld[top]: { fld[sub]: something }
+    let splitting = Array.from(this.keys()).filter((k) => ref.isparentRef(k, fld) && this.get(k) !== undefined);
+    // console.debug("splitting", splitting);
+    if (splitting.length) {
+      for (let k of splitting) {
+        let fldsub = ref.getsubRef(k, fld);
+        return ref.extractByRef(fldsub, this.get(k))
+      }
     }
   }
 
@@ -86,7 +113,7 @@ export class Changes extends Map {
    */
   patch(obj) {
     this.forEach((v, k) => {
-      Ref.update(obj, k, v);
+      ref.updateByRef(k, obj, v);
     });
   }
 }

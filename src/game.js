@@ -87,12 +87,14 @@ export class Game {
    *
    * Applies given changes to game state, using {@link Changes}
    *
-   * @param {Object} changes the changes to apply
+   * @param {Object} updates the changes to apply
    * @fires Page.update
    */
-  updateTrial(changes) {
-    new Changes(changes).patch(this.trial);
-    this.page.update(new Changes(changes, "trial"));
+  updateTrial(updates) {
+    let changes = new Changes(updates);
+    changes.patch(this.trial);
+    changes = changes.prefix("trial");
+    this.page.update(changes);
   }
 
   /**

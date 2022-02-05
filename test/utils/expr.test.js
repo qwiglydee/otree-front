@@ -60,7 +60,7 @@ describe("expressions", () => {
       });
     });
 
-    describe("checking", () => {
+    describe("checking if affected", () => {
       it("resetting `var`", () => {
         let parsed = parseVar("foo");
         let event;
@@ -68,10 +68,10 @@ describe("expressions", () => {
         event = new CustomEvent("ot.reset", { detail: null });
         expect(affecting(parsed, event)).to.be.true;
 
-        event = new CustomEvent("ot.reset", { detail: ['foo']});
+        event = new CustomEvent("ot.reset", { detail: ["foo"] });
         expect(affecting(parsed, event)).to.be.true;
 
-        event = new CustomEvent("ot.reset", { detail: ['bar'] });
+        event = new CustomEvent("ot.reset", { detail: ["bar"] });
         expect(affecting(parsed, event)).to.be.false;
       });
 
@@ -82,16 +82,48 @@ describe("expressions", () => {
         event = new CustomEvent("ot.reset", { detail: null });
         expect(affecting(parsed, event)).to.be.true;
 
-        event = new CustomEvent("ot.reset", { detail: ['foo.fld']});
+        event = new CustomEvent("ot.reset", { detail: ["foo.fld"] });
         expect(affecting(parsed, event)).to.be.true;
 
-        event = new CustomEvent("ot.reset", { detail: ['foo'] });
+        event = new CustomEvent("ot.reset", { detail: ["foo"] });
         expect(affecting(parsed, event)).to.be.true;
 
-        event = new CustomEvent("ot.reset", { detail: ['bar'] });
+        event = new CustomEvent("ot.reset", { detail: ["bar"] });
         expect(affecting(parsed, event)).to.be.false;
       });
 
+      it("updating `var`", () => {
+        let parsed = parseVar("foo");
+        let event;
+
+        event = new CustomEvent("ot.update", { detail: new Changes({ foo: "Foo" }) });
+        expect(affecting(parsed, event)).to.be.true;
+      });
+
+      it("updating `obj.fld`", () => {
+        let parsed = parseVar("obj.fld");
+        let event;
+
+        event = new CustomEvent("ot.update", { detail: new Changes({ "obj.fld": "Foo" }) });
+        expect(affecting(parsed, event)).to.be.true;
+
+        event = new CustomEvent("ot.update", { detail: new Changes({ obj: { fld: "Foo" } }) });
+        expect(affecting(parsed, event)).to.be.true;
+
+        event = new CustomEvent("ot.update", { detail: new Changes({ obj: {} }) });
+        expect(affecting(parsed, event)).to.be.true;
+      });
+
+      it("updating arrays", () => {
+        let parsed = parseVar("foo.1");
+        let event;
+
+        event = new CustomEvent("ot.update", { detail: new Changes({ "foo.1": 2 }) });
+        expect(affecting(parsed, event)).to.be.true;
+
+        event = new CustomEvent("ot.update", { detail: new Changes({ foo: [1, 2, 3] }) });
+        expect(affecting(parsed, event)).to.be.true;
+      });
     });
   });
 
@@ -303,10 +335,10 @@ describe("expressions", () => {
         event = new CustomEvent("ot.reset", { detail: null });
         expect(affecting(parsed, event)).to.be.true;
 
-        event = new CustomEvent("ot.reset", { detail: ['foo']});
+        event = new CustomEvent("ot.reset", { detail: ["foo"] });
         expect(affecting(parsed, event)).to.be.true;
 
-        event = new CustomEvent("ot.reset", { detail: ['bar'] });
+        event = new CustomEvent("ot.reset", { detail: ["bar"] });
         expect(affecting(parsed, event)).to.be.false;
       });
 
@@ -317,18 +349,16 @@ describe("expressions", () => {
         event = new CustomEvent("ot.reset", { detail: null });
         expect(affecting(parsed, event)).to.be.true;
 
-        event = new CustomEvent("ot.reset", { detail: ['foo.fld']});
+        event = new CustomEvent("ot.reset", { detail: ["foo.fld"] });
         expect(affecting(parsed, event)).to.be.true;
 
-        event = new CustomEvent("ot.reset", { detail: ['foo'] });
+        event = new CustomEvent("ot.reset", { detail: ["foo"] });
         expect(affecting(parsed, event)).to.be.true;
 
-        event = new CustomEvent("ot.reset", { detail: ['bar'] });
+        event = new CustomEvent("ot.reset", { detail: ["bar"] });
         expect(affecting(parsed, event)).to.be.false;
       });
-
     });
-
   });
 
   describe("assignments", () => {

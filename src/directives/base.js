@@ -1,5 +1,5 @@
 import { parseVar } from "../utils/expr";
-import { Ref } from "../utils/changes";
+import * as ref from "../utils/ref";
 
 /* map of selector => class */
 export const registry = new Map();
