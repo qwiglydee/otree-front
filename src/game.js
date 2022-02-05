@@ -109,8 +109,6 @@ export class Game {
   updateStatus(changes) {
     let status = this.status;
     Object.assign(status, changes);
-    this.page.update({ status: changes });
-    this.page.emitEvent("ot.status", changes);
     if (changes.trialStarted) {
       this.page.emitEvent("ot.started");
     }
@@ -120,6 +118,8 @@ export class Game {
     if (changes.gameOver) {
       this.page.emitEvent("ot.gameover");
     }
+    this.onStatus(changes);
+    this.page.update({ status: changes });
   }
 
   /**
@@ -133,8 +133,8 @@ export class Game {
    */
   setFeedback(feedback) {
     this.feedback = feedback;
-    this.page.update({ feedback });
     this.onFeedback(this.feedback);
+    this.page.update({ feedback: this.feedback });
   }
 
   /**
@@ -158,8 +158,8 @@ export class Game {
    */
   setProgress(progress) {
     this.progress = progress;
-    this.page.update({ progress });
     this.onProgress(this.progress);
+    this.page.update({ progress: this.progress });
   }
 
   /**
@@ -205,15 +205,12 @@ export class Game {
    */
   onProgress(progress) {}
 
-
   /**
-   * A handler for {@link Game.status}
+   * A hook called after updateStatus
    *
-   * @type {Game~onStatus}
+   * @param {Object} changes obj of changed flags
    */
-  set onStatus(fn) {
-    this.page.onEvent("ot.status", (ev) => fn(this.status, ev.detail));
-  }
+  onStatus(changes) {}
 
   /**
    * Plays a game trial.

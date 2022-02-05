@@ -111,10 +111,7 @@ describe("Game", () => {
     detail = await pageEvent("ot.update");
     expect(detail).to.eql(new Changes({ status: { bar: "Bar2", baz: "Baz" } }));
 
-    detail = await pageEvent("ot.status");
-    expect(detail).to.eql({ bar: "Bar2", baz: "Baz" });
-
-    expect(onstatus.args).to.eql([{ foo: "Foo", bar: "Bar2", baz: "Baz" }, { bar: "Bar2", baz: "Baz" }]);
+    expect(onstatus.args).to.eql([{ bar: "Bar2", baz: "Baz" }]);
   });
 
   it("emits started", async () => {
@@ -208,7 +205,7 @@ describe("Game playing", () => {
       game.updateStatus({ trialCompleted: true });
     };
 
-    game.onStatus = function (status, changed) {
+    game.onStatus = function (changed) {
       if (changed.trialCompleted) {
         game.updateStatus({ gameOver: true });
       }
@@ -243,7 +240,7 @@ describe("Game playing", () => {
       game.updateStatus({ trialCompleted: true });
     };
 
-    game.onStatus = function (status, changed) {
+    game.onStatus = function (changed) {
       if (changed.trialCompleted) {
         game.updateStatus({ gameOver: true });
       }
@@ -275,7 +272,7 @@ describe("Game playing", () => {
       game.updateStatus({ trialCompleted: true });
     };
 
-    game.onStatus = function (status, changed) {
+    game.onStatus = function (changed) {
       if (changed.trialCompleted && iter == 5) {
         game.updateStatus({ gameOver: true });
       }
@@ -311,7 +308,7 @@ describe("Game playing", () => {
       game.updateStatus({ trialCompleted: true });
     };
 
-    game.onStatus = function (status, changed) {
+    game.onStatus = function (changed) {
       if (changed.trialCompleted && iter == 5) {
         game.updateStatus({ gameOver: true });
       }
