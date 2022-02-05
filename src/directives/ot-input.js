@@ -137,6 +137,9 @@ class otCustomInput extends otEnablable {
   }
 
   setup() {
+    if (!this.trigger.key && !this.trigger.touch && !this.trigger.click) {
+      throw new Error("custom ot-input missing any ot-click ot-key ot-touch");
+    }
     this.onEvent("ot.reset", this.onReset);
     this.onEvent("ot.update", this.onUpdate);
     this.onEvent("ot.freezing", this.onFreezing);

@@ -149,7 +149,7 @@ describe("ot-enabled", () => {
     describe("without ot-enabled", () => {
       beforeEach(async () => {
         body = document.createElement("body");
-        elem = await fixture(`<div ot-input="foo = 'Foo'"></div>`, { parentNode: body });
+        elem = await fixture(`<div ot-click ot-input="foo = 'Foo'"></div>`, { parentNode: body });
         page = new Page(body);
         await pageEvent("ot.reset");
       });
@@ -199,7 +199,7 @@ describe("ot-enabled", () => {
     describe("with ot-enabled", () => {
       beforeEach(async () => {
         body = document.createElement("body");
-        elem = await fixture(`<div ot-input="foo = 'Foo'" ot-enabled="phase == 'input'"></div>`, {
+        elem = await fixture(`<div ot-click ot-input="foo = 'Foo'" ot-enabled="phase == 'input'"></div>`, {
           parentNode: body,
         });
         page = new Page(body);
