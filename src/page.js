@@ -89,6 +89,10 @@ export class Page {
     });
   }
 
+  waitForEvents(types) {
+    return Promise.race(types.map(type => this.waitForEvent(type)));
+  }
+
   /**
    * Emits an event.
    *

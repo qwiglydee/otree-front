@@ -184,15 +184,11 @@ export class Game {
    *
    * @returns {Promise} resolving with result when game completes
    */
-  async playTrial() {
-    this.resetTrial();
-    await this.page.waitForEvent("ot.trial.completed");
-  }
-
   async playIterations() {
     while (!this.status.gameOver) {
-      await this.playTrial();
-      await sleep(this.config.post_trial_pause);
+        this.resetTrial();
+        await this.page.waitForEvents(["ot.trial.completed", "ot.game.over"]);
+        await sleep(this.config.post_trial_pause);
     }
   }
 }

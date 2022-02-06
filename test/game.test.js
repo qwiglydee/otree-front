@@ -178,26 +178,7 @@ describe("Game playing", async () => {
     await pageEvent("ot.reset"); // initial
   });
 
-  it("plays a trial async", async () => {
-    game.loadTrial = function () {
-      game.startTrial({ foo: "Foo" });
-    };
-
-    page.onStatus = async function (changed) {
-      if (changed.trialStarted) {
-        await sleep(100);
-        game.updateStatus({ trialCompleted: true, gameOVer: true });
-      }
-    };
-
-    const t0 = Date.now();
-    await game.playTrial();
-    const t1 = Date.now();
-
-    expect(t1 - t0).to.be.within(100, 110);
-  });
-
-  it("plays iterations async", async () => {
+  it.only("plays iterations async", async () => {
     let iter = 0,
       max_iters = 5;
 
