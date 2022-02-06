@@ -49,8 +49,8 @@ export class Game {
    * Sets `trial`, `status`, `feedback` to empty objects or nulls.
    * Updates page with all the affected objects.
    *
-   * Calls loadTrial hook.
-   *
+   * calls user-defined loadTrial()
+   * 
    * @fires Page.reset
    */
   resetTrial() {
@@ -62,24 +62,23 @@ export class Game {
   }
 
   /**
-   * Sets initial game state.
+   * Starts a trial
    *
-   * Sets initial trial data and updates page.
-   * Calls startTrial hook after page update.
+   * Preloads media if needed.
+   * Sets initial trial data, updates page.
    *
    * @param {Object} trial
    * @fires Page.update
    */
-  async setTrial(trial) {
+  async startTrial(trial) {
     this.trial = trial;
 
     if (this.config.media_fields) {
       await preloadMedia(trial, this.config.media_fields);
     }
 
+    this.updateStatus({ trialStarted: true });
     this.page.update({ trial });
-    await this.page.waitForEvent("ot.update"); // make sure the hook is called after page update
-    this.startTrial(this.trial);
   }
 
   /**
@@ -93,8 +92,7 @@ export class Game {
   updateTrial(updates) {
     let changes = new Changes(updates);
     changes.patch(this.trial);
-    changes = changes.prefix("trial");
-    this.page.update(changes);
+    this.page.update(changes.prefix("trial"));
   }
 
   /**
@@ -109,23 +107,24 @@ export class Game {
   updateStatus(changes) {
     let status = this.status;
     Object.assign(status, changes);
+
+    this.page.emitEvent("ot.status", changes);
+
     if (changes.trialStarted) {
-      this.page.emitEvent("ot.started");
+      this.page.emitEvent("ot.trial.started");
     }
     if (changes.trialCompleted) {
-      this.page.emitEvent("ot.completed");
+      this.page.emitEvent("ot.trial.completed");
     }
     if (changes.gameOver) {
-      this.page.emitEvent("ot.gameover");
+      this.page.emitEvent("ot.game.over");
     }
-    this.onStatus(changes);
-    this.page.update({ status: changes });
+
+    this.page.update(new Changes(changes).prefix('status'));
   }
 
   /**
    * Sets feedback
-   *
-   * Calls hook onFeedback(feedback)
    *
    * @param {string} code
    * @param {string} message
@@ -133,7 +132,6 @@ export class Game {
    */
   setFeedback(feedback) {
     this.feedback = feedback;
-    this.onFeedback(this.feedback);
     this.page.update({ feedback: this.feedback });
   }
 
@@ -158,7 +156,6 @@ export class Game {
    */
   setProgress(progress) {
     this.progress = progress;
-    this.onProgress(this.progress);
     this.page.update({ progress: this.progress });
   }
 
@@ -174,43 +171,11 @@ export class Game {
 
   /**
    * A hook called to retrieve initial Trial data.
-   * Shuld call setTria l
+   * Shuld eventually call startTrial(trial)
    */
   loadTrial() {
-    throw new Error("Implement the `loadTrial` hook");
+    throw new Error("Implement the `game.loadTrial`");
   }
-
-  /**
-   * A hook called after trial loaded.
-   *
-   * Should start all game process.
-   *
-   * @param {Object} trial reference to game.trial
-   */
-  startTrial(trial) {
-    throw new Error("Implement the `startTrial` hook");
-  }
-
-  /**
-   * A hook called when setFeedback
-   *
-   * @param {Object} feedback reference to game.feedback
-   */
-  onFeedback(feedback) {}
-
-  /**
-   * A hook called after setProgress
-   *
-   * @param {Object} progress reference to game.progress
-   */
-  onProgress(progress) {}
-
-  /**
-   * A hook called after updateStatus
-   *
-   * @param {Object} changes obj of changed flags
-   */
-  onStatus(changes) {}
 
   /**
    * Plays a game trial.
@@ -221,7 +186,7 @@ export class Game {
    */
   async playTrial() {
     this.resetTrial();
-    await this.page.waitForEvent("ot.completed");
+    await this.page.waitForEvent("ot.trial.completed");
   }
 
   async playIterations() {

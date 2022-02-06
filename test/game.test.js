@@ -1,30 +1,10 @@
 import { expect, oneEvent, aTimeout, nextFrame } from "@open-wc/testing";
 
-import { Changes } from "../src/utils/changes";
-
 import { Page } from "../src/page";
 import { Game } from "../src/game";
 import { sleep } from "../src/utils/timers";
 
-function spy(obj, methodname, fn) {
-  let spied = {
-    count: 0,
-  };
-  let orig = fn || obj[methodname];
-  obj[methodname] = function () {
-    spied.count++;
-    spied.args = Array.from(arguments);
-    return orig.apply(this, arguments);
-  };
-  return spied;
-}
-
-function init() {
-  let body = document.createElement("body");
-  let page = new Page(body);
-  let game = new Game(page);
-  return { body, page, game };
-}
+import { spy, flatmap } from "./util";
 
 describe("Game", () => {
   let body, page, game, detail;
@@ -38,23 +18,22 @@ describe("Game", () => {
     await oneEvent(body, type);
   }
 
-  beforeEach(() => {
+  beforeEach(async () => {
     body = document.createElement("body");
     page = new Page(body);
     game = new Game(page);
+    await pageEvent("ot.reset"); // initial
   });
 
   it("setups", async () => {
     game.setConfig({ foo: "Foo" });
     expect(game.config).to.eql({ foo: "Foo" });
     detail = await pageEvent("ot.update");
-    expect(detail).to.eql(new Changes({ config: { foo: "Foo" } }));
+    expect(flatmap(detail)).to.eql({ config: { foo: "Foo" } });
   });
 
-  it("resets and loads trial", async () => {
-    await pageEvent("ot.reset"); // initial
-
-    let loadtrial = spy(game, "loadTrial", function () {});
+  it("resets trial", async () => {
+    game.loadTrial = spy();
 
     game.resetTrial();
 
@@ -65,270 +44,182 @@ describe("Game", () => {
     detail = await pageEvent("ot.reset");
     expect(detail).to.eql(["trial", "status", "feedback"]);
 
-    expect(loadtrial.args).to.eql([]);
+    expect(game.loadTrial.spied.count).to.eq(1);
   });
 
-  it("sets and starts trial", async () => {
-    let starttrial = spy(game, "startTrial", function () {});
-
+  it("starts trial", async () => {
     let trial = { foo: "Foo" };
-    game.setTrial(trial);
-    detail = await pageEvent("ot.update");
-    expect(detail).to.eql(new Changes({ trial }));
 
-    expect(starttrial.args).to.eql([trial]);
+    await game.startTrial(trial);
+
+    expect(game.trial).to.eql(trial);
+
+    detail = await pageEvent("ot.status");
+    expect(detail).to.eql({ trialStarted: true });
+
+    detail = await pageEvent("ot.trial.started");
+
+    detail = await pageEvent("ot.update");
+    expect(flatmap(detail)).to.eql({ "status.trialStarted": true });
+
+    detail = await pageEvent("ot.update");
+    expect(flatmap(detail)).to.eql({ trial: { foo: "Foo" } });
   });
 
-  it("preloads images",  async () => {
-    const imgurl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQIW2NgAAIAAAUAAR4f7BQAAAAASUVORK5CYII=";
-    game.config.media_fields = { image: 'image' }
+  it("preloads images", async () => {
+    let img =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQIW2NgAAIAAAUAAR4f7BQAAAAASUVORK5CYII=";
+    let trial = { foo: img };
+    game.config.media_fields = { foo: "image" };
 
-    game.startTrial=function () {};
-  
-    await game.setTrial({ image: imgurl });
+    await game.startTrial(trial);
 
-    expect(game.trial.image).to.be.instanceOf(Image);
-    expect(game.trial.image.src).to.eq(imgurl);
+    expect(game.trial.foo).to.be.instanceOf(Image);
+    expect(game.trial.foo.src).to.eq(img);
   });
 
   it("updates trial", async () => {
     game.trial = { foo: "Foo", bar: "Bar" };
+
     game.updateTrial({ bar: "Bar2", baz: "Baz" });
+
     expect(game.trial).to.eql({ foo: "Foo", bar: "Bar2", baz: "Baz" });
 
     detail = await pageEvent("ot.update");
-    expect(detail).to.eql(new Changes({ "trial.bar": "Bar2", "trial.baz": "Baz" }));
+    expect(flatmap(detail)).to.eql({ "trial.bar": "Bar2", "trial.baz": "Baz" });
   });
 
   it("updates status", async () => {
-    let onstatus = spy(game, "onStatus", function () {});
-
     game.status = { foo: "Foo", bar: "Bar" };
+
     game.updateStatus({ bar: "Bar2", baz: "Baz" });
 
     expect(game.status).to.eql({ foo: "Foo", bar: "Bar2", baz: "Baz" });
 
-    detail = await pageEvent("ot.update");
-    expect(detail).to.eql(new Changes({ status: { bar: "Bar2", baz: "Baz" } }));
+    detail = await pageEvent("ot.status");
+    expect(detail).to.eql({ bar: "Bar2", baz: "Baz" });
 
-    expect(onstatus.args).to.eql([{ bar: "Bar2", baz: "Baz" }]);
+    detail = await pageEvent("ot.update");
+    expect(flatmap(detail)).to.eql({ "status.bar": "Bar2", "status.baz": "Baz" });
   });
 
   it("emits started", async () => {
     game.updateStatus({ trialStarted: true });
-    await pageEvent("ot.started");
+    await pageEvent("ot.trial.started");
   });
 
   it("emits completed", async () => {
     game.updateStatus({ trialCompleted: true });
-    await pageEvent("ot.completed");
+    await pageEvent("ot.trial.completed");
   });
 
   it("emits gameover", async () => {
     game.updateStatus({ gameOver: true });
-    await pageEvent("ot.gameover");
+    await pageEvent("ot.game.over");
   });
 
   it("sets feedback", async () => {
-    let onfeedback = spy(game, "onFeedback", function () {});
-
     let feedback = { foo: "Foo" };
 
     game.setFeedback(feedback);
+
     expect(game.feedback).to.eql(feedback);
 
     detail = await pageEvent("ot.update");
-    expect(detail).to.eql(new Changes({ feedback }));
-
-    expect(onfeedback.args).to.eql([feedback]);
+    expect(flatmap(detail)).to.eql({ feedback });
   });
 
   it("clears feedback", async () => {
-    await pageEvent("ot.reset"); // initial
-
-    let onfeedback = spy(game, "onFeedback", function () {});
-
     game.feedback = { foo: "Foo" };
+
     game.clearFeedback();
+
     expect(game.feedback).to.be.undefined;
 
     detail = await pageEvent("ot.reset");
     expect(detail).to.eql(["feedback"]);
-
-    expect(onfeedback.args).to.be.undefined;
   });
 
   it("sets progress", async () => {
-    let onprogress = spy(game, "onProgress", function () {});
-
     let progress = { foo: "Foo" };
 
     game.setProgress(progress);
+
     expect(game.progress).to.eql(progress);
 
     detail = await pageEvent("ot.update");
-    expect(detail).to.eql(new Changes({ progress }));
-
-    expect(onprogress.args).to.eql([progress]);
+    expect(flatmap(detail)).to.eql({ progress });
   });
 
   it("clears progress", async () => {
-    await pageEvent("ot.reset"); // initial
-
-    let onprogress = spy(game, "onProgress", function () {});
-
     game.progress = { foo: "Foo" };
+
     game.resetProgress();
+
     expect(game.progress).to.be.undefined;
 
     detail = await pageEvent("ot.reset");
     expect(detail).to.eql(["progress"]);
-
-    expect(onprogress.args).to.be.undefined;
   });
 });
 
-describe("Game playing", () => {
-  // variables or events leak somehow
+describe("Game playing", async () => {
+  // variables or events leak somehow from here
+  let body, page, game;
+
+  async function pageEvent(type) {
+    return (await oneEvent(body, type)).detail;
+  }
+
+  beforeEach(async function init() {
+    body = document.createElement("body");
+    page = new Page(body);
+    game = new Game(page);
+    await pageEvent("ot.reset"); // initial
+  });
 
   it("plays a trial async", async () => {
-    const { body, page, game } = init();
-    let iter = 0;
-
     game.loadTrial = function () {
-      game.setTrial({ foo: "Foo" });
+      game.startTrial({ foo: "Foo" });
     };
 
-    game.startTrial = async function (trial) {
-      game.updateStatus({ trialStarted: true });
-      await sleep(100);
-      game.updateStatus({ trialCompleted: true });
-    };
-
-    game.onStatus = function (changed) {
-      if (changed.trialCompleted) {
-        game.updateStatus({ gameOver: true });
+    page.onStatus = async function (changed) {
+      if (changed.trialStarted) {
+        await sleep(100);
+        game.updateStatus({ trialCompleted: true, gameOVer: true });
       }
     };
-
-    let starttrial = spy(game, "startTrial");
 
     const t0 = Date.now();
     await game.playTrial();
-    const t1 = Date.now();
-
-    expect(starttrial.count).to.eq(1);
-    expect(starttrial.args).to.eql([{ foo: "Foo" }]);
-    expect(t1 - t0).to.be.within(100, 110);
-  });
-
-  it("plays a trial eventual", async () => {
-    const { body, page, game } = init();
-    async function pageEvent(type) {
-      return (await oneEvent(body, type)).detail;
-    }
-  
-    let iter = 0;
-
-    game.loadTrial = function () {
-      game.setTrial({ foo: "Foo" });
-    };
-
-    game.startTrial = async function (trial) {
-      game.updateStatus({ trialStarted: true });
-      await sleep(100);
-      game.updateStatus({ trialCompleted: true });
-    };
-
-    game.onStatus = function (changed) {
-      if (changed.trialCompleted) {
-        game.updateStatus({ gameOver: true });
-      }
-    };
-
-    game.playTrial();
-    const t0 = Date.now();
-    await pageEvent("ot.started");
-    await pageEvent("ot.completed");
     const t1 = Date.now();
 
     expect(t1 - t0).to.be.within(100, 110);
   });
 
   it("plays iterations async", async () => {
-    const { body, page, game } = init();
-    let iter = 0;
+    let iter = 0,
+      max_iters = 5;
 
     game.setConfig({ post_trial_pause: 200 });
 
     game.loadTrial = async function () {
-      game.setTrial({ foo: "Foo" });
+      game.startTrial({ foo: "Foo" });
     };
 
-    game.startTrial = async function (trial) {
-      iter++;
-      game.updateStatus({ trialStarted: true });
-      await sleep(100);
-      game.updateStatus({ trialCompleted: true });
-    };
-
-    game.onStatus = function (changed) {
-      if (changed.trialCompleted && iter == 5) {
-        game.updateStatus({ gameOver: true });
+    page.onStatus = async function (changed) {
+      if (changed.trialStarted) {
+        iter += 1;
+        await sleep(100);
+        game.updateStatus({ trialCompleted: true, gameOver: iter >= max_iters });
       }
     };
-
-    let starttrial = spy(game, "startTrial");
 
     const t0 = Date.now();
     await game.playIterations();
     const t1 = Date.now();
 
-    expect(starttrial.count).to.eq(5);
+    expect(iter).to.eq(5);
     expect(t1 - t0).to.be.within(1500, 1550);
-  });
-
-  it("plays iterations eventual", async () => {
-    const { body, page, game } = init();
-    async function pageEvent(type) {
-      return (await oneEvent(body, type)).detail;
-    }
-    let iter = 0;
-
-    game.setConfig({ post_trial_pause: 200 });
-
-    game.loadTrial = async function () {
-      game.setTrial({ foo: "Foo" });
-    };
-
-    game.startTrial = async function (trial) {
-      iter++;
-      game.updateStatus({ trialStarted: true });
-      await sleep(100);
-      game.updateStatus({ trialCompleted: true });
-    };
-
-    game.onStatus = function (changed) {
-      if (changed.trialCompleted && iter == 5) {
-        game.updateStatus({ gameOver: true });
-      }
-    };
-
-    game.playIterations();
-    const t0 = Date.now();
-    await pageEvent("ot.started");
-    await pageEvent("ot.completed");
-    await pageEvent("ot.started");
-    await pageEvent("ot.completed");
-    await pageEvent("ot.started");
-    await pageEvent("ot.completed");
-    await pageEvent("ot.started");
-    await pageEvent("ot.completed");
-    await pageEvent("ot.started");
-    await pageEvent("ot.completed");
-    await pageEvent("ot.gameover");
-    const t1 = Date.now();
-
-    expect(t1 - t0).to.be.within(1500-200, 1600-200);
   });
 });

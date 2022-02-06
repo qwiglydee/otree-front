@@ -3,22 +3,7 @@ import { expect, fixture, oneEvent, aTimeout, nextFrame } from "@open-wc/testing
 import { Page } from "../src/page";
 import { Changes } from "../src/utils/changes";
 
-
-function spy(fn) {
-  let spied = {
-    count: 0,
-  };
-  let orig = fn || function(){};
-
-  function wrapped() {
-    spied.count ++;
-    spied.args = Array.from(arguments);
-    return orig.apply(null, arguments);
-  }
-
-  wrapped.spied = spied
-  return wrapped;
-}
+import { spy } from "./util";
 
 describe("Page", () => {
   let body, page, elem, detail;
@@ -142,33 +127,32 @@ describe("Page", () => {
   describe("sets handlers", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div></div>`, { parentNode: body });
       page = new Page(body);
       await pageEvent("ot.reset"); // initial reset
     });
 
-    it("onInput", async () => {
-      let handler = spy()
-      page.onInput = handler;
-
-      await pageFire("ot.input", { name: "foo", value: "Foo" });
-      expect(handler.spied.args).to.eql(["foo", "Foo"]);
+    it("onStatus", async () => {
+      page.onStatus = spy();
+      await pageFire("ot.status", { foo: "Foo" });
+      expect(page.onStatus.spied.args).to.eql([{ "foo": "Foo" }]);
     });
 
-    it("onUpate", async () => {
-      let handler = spy()
-      page.onUpdate = handler;
+    it("onInput", async () => {
+      page.onInput = spy();
+      await pageFire("ot.input", { name: "foo", value: "Foo" });
+      expect(page.onInput.spied.args).to.eql(["foo", "Foo"]);
+    });
 
+    it("onUpdate", async () => {
+      page.onUpdate = spy();
       await pageFire("ot.update", { foo:  "Foo" });
-      expect(handler.spied.args).to.eql([{ foo: "Foo" }]);
+      expect(page.onUpdate.spied.args).to.eql([{ foo: "Foo" }]);
     });
 
     it("onTimeout", async () => {
-      let handler = spy()
-      page.onTimeout = handler;
-
+      page.onTimeout = spy();
       await pageFire("ot.timeout", 1000);
-      expect(handler.spied.args).to.eql([1000]);
+      expect(page.onTimeout.spied.args).to.eql([1000]);
     });
   });
 });

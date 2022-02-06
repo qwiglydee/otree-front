@@ -32,6 +32,11 @@ export class Page {
     });
 
     this.reset();
+
+    this.onEvent("ot.status", (ev) => this.onStatus(ev.detail));
+    this.onEvent("ot.input", (ev) => this.onInput(ev.detail.name, ev.detail.value));
+    this.onEvent("ot.update", (ev) => this.onUpdate(ev.detail));
+    this.onEvent("ot.timeout", (ev) => this.onTimeout(ev.detail));
   }
 
   /**
@@ -125,7 +130,7 @@ export class Page {
   }
 
   /**
-   * Signals changes of some page vars 
+   * Signals changes of some page vars
    *
    * @param {object|Changes} changes
    * @fires Page.update
@@ -162,16 +167,15 @@ export class Page {
     this.emitEvent("ot.freezing", false);
   }
 
-
   /**
    * Force native inputs to emit values
-   *  
-   * @param {*} inpvar 
+   *
+   * @param {*} inpvar
    */
   submitInputs(inpvar) {
-    this.body.querySelectorAll(`[ot-input="${inpvar}"]`).forEach(inp => {
-      this.emitEvent('ot.input', {name: inpvar, value: inp.value});
-    })
+    this.body.querySelectorAll(`[ot-input="${inpvar}"]`).forEach((inp) => {
+      this.emitEvent("ot.input", { name: inpvar, value: inp.value });
+    });
   }
 
   /**
@@ -182,31 +186,24 @@ export class Page {
   }
 
   /**
-   * A handler for {@link Page.input}
-   *
-   * @type {Page~onInput}
+   * A handler for {@link Page.status}
    */
-  set onInput(fn) {
-    this.onEvent("ot.input", (ev) => fn(ev.detail.name, ev.detail.value));
-  }
+  onStatus(updated) {}
+
+  /**
+   * A handler for {@link Page.input}
+   */
+  onInput(name, value) {}
 
   /**
    * A handler for {@link Page.update}
-   *
-   * @type {Page~onUpdate}
    */
-  set onUpdate(fn) {
-    this.onEvent("ot.update", (ev) => fn(ev.detail));
-  }
+  onUpdate(changes) {}
 
   /**
    * A handler for {@link Schedule.timeout}
-   *
-   * @type {Page~onTimeout}
    */
-  set onTimeout(fn) {
-    this.onEvent("ot.timeout", (ev) => fn(ev.detail));
-  }
+  onTimeout(time) {}
 }
 
 /**
