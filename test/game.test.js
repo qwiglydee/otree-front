@@ -178,7 +178,28 @@ describe("Game playing", async () => {
     await pageEvent("ot.reset"); // initial
   });
 
-  it.only("plays iterations async", async () => {
+  it("plays single trial", async () => {
+    game.setConfig({ post_trial_pause: 200 });
+
+    game.loadTrial = async function () {
+      game.startTrial({ foo: "Foo" });
+    };
+
+    page.onStatus = async function (changed) {
+      if (changed.trialStarted) {
+        await sleep(100);
+        game.updateStatus({ trialCompleted: true, gameOver: true });
+      }
+    };
+
+    const t0 = Date.now();
+    await game.playTrial();
+    const t1 = Date.now();
+
+    expect(t1 - t0).to.be.within(300, 310);
+  });
+
+  it("plays iterations", async () => {
     let iter = 0,
       max_iters = 5;
 
