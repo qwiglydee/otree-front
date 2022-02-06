@@ -101,6 +101,9 @@ export function setChild(elem, child) {
   }
 }
 
+
+const TEXTINPUTS = ['text', 'number', 'time', 'date']; 
+
 /** 
  * Checks if an elem is a text input or textarea
  *  
@@ -108,5 +111,5 @@ export function setChild(elem, child) {
  * @returns {boolean}
  */
 export function isTextInput(elem) {
-  return (elem.tagName == "INPUT" && elem.type == "text") || elem.tagName == "TEXTAREA";
+  return (elem.tagName == "INPUT" && TEXTINPUTS.includes(elem.type));
 }
