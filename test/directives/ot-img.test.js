@@ -1,134 +1,66 @@
-import { expect, fixture, elementUpdated } from "@open-wc/testing";
+import { expect, oneEvent, fixture, aTimeout, nextFrame, elementUpdated } from "@open-wc/testing";
 
 import { setChild } from "../../src/utils/dom";
 import { Page } from "../../src/page";
 
 import "../../src/directives/ot-img";
 
-
 describe("ot-img", () => {
-  let body, elem, page;
-  const
-    foo_img = new Image(),
+  let body, elem, img, page;
+  const foo_img = new Image(),
     bar_img = new Image();
 
-  describe("errors", () => {
-    it("invalid path", async () => {
-      elem = await fixture(`<div ot-img=".foo"></div>`);
-      expect(() => new Page(document.body)).to.throw();
-    });
+  const mock_img_uri =
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQIW2NgAAIAAAUAAR4f7BQAAAAASUVORK5CYII=";
 
-    it("invalid chars", async () => {
-      elem = await fixture(`<div ot-img="foo/bar"></div>`);
-      expect(() => new Page(document.body)).to.throw();
-    });
+  const mock_img = new Image();
+  mock_img.src = mock_img_uri;
 
-    it("invalid img value");
-  });
+  async function pageEvent(type) {
+    return (await oneEvent(body, type)).detail;
+  }
 
   describe("updating", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div ot-img="obj.fld"></div>`, { parentNode: body });
+      elem = await fixture(`<div><img width="100" class="foo" ot-img="var"></div>`, { parentNode: body });
       page = new Page(body);
+      await pageEvent("ot.reset"); // initial
+      mock_img.src = mock_img_uri;
+      await nextFrame();
     });
 
     it("resets", async () => {
-      setChild(elem, foo_img);
+      img = elem.children[0];
+      img.src = mock_img_uri;
+      await nextFrame();
+
+      expect(img.src).not.to.be.empty;
+
       page.reset();
-      await elementUpdated(elem);
-      expect(elem).to.be.empty;
+      await nextFrame();
+
+      img = elem.children[0];
+      expect(img.src).to.be.empty;
+
+      expect(img).to.have.attribute("width", "100");
+      expect(img).to.have.class("foo");
     });
 
-    it("changes by fld", async () => {
+    it("replaces", async () => {
       page.reset();
-      await elementUpdated(elem);
+      await nextFrame();
 
-      page.update({ "obj.fld": foo_img });
-      await elementUpdated(elem);
-      expect(elem).to.contain(foo_img);
+      expect(elem.children[0].src).to.be.empty;
 
-      page.update({ "obj.fld": bar_img });
-      await elementUpdated(elem);
-      expect(elem).to.contain(bar_img);
-    });
+      page.update({ var: mock_img });
+      await nextFrame();
 
-    it("changes by obj", async () => {
-      page.reset();
-      await elementUpdated(elem);
+      let img = elem.children[0];
+      expect(img.src).to.eq(mock_img_uri);
 
-      page.update({ obj: { fld: foo_img } });
-      await elementUpdated(elem);
-      expect(elem).to.contain(foo_img);
-
-      page.update({ obj: { fld: bar_img } });
-      await elementUpdated(elem);
-      expect(elem).to.contain(bar_img);
-    });
-
-    it("ignores unrelated fld", async () => {
-      page.reset();
-      await elementUpdated(elem);
-
-      page.update({ "obj.fld": foo_img });
-      await elementUpdated(elem);
-      expect(elem).to.contain(foo_img);
-
-      page.update({ "obj.fld2": bar_img });
-      await elementUpdated(elem);
-      expect(elem).to.contain(foo_img);
-    });
-
-    it("ignores unrelated obj", async () => {
-      page.reset();
-      await elementUpdated(elem);
-
-      page.update({ obj: { fld: foo_img } });
-      await elementUpdated(elem);
-      expect(elem).to.contain(foo_img);
-
-      page.update({ obj2: { fld: bar_img } });
-      await elementUpdated(elem);
-      expect(elem).to.contain(foo_img);
-    });
-
-    it("clears by fld deletion", async () => {
-      page.reset();
-      await elementUpdated(elem);
-
-      page.update({ "obj.fld": foo_img });
-      await elementUpdated(elem);
-      expect(elem).to.contain(foo_img);
-
-      page.update({ "obj.fld": undefined });
-      await elementUpdated(elem);
-      expect(elem).to.be.empty;
-    });
-
-    it("clears by empty obj", async () => {
-      page.reset();
-      await elementUpdated(elem);
-
-      page.update({ obj: { fld: foo_img } });
-      await elementUpdated(elem);
-      expect(elem).to.contain(foo_img);
-
-      page.update({ obj: {} });
-      await elementUpdated(elem);
-      expect(elem).to.be.empty;
-    });
-
-    it("clears by obj deletion", async () => {
-      page.reset();
-      await elementUpdated(elem);
-
-      page.update({ obj: { fld: foo_img } });
-      await elementUpdated(elem);
-      expect(elem).to.contain(foo_img);
-
-      page.update({ obj: undefined });
-      await elementUpdated(elem);
-      expect(elem).to.be.empty;
+      expect(img).to.have.attribute("width", "100");
+      expect(img).to.have.class("foo");
     });
   });
 });
