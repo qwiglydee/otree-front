@@ -18,11 +18,11 @@ describe("schedule", () => {
   });
 
   it("runs phases", async () => {
-    schedule.setup([
+    schedule.phases = [
         { at: 0, foo: "foo0" },
         { at: 100, foo: "foo1" },
         { at: 200, foo: "foo2" },
-    ]);
+    ];
 
     const t0 = Date.now();
     schedule.start();
@@ -41,7 +41,7 @@ describe("schedule", () => {
   });
 
   it("timeouts", async () => {
-    schedule.setTimeout(100);
+    schedule.timeout = 100;
 
     const t0 = Date.now();
     schedule.start();
@@ -56,13 +56,13 @@ describe("schedule", () => {
 
     page.onEvent("ot.update", () => counter++);
 
-    schedule.setup([
+    schedule.phases = [
         { at: 100, foo: "foo1" },
         { at: 200, foo: "foo2" },
         { at: 300, foo: "foo3" },
         { at: 400, foo: "foo4" },
-    ]);
-    schedule.setTimeout(250);
+    ];
+    schedule.timeout = 250;
 
     schedule.start();
 
@@ -76,12 +76,12 @@ describe("schedule", () => {
 
     page.onEvent("ot.update", () => counter++);
 
-    schedule.setup([
+    schedule.phases = [
         { at: 100, foo: "foo1" },
         { at: 200, foo: "foo2" },
         { at: 300, foo: "foo3" },
         { at: 400, foo: "foo4" },
-    ]);
+    ];
 
     schedule.start();
 
@@ -91,4 +91,34 @@ describe("schedule", () => {
     await aTimeout(1000);
     expect(counter).to.eq(2);
   });
+
+
+  it("autostarts", async() => {
+    let counter = 0;
+    page.onEvent('ot.timeout', function() { counter++ });
+
+    schedule.timeout = 100;
+    
+    page.emitEvent("ot.trial.started");
+
+    await aTimeout(1000);
+    expect(counter).to.eq(1);
+  });
+
+  it("autostops", async() => {
+    let counter = 0;
+    page.onEvent('ot.timeout', function() { counter++ });
+
+    schedule.timeout = 100;
+
+    schedule.start();
+
+    await aTimeout(50);
+    page.emitEvent("ot.trial.completed");
+
+    await aTimeout(1000);
+    expect(counter).to.eq(0);
+  });
+
+
 });

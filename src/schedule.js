@@ -2,6 +2,9 @@ import { Timers } from "./utils/timers";
 
 /**
  * Schedule to toggle page flags at specifed time moments
+ * 
+ * @property {Array} phases list of phases as `{ at: msecodds, var: val, ...}`
+ * @property {number} timeout number of mseconds to emit timeout 
  */
 
 export class Schedule {
@@ -10,33 +13,9 @@ export class Schedule {
     this.timers = new Timers();
     this.phases = [];
     this.timeout = null;
-  }
 
-  /**
-   * Setup schedule
-   *
-   * The `phases` is a list of vars augmented with `at` field indicating time in ms to update the vars.
-   * ```
-   * [
-   *  { at: 0, phase: "something", ... }
-   *  { at: 1000, foo: "Foo", ... }
-   * }
-   * ```
-   *
-   * The `timeout` in config is time in ms to emit timeout even t.
-   *
-   * @param {Object} phases list of phases
-   */
-  setup(phases) {
-    this.phases = phases;
-  }
-
-  at(time, vars) {
-    this.phases.push({ at: time, ...vars})
-  }
-
-  setTimeout(time) {
-    this.timeout = time;
+    this.page.onEvent("ot.trial.started", () => this.start());
+    this.page.onEvent("ot.trial.completed", () => this.stop());
   }
 
   /**
