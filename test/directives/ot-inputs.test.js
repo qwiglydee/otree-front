@@ -424,6 +424,24 @@ describe("native ot-input", () => {
     expect(elem.value).to.eq("");
   });
 
+  it("resets specifically", async () => {
+    elem.value = "xxx";
+
+    page.reset(['foo']);
+    await elementUpdated(elem);
+
+    expect(elem.value).to.eq("");
+  });
+
+  it("skips resetting specifically", async () => {
+    elem.value = "xxx";
+
+    page.reset(['bar']);
+    await elementUpdated(elem);
+
+    expect(elem.value).to.eq("xxx");
+  });
+
   it("updates", async () => {
     elem.value = "xxx";
 
