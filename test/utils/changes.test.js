@@ -14,7 +14,7 @@ describe("changes", () => {
     });
 
     it("checks keys", () => {
-      expect(() => new Changes({ "obj[foo]": "Foo" })).to.throw;
+      expect(() => new Changes({ "obj[foo]": "Foo" })).to.throw();
     });
   });
 

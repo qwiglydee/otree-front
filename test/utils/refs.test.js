@@ -1,6 +1,5 @@
 import { expect } from "@open-wc/testing";
 
-
 import * as ref from "../../src/utils/ref";
 
 describe("ref", () => {
@@ -14,17 +13,20 @@ describe("ref", () => {
     expect(ref.isparentRef("foo.bar", "foo.bar.baz")).to.be.true;
   });
 
-  if("gets nested path", () => {
+  it("gets nested path", () => {
     expect(ref.getsubRef("foo", "foo")).to.be.eq("");
     expect(ref.getsubRef("foo", "foo.bar")).to.be.eq("bar");
-    expect(ref.getsubRef("foo", "foobar")).to.be.undefined;
     expect(ref.getsubRef("foo", "foo.bar.baz")).to.be.eq("bar.baz");
-    expect(ref.getsubRef("foo.bar", "foo")).to.be.undefined;
     expect(ref.getsubRef("foo.bar", "foo.bar")).to.be.eq("");
     expect(ref.getsubRef("foo.bar", "foo.bar.baz")).to.be.eq("baz");
   });
 
-  if("gets common top path", () => {
+  it("fails to get incompatible nested path", () => {
+    expect(() => ref.getsubRef("foo", "foobar")).to.throw();
+    expect(() => ref.getsubRef("foo.bar", "foo")).to.throw();
+  });
+
+  it("gets common top path", () => {
     expect(ref.gettopRef("foo", "foo.bar")).to.be.eq("foo");
     expect(ref.gettopRef("foo.bar", "foo.baz")).to.be.eq("foo");
     expect(ref.gettopRef("foo.bar", "foo.bar.baz")).to.be.eq("foo.bar");
@@ -32,25 +34,23 @@ describe("ref", () => {
   });
 
   it("extracts from object", () => {
-    let obj = {foo:{bar:{baz:"Baz"}}};
-    expect(ref.extractByRef("foo", obj)).to.eql({bar:{baz:"Baz"}});
-    expect(ref.extractByRef("foo.bar", obj)).to.eql({baz:"Baz"});
+    let obj = { foo: { bar: { baz: "Baz" } } };
+    expect(ref.extractByRef("foo", obj)).to.eql({ bar: { baz: "Baz" } });
+    expect(ref.extractByRef("foo.bar", obj)).to.eql({ baz: "Baz" });
     expect(ref.extractByRef("foo.bar.baz", obj)).to.eql("Baz");
     expect(ref.extractByRef("bar", obj)).to.be.undefined;
     expect(ref.extractByRef("baz", obj)).to.be.undefined;
   });
 
   it("updates object", () => {
-    expect(ref.updateByRef("foo", {foo:{bar:{baz:"Baz"}}}, "new")).to.eql({foo: "new"});
-    expect(ref.updateByRef("foo.bar", {foo:{bar:{baz:"Baz"}}}, "new")).to.eql({foo:{bar: "new"}});
-    expect(ref.updateByRef("foo.bar.baz", {foo:{bar:{baz:"Baz"}}}, "new")).to.eql({foo:{bar:{baz: "new"}}});
-    expect(() => ref.updateByRef("bar", {foo:{bar:{baz:"Baz"}}}, "new")).to.throw;
-    expect(() => ref.updateByRef("baz", {foo:{bar:{baz:"Baz"}}}, "new")).to.throw;
+    let obj = { foo: { bar: "Bar" } };
+    ref.updateByRef("foo.bar", obj, "new");
+    expect(obj).to.eql({ foo: { bar: "new" } });
   });
 
-  it("updates in place", () => {
-    let obj = {foo:{bar:{baz:"Baz"}}};
-    let upd = ref.updateByRef("foo.bar", obj, "new");
-    expect(upd).to.be.equal(obj);
-  })
+  it("inserts subobjets", () => {
+    let obj = { foo: { bar: "Bar" } };
+    ref.updateByRef("foo.baz.qux", obj, "new");
+    expect(obj).to.eql({ foo: { bar: "Bar", baz: { qux: "new" } }});
+  });
 });

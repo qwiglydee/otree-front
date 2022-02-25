@@ -1,108 +1,102 @@
-import * as ref from "./ref";
+import { overlapsRef, extractByRef } from "./ref";
 
-const VAREXPR = new RegExp(/^[a-zA-Z]\w+(\.\w+)*$/);
+const EXPR_RE = new RegExp(/^(?<ref>[a-zA-Z]\w+(\.\w+)*)( (?<op>=|==|!=) (?<arg>.+))?$/);
 
-export function parseVar(expr) {
-  let match = VAREXPR.exec(expr);
-
+export function parseExpr(expr) {
+  let match = expr.match(EXPR_RE);
   if (!match) {
-    throw new Error(`Invalid expression for var: "${expr}"`);
+    throw new Error(`invalid expression: "${expr}"`);
   }
 
-  let ref = match[0];
-  return { ref };
-}
+  let { ref, op, arg } = match.groups;
 
-export function evalVar(parsed, changes) {
-  const { ref } = parsed;
-
-  return changes.pick(ref);
-}
-
-
-const CONDEXPR = new RegExp(/^([\w.]+)( ([!=]=) (.+))?$/);
-
-export function parseCond(expr) {
-  let match = CONDEXPR.exec(expr);
-
-  if (!match) {
-    throw new Error(`Invalid condition expression: "${expr}"`);
-  }
-
-  let varmatch = VAREXPR.exec(match[1]);
-  if (!varmatch) {
-    throw new Error(`Invalid variable in condition expression: "${expr}"`);
-  }
-
-  let [_0, ref, _2, eq, val] = match;
-
-  if (val) {
-    try {
-      val = JSON.parse(val.replaceAll("'", '"'));
-    } catch {
-      throw new Error(`Invalid value in condition expression: ${expr}`);
-    }
+  if (op === undefined) {
+    return new VarExpr(ref);
   } else {
-    val = undefined;
+    try {
+      arg = JSON.parse(match.groups.arg.replaceAll("'", '"'));
+    } catch {
+      throw new Error(`invalid expression for value: "${expr}"`);
+    }
+    if (op == "=") return new InpExpr(ref, arg);
+    if (op == "==" || op == "!=") return new CmpExpr(ref, op, arg);
+    throw new Error(`unsupported expression: ${expr}`);
   }
-
-  return { ref, eq, val };
 }
 
-export function evalCond(parsed, changes) {
-  const { ref, eq, val } = parsed;
-
-  let value = changes.pick(ref);
-
-  if (eq === undefined) return !!value;
-  if (eq == "==") return value === val;
-  if (eq == "!=") return value !== val;
-}
-
-const ASSIGNEXPR = new RegExp(/^([\w.]+) = (.+)?$/);
-
-export function parseAssign(expr) {
-  let match = ASSIGNEXPR.exec(expr);
-
-  if (!match) {
-    throw new Error(`Invalid input expression: "${expr}"`);
-  }
-
-  let varmatch = VAREXPR.exec(match[1]);
-  if (!varmatch) {
-    throw new Error(`Invalid variable in input expression: "${expr}"`);
-  }
-
-  let [_0, ref, val] = match;
-
-  try {
-    val = JSON.parse(match[2].replaceAll("'", '"'));
-  } catch {
-    throw new Error(`Invalid value in assignment expression: ${expr}`);
-  }
-
-  return { ref, val };
-}
-
-export function evalAssign(parsed) {
-  return { [parsed.ref]: parsed.val };
-}
-
-/**
- * Checks if an event affects an expression
- *
- * @param {Event} event
- * @param {object} expr parsed expression containing ref to a var
- */
-export function affecting(parsed, event) {
+function affects(event, ref) {
   switch (event.type) {
     case "ot.reset":
-      let topvars = event.detail;
-      return topvars == null || topvars.some(v => v == parsed.ref || ref.isparentRef(v, parsed.ref));
+      return event.detail == null || event.detail.some((v) => overlapsRef(v, ref));
     case "ot.update":
-      let changes = event.detail;
-      return changes.affects(parsed.ref);
+      return event.detail.affects(ref);
+    case "ot.input":
+      return overlapsRef(event.detail.name, ref);
     default:
-      return false;
+      throw new Error("irrelevant event");
+  }
+}
+
+export class VarExpr {
+  constructor(ref) {
+    this.ref = ref;
+  }
+
+  affected(event) {
+    return affects(event, this.ref);
+  }
+
+  eval(event) {
+    switch (event.type) {
+      case "ot.reset":
+        return undefined;
+      case "ot.update":
+        return event.detail.pick(this.ref);
+      case "ot.input":
+        if (event.detail.name == this.ref) return event.detail.value;
+        if (overlapsRef(event.detail.name, this.ref))
+          return extractByRef(this.ref, { [event.detail.name]: event.detail.value });
+    }
+  }
+}
+
+export class CmpExpr {
+  constructor(ref, op, arg) {
+    this.ref = ref;
+    this.op = op;
+    this.arg = arg;
+  }
+
+  affected(event) {
+    return affects(event, this.ref);
+  }
+
+  eval(event) {
+    let val;
+    switch (event.type) {
+      case "ot.reset":
+        return false;
+      case "ot.update":
+        val = event.detail.pick(this.ref);
+        break;
+      case "ot.input":
+        val = event.detail.value;
+        break;
+    }
+
+    if (this.op == "==") return val === this.arg;
+    if (this.op == "!=") return val !== this.arg;
+    throw new Error(`Unsuppoted comparision operator: ${this.op}`);
+  }
+}
+
+export class InpExpr {
+  constructor(ref, val) {
+    this.ref = ref;
+    this.val = val;
+  }
+
+  affected(event) {
+    return affects(event, this.ref);
   }
 }

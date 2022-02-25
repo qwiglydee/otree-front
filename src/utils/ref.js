@@ -9,7 +9,9 @@
 /**
  * Checks if one ref is parent of other
  * 
- * `expect(isparentRef("foo.bar", "foo.bar.baz")`
+ * ```
+ * expect(isparentRef("foo.bar", "foo.bar.baz")
+ * ```
  * 
  * @param {string} parentref reference to parent object
  * @param {string} nestedref reference to nested field
@@ -17,6 +19,10 @@
  */
 export function isparentRef(parentref, nestedref) {
   return nestedref.startsWith(parentref + ".");
+}
+
+export function overlapsRef(parentref, nestedref) {
+  return parentref == nestedref || isparentRef(parentref, nestedref);
 }
 
 /**
@@ -63,8 +69,7 @@ export function getsubRef(parentref, nestedref) {
     }
   }
   if (path.length == 0) return undefined;
-  return ".".join(path);
-  
+  return path.join(".");
 }
 
 /**

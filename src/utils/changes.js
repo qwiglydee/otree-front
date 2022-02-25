@@ -4,8 +4,9 @@
  * @module utils/changes
  */
 
-import { parseVar } from "../utils/expr";
 import * as ref from "./ref";
+
+const VAR_RE = new RegExp(/^(?<ref>[a-zA-Z]\w+(\.\w+)*)$/);
 
 /**
  * A set of references to vars and their new values.
@@ -24,7 +25,9 @@ export class Changes extends Map {
       super();
     }
     // validate keys
-    this.forEach((v, k) => parseVar(k));
+    if( ! Array.from(this.keys()).every(k => k.match(VAR_RE))) {
+      throw new Error("Some changes keys are invalid");
+    }
   }
 
   prefix(pref) {
