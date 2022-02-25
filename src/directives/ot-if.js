@@ -1,4 +1,4 @@
-import { parseCond, evalCond, affecting } from "../utils/expr";
+import { parseExpr, VarExpr, CmpExpr } from "../utils/expr";
 import { toggleDisplay } from "../utils/dom";
 
 import { DirectiveBase, registerDirective } from "./base";
@@ -11,29 +11,33 @@ import { DirectiveBase, registerDirective } from "./base";
  * The `var` is a page var reference like `game.feedback`, the `val` is a primitive json expression
  * like "true" (boolean), "42" (number), "'foo'" (string).
  *
- * For `ot-when="var"` element shows when the `var` is defined.
+ * For `ot-when="var"` element shows when the `var` is defined and true.
  *
- * For `ot-when="var==val"` element shows when the `var` is defined and equal to the val.
- *
- * For `ot-when="var===val"` element shows when the `var` is defined and strictly equal to the val.
+ * For `ot-when="var == val"` element shows when the `var` is defined and equal to the val.
  *
  * @hideconstructor
  */
 export class otIf extends DirectiveBase {
   init() {
-    this.cond = parseCond(this.getParam("if"));
+    this.expr = parseExpr(this.getParam("if"));
+    if (!(this.expr instanceof CmpExpr || this.expr instanceof VarExpr)) {
+      throw new Error("expected var reference or condition expression in ot-if");
+    }
+
+    this.onEvent("ot.reset", this.reset);
+    this.onEvent("ot.update", this.update);
+    this.onEvent("ot.input", this.update);
   }
 
-  onReset(event) {
-    if (affecting(this.cond, event)) {
-      toggleDisplay(this.elem, false);
-    }
+  reset(event) {
+    if (!this.expr.affected(event)) return;
+    toggleDisplay(this.elem, false);
   }
 
-  onUpdate(event, changes) {
-    if (affecting(this.cond, event)) {
-      toggleDisplay(this.elem, evalCond(this.cond, changes));
-    }
+  update(event) {
+    // both ot.update and ot.input
+    if (!this.expr.affected(event)) return;
+    toggleDisplay(this.elem, this.expr.eval(event));
   }
 }
 

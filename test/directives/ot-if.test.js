@@ -1,265 +1,176 @@
-import { expect, fixture, elementUpdated, oneEvent } from "@open-wc/testing";
+import { expect, fixture, oneEvent, nextFrame } from "@open-wc/testing";
 
 import { toggleDisplay } from "../../src/utils/dom";
 import { Page } from "../../src/page";
 
 import "../../src/directives/ot-if";
-import { otIf } from "../../src/directives/ot-if";
 
 describe("ot-if", () => {
   let body, elem, page;
 
-  async function pageEvent(type) {
-    return (await oneEvent(body, type)).detail;
-  }
+  describe("errors", () => {
+    beforeEach(async () => {
+      body = document.createElement("body");
+    });
+
+    it("on empty", async () => {
+      await fixture(`<div ot-if=""></div>`, { parentNode: body });
+      expect(() => new Page(elem)).to.throw(Error, "invalid expression");
+    });
+
+    it("on bogus expr", async () => {
+      await fixture(`<div ot-if="13"></div>`, { parentNode: body });
+      expect(() => new Page(elem)).to.throw(Error, "invalid expression");
+    });
+
+    it("on wrong inp expr", async () => {
+      await fixture(`<div ot-if="foo = true"></div>`, { parentNode: body });
+      expect(() => new Page(elem)).to.throw(Error, "expected var reference or condition");
+    });
+  });
 
   describe("var", () => {
     beforeEach(async () => {
       body = document.createElement("body");
       elem = await fixture(`<div ot-if="var"></div>`, { parentNode: body });
       page = new Page(body);
-      await pageEvent('ot.reset');
+      await oneEvent(body, "ot.reset");
     });
 
-    it("resets", async () => {
-      toggleDisplay(elem, true);
-      page.reset();
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
+    describe("resetting", () => {
+      it("globally", async () => {
+        toggleDisplay(elem, true);
+        page.reset();
+        await nextFrame();
+        expect(elem).not.to.be.displayed;
+      });
+
+      it("by specific var", async () => {
+        toggleDisplay(elem, true);
+        page.reset(["var"]);
+        await nextFrame();
+        expect(elem).not.to.be.displayed;
+      });
+
+      it("not by irrelevant var", async () => {
+        toggleDisplay(elem, true);
+        page.reset(["anothervar"]);
+        await nextFrame();
+        expect(elem).to.be.displayed;
+      });
     });
 
-    it("resets with 'var'", async () => {
-      toggleDisplay(elem, true);
-      page.reset(["var"]);
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
+    describe("changing", () => {
+      it("by updaing var to str", async () => {
+        toggleDisplay(elem, false);
+        page.update({ var: "foo" });
+        await nextFrame();
+        expect(elem).to.be.displayed;
+      });
 
-    it("not resets with 'othervar'", async () => {
-      toggleDisplay(elem, true);
-      page.reset(["othervar"]);
-      await elementUpdated(elem);
-      expect(elem).to.be.displayed;
-    });
+      it("not by updaing unrelated var", async () => {
+        toggleDisplay(elem, false);
+        page.update({ anothervar: "foo" });
+        await nextFrame();
+        expect(elem).not.to.be.displayed;
+      });
 
-    it("toggles", async () => {
-      toggleDisplay(elem, false);
+      it("by updaing var to true", async () => {
+        toggleDisplay(elem, false);
+        page.update({ var: true });
+        await nextFrame();
+        expect(elem).to.be.displayed;
+      });
 
-      page.update({ var: true });
-      await elementUpdated(elem);
-      expect(elem).to.be.displayed;
+      it("by updaing var to false", async () => {
+        toggleDisplay(elem, true);
+        page.update({ var: false });
+        await nextFrame();
+        expect(elem).not.to.be.displayed;
+      });
 
-      page.update({ var: false });
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
+      it("by inputting var", async () => {
+        toggleDisplay(elem, false);
+        page.input("var", "foo");
+        await nextFrame();
+        expect(elem).to.be.displayed;
+      });
 
-  });
-
-  describe("obj.fld", () => {
-    beforeEach(async () => {
-      body = document.createElement("body");
-      elem = await fixture(`<div ot-if="obj.fld"></div>`, { parentNode: body });
-      page = new Page(body);
-      await pageEvent('ot.reset');
-    });
-
-    it("resets", async () => {
-      toggleDisplay(elem, true);
-
-      page.reset();
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
-
-    it("resets with 'obj'", async () => {
-      toggleDisplay(elem, true);
-
-      page.reset(["obj"]);
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
-
-    it("not resets with 'otherobj'", async () => {
-      toggleDisplay(elem, true);
-
-      page.reset(["otherobj"]);
-      await elementUpdated(elem);
-      expect(elem).to.be.displayed;
-    });
-
-    it("resets with 'obj.fld'", async () => {
-      toggleDisplay(elem, true);
-
-      page.reset(["obj.fld"]);
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
-
-    it("not resets with 'obj.otherfld'", async () => {
-      toggleDisplay(elem, true);
-
-      page.reset(["obj.otherfld"]);
-      await elementUpdated(elem);
-      expect(elem).to.be.displayed;
-    });
-
-    it("toggles by obj", async () => {
-      toggleDisplay(elem, false);
-
-      page.update({ obj: { fld: true } });
-      await elementUpdated(elem);
-      expect(elem).to.be.displayed;
-
-      page.update({ obj: { fld: false } });
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
-
-    it("toggles by obj.fld", async () => {
-      toggleDisplay(elem, false);
-
-      page.update({ "obj.fld": true });
-      await elementUpdated(elem);
-      expect(elem).to.be.displayed;
-
-      page.update({ "obj.fld": false });
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
-
-    it("toggles by missing fld", async () => {
-      toggleDisplay(elem, true);
-
-      page.update({ obj: {} });
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
+      it("not by inputting unrelated var", async () => {
+        toggleDisplay(elem, false);
+        page.input("anothervar", "foo");
+        await nextFrame();
+        expect(elem).not.to.be.displayed;
+      });
     });
   });
 
   describe("var == val", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div ot-if="var == 'foo'"></div>`, { parentNode: body });
+      elem = await fixture(`<div ot-if="var == 'val'"></div>`, { parentNode: body });
       page = new Page(body);
-      await pageEvent('ot.reset');
+      await oneEvent(body, "ot.reset");
     });
 
-    it("resets", async () => {
-      toggleDisplay(elem, true);
+    describe("resetting", () => {
+      it("globally", async () => {
+        toggleDisplay(elem, true);
+        page.reset();
+        await nextFrame();
+        expect(elem).not.to.be.displayed;
+      });
 
-      page.reset();
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
+      it("by specific var", async () => {
+        toggleDisplay(elem, true);
+        page.reset(["var"]);
+        await nextFrame();
+        expect(elem).not.to.be.displayed;
+      });
+
+      it("not by irrelevant var", async () => {
+        toggleDisplay(elem, true);
+        page.reset(["anothervar"]);
+        await nextFrame();
+        expect(elem).to.be.displayed;
+      });
     });
 
-    it("resets with 'var'", async () => {
-      toggleDisplay(elem, true);
+    describe("changing", () => {
+      it("by updaing var to match", async () => {
+        toggleDisplay(elem, false);
+        page.update({ var: "val" });
+        await nextFrame();
+        expect(elem).to.be.displayed;
+      });
 
-      page.reset(["var"]);
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
+      it("by updaing var to mismatch", async () => {
+        toggleDisplay(elem, true);
+        page.update({ var: "xxx" });
+        await nextFrame();
+        expect(elem).not.to.be.displayed;
+      });
 
-    it("not resets with 'othervar'", async () => {
-      toggleDisplay(elem, true);
+      it("not by updaing unrelated var", async () => {
+        toggleDisplay(elem, false);
+        page.update({ anothervar: "val" });
+        await nextFrame();
+        expect(elem).not.to.be.displayed;
+      });
 
-      page.reset(["othervar"]);
-      await elementUpdated(elem);
-      expect(elem).to.be.displayed;
-    });
+      it("by inputting var", async () => {
+        toggleDisplay(elem, false);
+        page.input("var", "val");
+        await nextFrame();
+        expect(elem).to.be.displayed;
+      });
 
-    it("toggles", async () => {
-      toggleDisplay(elem, false);
-
-      page.update({ var: "foo" });
-      await elementUpdated(elem);
-      expect(elem).to.be.displayed;
-
-      page.update({ var: "bar" });
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
-  });
-
-  describe("obj.fld == val", () => {
-    beforeEach(async () => {
-      body = document.createElement("body");
-      elem = await fixture(`<div ot-if="obj.fld == 'foo'"></div>`, { parentNode: body });
-      page = new Page(body);
-      await pageEvent('ot.reset');
-    });
-
-    it("resets", async () => {
-      toggleDisplay(elem, true);
-
-      page.reset();
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
-
-    it("resets with 'obj'", async () => {
-      toggleDisplay(elem, true);
-
-      page.reset(["obj"]);
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
-
-    it("not resets with 'otherobj'", async () => {
-      toggleDisplay(elem, true);
-
-      page.reset(["otherobj"]);
-      await elementUpdated(elem);
-      expect(elem).to.be.displayed;
-    });
-
-    it("resets with 'obj.fld'", async () => {
-      toggleDisplay(elem, true);
-
-      page.reset(["obj.fld"]);
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
-
-    it("not resets with 'obj.otherfld'", async () => {
-      toggleDisplay(elem, true);
-
-      page.reset(["obj.otherfld"]);
-      await elementUpdated(elem);
-      expect(elem).to.be.displayed;
-    });
-
-    it("toggles by obj", async () => {
-      toggleDisplay(elem, false);
-
-      page.update({ obj: { fld: "foo" } });
-      await elementUpdated(elem);
-      expect(elem).to.be.displayed;
-
-      page.update({ obj: { fld: "bar" } });
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
-
-    it("toggles by obj.fld", async () => {
-      toggleDisplay(elem, false);
-
-      page.update({ "obj.fld": "foo" });
-      await elementUpdated(elem);
-      expect(elem).to.be.displayed;
-
-      page.update({ "obj.fld": "var" });
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
-    });
-
-    it("toggles by missing fld", async () => {
-      toggleDisplay(elem, true);
-
-      page.update({ obj: {} });
-      await elementUpdated(elem);
-      expect(elem).not.to.be.displayed;
+      it("not by inputting unrelated var", async () => {
+        toggleDisplay(elem, false);
+        page.input("anothervar", "val");
+        await nextFrame();
+        expect(elem).not.to.be.displayed;
+      });
     });
   });
 });

@@ -23,13 +23,7 @@ export class Page {
 
   init() {
     let page = this;
-    registry.forEach((cls, sel) => {
-      this.body.querySelectorAll(sel).forEach((elem) => {
-        // console.debug(cls, sel, elem);
-        let inst = new cls(page, elem);
-        inst.setup();
-      });
-    });
+    registry.forEach((cls, sel) => this.body.querySelectorAll(sel).forEach((elem) => new cls(page, elem)));
 
     this.reset();
 
@@ -142,6 +136,18 @@ export class Page {
   update(changes) {
     if (!(changes instanceof Changes)) changes = new Changes(changes);
     this.emitEvent("ot.update", changes);
+  }
+
+  /**
+   * Signals user input
+   *
+   * @param {str} name
+   * @param {any} value
+   * @fires Page.input
+   */
+
+  input(name, value) {
+    this.emitEvent("ot.input", { name, value });
   }
 
   /**

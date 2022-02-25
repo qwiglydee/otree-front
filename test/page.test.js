@@ -55,6 +55,12 @@ describe("Page", () => {
       expect(detail).to.eql(new Changes({ foo: "Foo" }));
     });
 
+    it("input", async () => {
+      page.input('foo', "Foo");
+      detail = await pageEvent("ot.input");
+      expect(detail).to.eql({ name: 'foo', value: "Foo" });
+    });
+
     it("timeout", async () => {
       page.timeout();
       await pageEvent("ot.timeout");

@@ -1,6 +1,3 @@
-import { parseVar } from "../utils/expr";
-import * as ref from "../utils/ref";
-
 /* map of selector => class */
 export const registry = new Map();
 
@@ -26,7 +23,7 @@ export class DirectiveBase {
   /**
    * Returns a value from attribute `ot-name`.
    *
-   * @param {string} [name=this.name] the param to get
+   * @param {string} name the param to get
    */
   getParam(attr) {
     return this.elem.getAttribute(`ot-${attr}`);
@@ -45,14 +42,12 @@ export class DirectiveBase {
   constructor(page, elem) {
     this.page = page;
     this.elem = elem;
-    // this.handlers = new Map();  // TODO: cleaning up when detached
     this.init();
   }
 
   /**
    * Initializes directive.
-   *
-   * Use it to parse parameters from the element, and to init all the state.
+   * Used in derived classes. 
    */
   init() {}
 
@@ -74,13 +69,5 @@ export class DirectiveBase {
    */
   onElemEvent(eventype, handler) {
     this.page.onElemEvent(this.elem, eventype, handler.bind(this));
-  }
-
-  /**
-   * Sets up event handlers
-   */
-  setup() {
-    if (this.onReset) this.onEvent("ot.reset", this.onReset);
-    if (this.onUpdate) this.onEvent("ot.update", this.onUpdate);
   }
 }

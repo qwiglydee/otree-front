@@ -1,4 +1,4 @@
-import { parseVar, evalVar, affecting } from "../utils/expr";
+import { parseExpr, VarExpr } from "../utils/expr";
 import { setText } from "../utils/dom";
 import { DirectiveBase, registerDirective } from "./base";
 
@@ -9,21 +9,29 @@ import { DirectiveBase, registerDirective } from "./base";
  *
  * @hideconstructor
  */
-class otText extends DirectiveBase {
+export class otText extends DirectiveBase {
   init() {
-    this.var = parseVar(this.getParam("text"));
+    this.enablable = this.hasParam("enabled"); // controlled by ot-enabled directive
+
+    this.var = parseExpr(this.getParam("text"));
+    if (!(this.var instanceof VarExpr)) {
+      throw new Error("expected var reference expression in ot-text");
+    }
+
+    this.onEvent("ot.reset", this.reset);
+    this.onEvent("ot.update", this.update);
+    this.onEvent("ot.input", this.update);
   }
 
-  onReset(event, vars) {
-    if (affecting(this.var, event)) {
-      setText(this.elem, null);
-    }
+  reset(event) {
+    if (!this.var.affected(event)) return;
+    setText(this.elem, null);
   }
 
-  onUpdate(event, changes) {
-    if (affecting(this.var, event)) {
-      setText(this.elem, evalVar(this.var, changes));
-    }
+  update(event) {
+    // both ot.update and ot.input
+    if (!this.var.affected(event)) return;
+    setText(this.elem, this.var.eval(event));
   }
 }
 

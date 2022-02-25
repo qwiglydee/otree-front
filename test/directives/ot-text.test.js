@@ -1,107 +1,98 @@
-import { expect, fixture, elementUpdated } from "@open-wc/testing";
+import { expect, fixture, nextFrame, oneEvent } from "@open-wc/testing";
 
 import { setText } from "../../src/utils/dom";
 import { Page } from "../../src/page";
-import { Changes } from "../../src/utils/changes";
-import "../../src/directives/ot-text";
+
+import { otText } from "../../src/directives/ot-text";
 
 describe("ot-text", () => {
   let body, elem, page;
 
   describe("errors", () => {
-    it("invalid path", async () => {
-      elem = await fixture(`<div ot-text=".foo"></div>`);
-      expect(() => new Page(document.body)).to.throw();
+    beforeEach(async () => {
+      body = document.createElement("body");
     });
 
-    it("invalid chars", async () => {
-      elem = await fixture(`<div ot-text="foo/bar"></div>`);
-      expect(() => new Page(document.body)).to.throw();
+    it("on empty", async () => {
+      await fixture(`<div ot-text=""></div>`, { parentNode: body });
+      expect(() => new Page(elem)).to.throw(Error, "invalid expression");
+    });
+
+    it("on bogus expr", async () => {
+      await fixture(`<div ot-text="13"></div>`, { parentNode: body });
+      expect(() => new Page(elem)).to.throw(Error, "invalid expression");
+    });
+
+    it("on wrong inp expr", async () => {
+      await fixture(`<div ot-text="foo = true"></div>`, { parentNode: body });
+      expect(() => new Page(elem)).to.throw(Error, "expected var reference");
+    });
+
+    it("on wrong cmp expr", async () => {
+      await fixture(`<div ot-text="foo == true"></div>`, { parentNode: body });
+      expect(() => new Page(elem)).to.throw(Error, "expected var reference");
     });
   });
 
-  describe("updating", () => {
+  describe("resetting", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div ot-text="obj.fld"></div>`, { parentNode: body });
+      elem = await fixture(`<div ot-text="var"></div>`, { parentNode: body });
       page = new Page(body);
+      await oneEvent(body, "ot.reset");
+      setText(elem, "initial");
     });
 
-    it("resets", async () => {
-      setText(elem, "xxx");
+    it("resets globally", async () => {
       page.reset();
-      await elementUpdated(elem);
+      await nextFrame();
       expect(elem).to.have.text("");
     });
 
-    it("changes by fld", async () => {
-      page.update(new Changes({ "obj.fld": "foo" }));
-      await elementUpdated(elem);
-      expect(elem).to.have.text("foo");
-
-      page.update(new Changes({ "obj.fld": "bar" }));
-      await elementUpdated(elem);
-      expect(elem).to.have.text("bar");
-    });
-
-    it("changes by obj", async () => {
-      page.update(new Changes({ obj: { fld: "foo" } }));
-      await elementUpdated(elem);
-      expect(elem).to.have.text("foo");
-
-      page.update(new Changes({ obj: { fld: "bar" } }));
-      await elementUpdated(elem);
-      expect(elem).to.have.text("bar");
-    });
-
-    it("ignores unrelated fld", async () => {
-      page.update(new Changes({ "obj.fld": "foo" }));
-      await elementUpdated(elem);
-      expect(elem).to.have.text("foo");
-
-      page.update(new Changes({ "obj.fld2": "bar" }));
-      await elementUpdated(elem);
-      expect(elem).to.have.text("foo");
-    });
-
-    it("ignores unrelated obj", async () => {
-      page.update(new Changes({ obj: { fld: "foo" } }));
-      await elementUpdated(elem);
-      expect(elem).to.have.text("foo");
-
-      page.update(new Changes({ obj2: { fld: "bar" } }));
-      await elementUpdated(elem);
-      expect(elem).to.have.text("foo");
-    });
-
-    it("clears by fld deletion", async () => {
-      page.update(new Changes({ "obj.fld": "foo" }));
-      await elementUpdated(elem);
-      expect(elem).to.have.text("foo");
-
-      page.update(new Changes({ "obj.fld": undefined }));
-      await elementUpdated(elem);
+    it("resets by specific var", async () => {
+      page.reset(["var"]);
+      await nextFrame();
       expect(elem).to.have.text("");
     });
 
-    it("clears by empty obj", async () => {
-      page.update(new Changes({ obj: { fld: "foo" } }));
-      await elementUpdated(elem);
-      expect(elem).to.have.text("foo");
+    it("not resets by irrelevant var", async () => {
+      page.reset(["anothervar"]);
+      await nextFrame();
+      expect(elem).to.have.text("initial");
+    });
+  });
 
-      page.update(new Changes({ obj: {} }));
-      await elementUpdated(elem);
-      expect(elem).to.have.text("");
+  describe("changing", () => {
+    beforeEach(async () => {
+      body = document.createElement("body");
+      elem = await fixture(`<div ot-text="var"></div>`, { parentNode: body });
+      page = new Page(body);
+      await oneEvent(body, "ot.reset");
+      setText(elem, "initial");
     });
 
-    it("clears by obj deletion", async () => {
-      page.update(new Changes({ obj: { fld: "foo" } }));
-      await elementUpdated(elem);
+    it("by updaing var", async () => {
+      page.update({ var: "foo" });
+      await nextFrame();
       expect(elem).to.have.text("foo");
+    });
 
-      page.update(new Changes({ obj: undefined }));
-      await elementUpdated(elem);
-      expect(elem).to.have.text("");
+    it("not by updating another var", async () => {
+      page.update({ anothervar: "foo" });
+      await nextFrame();
+      expect(elem).to.have.text("initial");
+    });
+
+    it("by inputting var", async () => {
+      page.input("var", "foo");
+      await nextFrame();
+      expect(elem).to.have.text("foo");
+    });
+
+    it("not by inputting another var", async () => {
+      page.input("anothervar", "foo");
+      await nextFrame();
+      expect(elem).to.have.text("initial");
     });
   });
 });

@@ -1,8 +1,6 @@
-import { parseVar, evalVar, affecting } from "../utils/expr";
-import { setChild } from "../utils/dom";
+import { parseExpr, VarExpr } from "../utils/expr";
 
 import { DirectiveBase, registerDirective } from "./base";
-
 
 /**
  * Directive `ot-img="reference"`
@@ -14,35 +12,38 @@ import { DirectiveBase, registerDirective } from "./base";
  */
 export class otImg extends DirectiveBase {
   init() {
-    this.var = parseVar(this.getParam("img"));
+    this.orig = this.elem;
+    this.var = parseExpr(this.getParam("img"));
+    if (!(this.var instanceof VarExpr)) {
+      throw new Error("expected var reference expression in ot-text");
+    }
+
+    this.onEvent("ot.reset", this.reset);
+    this.onEvent("ot.update", this.update);
   }
 
-  onReset(event, vars) {
-    if (affecting(this.var, event)) {
-      this.replaceImg(new Image());
-    }
+  reset(event) {
+    if (!this.var.affected(event)) return;
+    this.elem.replaceWith(this.orig);
+    this.elem = this.orig;
   }
 
-  onUpdate(event, changes) {
-    if (affecting(this.var, event)) {
-      let img = evalVar(this.var, changes);
-      this.replaceImg(img);
-    }
+  update(event) {
+    if (!this.var.affected(event)) return;
+    this.replaceImg(this.var.eval(event));
   }
 
   replaceImg(newimg) {
     if (!!newimg && !(newimg instanceof Image)) {
       throw new Error(`Invalid value for image: ${newimg}, expecting Imge instance`);
     }
-    let attrs = this.elem.attributes;
     this.elem.replaceWith(newimg);
     this.elem = newimg;
 
-    for(let attr of attrs) {
-      if (attr.name.startsWith("ot-") || attr.name == 'src') continue;
+    for (let attr of this.orig.attributes) {
+      if (attr.name.startsWith("ot-") || attr.name == "src") continue;
       this.elem.setAttribute(attr.name, attr.value);
     }
-
   }
 }
 

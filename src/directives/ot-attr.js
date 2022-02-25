@@ -1,22 +1,22 @@
-import { parseVar, evalVar, affecting } from "../utils/expr";
+import { parseExpr, VarExpr } from "../utils/expr";
 import { setAttr } from "../utils/dom";
 import { DirectiveBase, registerDirective } from "./base";
 
 /**
  * Directives `ot-attr-something="reference"`
- * 
- * The allowed attributes are: 
- * - `height` 
- * - `width` 
- * - `min` 
- * - `max` 
- * - `low` 
- * - `high` 
- * - `optimum` 
- * - `value` 
- * 
+ *
+ * The allowed attributes are:
+ * - `height`
+ * - `width`
+ * - `min`
+ * - `max`
+ * - `low`
+ * - `high`
+ * - `optimum`
+ * - `value`
+ *
  * It deletes or sets value of the attribute to a value from {@link Page.event:update}.
- * 
+ *
  * @hideconstructor
  */
 class otAttrBase extends DirectiveBase {
@@ -25,19 +25,24 @@ class otAttrBase extends DirectiveBase {
   }
 
   init() {
-    this.var = parseVar(this.getParam(this.name));
+    this.var = parseExpr(this.getParam(this.name));
+    if (!(this.var instanceof VarExpr)) {
+      throw new Error(`expected var reference expression in ot-${this.name}`);
+    }
+
+    this.onEvent("ot.reset", this.reset);
+    this.onEvent("ot.update", this.update);
+    this.onEvent("ot.input", this.update);
   }
 
-  onReset(event,  vars) {
-    if (affecting(this.var, event)) {
-      setAttr(this.elem, this.name, null);
-    }
+  reset(event) {
+    if (!this.var.affected(event)) return;
+    setAttr(this.elem, this.name, null);
   }
 
-  onUpdate(event, changes) {
-    if (affecting(this.var, event)) {
-      setAttr(this.elem, this.name, evalVar(this.var, changes));
-    }
+  update(event) { // both ot.pdate and ot.input 
+    if (!this.var.affected(event)) return;
+    setAttr(this.elem, this.name, this.var.eval(event));
   }
 }
 
@@ -45,11 +50,11 @@ const ALLOWED_ATTRIBS = ["height", "width", "min", "max", "low", "high", "optimu
 
 // create subclass for each attr with static property
 // register them as `ot-something`
-ALLOWED_ATTRIBS.forEach(attrname => {
+ALLOWED_ATTRIBS.forEach((attrname) => {
   class otAttr extends otAttrBase {
     get name() {
       return attrname;
     }
-  };
+  }
   registerDirective(`[ot-${attrname}]`, otAttr);
 });

@@ -1,6 +1,5 @@
-import { expect, fixture, elementUpdated } from "@open-wc/testing";
+import { expect, fixture, oneEvent, nextFrame } from "@open-wc/testing";
 
-import { setClasses } from "../../src/utils/dom";
 import { Page } from "../../src/page";
 import "../../src/directives/ot-class";
 
@@ -9,120 +8,92 @@ describe("ot-class", () => {
   let body, elem, page;
 
   describe("errors", () => {
-    it("invalid path", async () => {
-      elem = await fixture(`<div ot-class=".foo"></div>`);
-      expect(() => new Page(document.body)).to.throw();
-    });
-
-    it("invalid chars", async () => {
-      elem = await fixture(`<div ot-class="foo/bar"></div>`);
-      expect(() => new Page(document.body)).to.throw();
-    });
-  });
-
-  describe("updating", () => {
     beforeEach(async () => {
       body = document.createElement("body");
-      elem = await fixture(`<div class="cls1 cls2" ot-class="game.fld"></div>`, { parentNode: body });
-      page = new Page(body);
     });
 
-    it("resets", async () => {
-      setClasses(elem, ['cls1', 'foo', 'bar'])
-      page.reset();
-      await elementUpdated(elem);
-      expect([...elem.classList]).to.eql(["cls1", "cls2"]);
+    it("on empty", async () => {
+      await fixture(`<div ot-class=""></div>`, { parentNode: body });
+      expect(() => new Page(elem)).to.throw(Error, "invalid expression");
     });
 
-    it("changes by fld", async () => {
-      page.reset();
-      await elementUpdated(elem);
-
-      page.update({ "game.fld": "foo" });
-      await elementUpdated(elem);
-      expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
-
-      page.update({ "game.fld": "bar" });
-      await elementUpdated(elem);
-      expect([...elem.classList]).to.eql(["cls1", "cls2", "bar"]);
+    it("on bogus expr", async () => {
+      await fixture(`<div ot-class="13"></div>`, { parentNode: body });
+      expect(() => new Page(elem)).to.throw(Error, "invalid expression");
     });
 
-    it("changes by obj", async () => {
-      page.reset();
-      await elementUpdated(elem);
-
-      page.update({ game: { fld: "foo" } });
-      await elementUpdated(elem);
-      expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
-
-      page.update({ game: { fld: "bar" } });
-      await elementUpdated(elem);
-      expect([...elem.classList]).to.eql(["cls1", "cls2", "bar"]);
+    it("on wrong inp expr", async () => {
+      await fixture(`<div ot-class="foo = true"></div>`, { parentNode: body });
+      expect(() => new Page(elem)).to.throw(Error, "expected var reference");
     });
 
-    it("ignores unrelated fld", async () => {
-      page.reset();
-      await elementUpdated(elem);
-
-      page.update({ "game.fld": "foo" });
-      await elementUpdated(elem);
-      expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
-
-      page.update({ "game.fld2": "bar" });
-      await elementUpdated(elem);
-      expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
-    });
-
-    it("ignores unrelated obj", async () => {
-      page.reset();
-      await elementUpdated(elem);
-
-      page.update({ game: { fld: "foo" } });
-      await elementUpdated(elem);
-      expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
-
-      page.update({ obj2: { fld: "bar" } });
-      await elementUpdated(elem);
-      expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
-    });
-
-    it("clears by fld deletion", async () => {
-      page.reset();
-      await elementUpdated(elem);
-
-      page.update({ "game.fld": "foo" });
-      await elementUpdated(elem);
-      expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
-
-      page.update({ "game.fld": undefined });
-      await elementUpdated(elem);
-      expect([...elem.classList]).to.eql(["cls1", "cls2"]);
-    });
-
-    it("clears by empty obj", async () => {
-      page.reset();
-      await elementUpdated(elem);
-
-      page.update({ game: { fld: "foo" } });
-      await elementUpdated(elem);
-      expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
-
-      page.update({ game: {} });
-      await elementUpdated(elem);
-      expect([...elem.classList]).to.eql(["cls1", "cls2"]);
-    });
-
-    it("clears by obj deletion", async () => {
-      page.reset();
-      await elementUpdated(elem);
-
-      page.update({ game: { fld: "foo" } });
-      await elementUpdated(elem);
-      expect([...elem.classList]).to.eql(["cls1", "cls2", "foo"]);
-
-      page.update({ game: undefined });
-      await elementUpdated(elem);
-      expect([...elem.classList]).to.eql(["cls1", "cls2"]);
+    it("on wrong cmp expr", async () => {
+      await fixture(`<div ot-class="foo == true"></div>`, { parentNode: body });
+      expect(() => new Page(elem)).to.throw(Error, "expected var reference");
     });
   });
+
+  describe("resetting", () => {
+    beforeEach(async () => {
+      body = document.createElement("body");
+      elem = await fixture(`<div class="default" ot-class="var"></div>`, { parentNode: body });
+      page = new Page(body);
+      await oneEvent(body, "ot.reset");
+      elem.classList.add("initial");
+    });
+
+    it("resets globally", async () => {
+      page.reset();
+      await nextFrame();
+      expect([...elem.classList]).to.eql(['default']);
+    });
+
+    it("resets by specific var", async () => {
+      page.reset(["var"]);
+      await nextFrame();
+      expect([...elem.classList]).to.eql(['default']);
+    });
+
+    it("not resets by irrelevant var", async () => {
+      page.reset(["anothervar"]);
+      await nextFrame();
+      expect([...elem.classList]).to.eql(['default', 'initial']);
+    });
+  });
+
+
+  describe("changing", () => {
+    beforeEach(async () => {
+      body = document.createElement("body");
+      elem = await fixture(`<div class="default" ot-class="var"></div>`, { parentNode: body });
+      page = new Page(body);
+      await oneEvent(body, "ot.reset");
+      elem.classList.add("initial");
+    });
+
+    it("by updaing var", async () => {
+      page.update({ var: "foo" });
+      await nextFrame();
+      expect([...elem.classList]).to.eql(['default', 'foo']);
+    });
+
+    it("not by updating another var", async () => {
+      page.update({ anothervar: "foo" });
+      await nextFrame();
+      expect([...elem.classList]).to.eql(['default', 'initial']);
+    });
+
+    it("by inputting var", async () => {
+      page.input("var", "foo");
+      await nextFrame();
+      expect([...elem.classList]).to.eql(['default', 'foo']);
+    });
+
+    it("not by inputting another var", async () => {
+      page.input("anothervar", "foo");
+      await nextFrame();
+      expect([...elem.classList]).to.eql(['default', 'initial']);
+    });
+  });
+
 });
