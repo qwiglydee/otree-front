@@ -21,7 +21,7 @@ describe("ot-enabled", () => {
     describe("without ot-enabled", () => {
       beforeEach(async () => {
         body = document.createElement("body");
-        elem = await fixture(`<input type="text" ot-input="foo"></div>`, { parentNode: body });
+        elem = await fixture(`<input type="text" ot-input="foo">`, { parentNode: body });
         page = new Page(body);
         await pageEvent("ot.reset");
       });
@@ -71,7 +71,7 @@ describe("ot-enabled", () => {
     describe("with ot-enabled", () => {
       beforeEach(async () => {
         body = document.createElement("body");
-        elem = await fixture(`<input type="text" ot-input="foo" ot-enabled="phase == 'input'"></div>`, {
+        elem = await fixture(`<input type="text" ot-input="foo" ot-enabled="phase == 'input'">`, {
           parentNode: body,
         });
         page = new Page(body);
@@ -81,18 +81,6 @@ describe("ot-enabled", () => {
       it("disabled on reset", async () => {
         page.reset();
         await pageEvent("ot.reset");
-
-        expect(elem).to.match(":disabled");
-      });
-
-      it("toggles on update", async () => {
-        page.update({ phase: "input" });
-        await pageEvent("ot.update");
-
-        expect(elem).not.to.match(":disabled");
-
-        page.update({ phase: "noinput" });
-        await pageEvent("ot.update");
 
         expect(elem).to.match(":disabled");
       });
@@ -107,6 +95,18 @@ describe("ot-enabled", () => {
         await pageEvent("ot.reset");
 
         expect(elem).not.to.match(":disabled");
+      });
+
+      it("toggles on update", async () => {
+        page.update({ phase: "input" });
+        await pageEvent("ot.update");
+
+        expect(elem).not.to.match(":disabled");
+
+        page.update({ phase: "noinput" });
+        await pageEvent("ot.update");
+
+        expect(elem).to.match(":disabled");
       });
 
       it("freezes/unfreezes when enabled", async () => {
@@ -413,6 +413,7 @@ describe("native ot-input", () => {
     body = document.createElement("body");
     elem = await fixture(`<input type="text" ot-input="foo"></div>`, { parentNode: body });
     page = new Page(body);
+    await pageEvent("ot.reset");
   });
 
   it("resets", async () => {
@@ -475,6 +476,7 @@ describe("button ot-input", () => {
       parentNode: body,
     });
     page = new Page(body);
+    await pageEvent("ot.reset");
   });
 
   it("triggers on click", async () => {
@@ -537,16 +539,16 @@ describe("ot-emit", () => {
 
   it("triggers on key", async () => {
     page.body.dispatchEvent(new KeyboardEvent("keydown", { ...EVENT_DEFAULTS, code: "Space" }));
-    detail = await pageEvent("foo");
+    await pageEvent("foo");
   });
 
   it("triggers on touch", async () => {
     elem.dispatchEvent(new TouchEvent("touchend", EVENT_DEFAULTS));
-    detail = await pageEvent("foo");
+    await pageEvent("foo");
   });
 
   it("triggers on click", async () => {
     elem.dispatchEvent(new MouseEvent("click", EVENT_DEFAULTS));
-    detail = await pageEvent("foo");
+    await pageEvent("foo");
   });
 });
